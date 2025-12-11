@@ -237,50 +237,138 @@
   }
   /* ===== quiz bank: questions variées (beaucoup) ===== */
   const quizBank = [
-    { q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0, points:50 },
-    { q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0, points:40 },
-    { q:"Que signifie 'soft skill' ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0, points:30 },
-    { q:"Que faire après une candidature ?", a:["Relancer poliment","Ne rien faire","Envoyer tous les jours"], correct:0, points:30 },
-    { q:"En entretien, comment commencer ?", a:["Bonjour + présentation brève","Raconter sa vie privée","Faire un sketch"], correct:0, points:40 },
-    { q:"Quelle est une bonne qualité professionnelle ?", a:["Ponctualité","Arriver en retard","Manque de respect"], correct:0, points:30 },
-    { q:"Comment adapter son CV à une offre ?", a:["Mettre en avant compétences demandées","Envoyer le même CV","Changer juste la police"], correct:0, points:35 },
-    { q:"Qu'est-ce qu'une lettre de motivation ?", a:["Un texte adapté à l'offre","Un CV en plus long","Une liste de notes personnelles"], correct:0, points:25 },
-    { q:"Où trouver des offres ?","a":["Sites d'emploi","Sur la Lune"], correct:0, points:20 }, // fallback, won't be used if system parses
-    { q:"Quel comportement éviter en entretien ?", a:["Regarder son téléphone","Écouter le recruteur","Demander des précisions"], correct:0, points:30 },
-    { q:"Qu'est-ce qu'un 'stage' ?", a:["Une période d'apprentissage en entreprise","Un travail permanent","Un abonnement"], correct:0, points:20 },
-    { q:"Pourquoi relancer une candidature ?", a:["Montrer l'intérêt","Manquer d'organisation","Crier"], correct:0, points:25 },
-    { q:"Comment se présenter ?", a:["Nom + objectif pro bref","Raconter un long épisode","Chanter"], correct:0, points:30 },
-    { q:"Qu'est-ce qu'un bon CV ?", a:["Clairement structuré","Brouillon","Sans contact"], correct:0, points:35 },
-    { q:"Quelle information NE doit PAS figurer ?", a:["Informations médicales sensibles","Compétences","Contact"], correct:0, points:30 },
-    { q:"Que signifie 'références' dans un CV ?", a:["Personnes pouvant témoigner de vous","Des références bibliographiques","Un mystère"], correct:0, points:20 },
-    { q:"Qu'est-ce qu'une compétence transférable ?", a:["Capacité utile dans plusieurs emplois","Un seul logiciel","Un diplôme précis"], correct:0, points:30 },
-    { q:"Que faire si on ne sait pas répondre en entretien ?", a:["Admettre et proposer comment trouver la réponse","Inventer une fausse réponse","Ignorer"], correct:0, points:40 },
-    { q:"Quel ton adopter en entretien ?", a:["Professionnel et cordial","Hautain","Trop familier"], correct:0, points:30 },
-    { q:"Comment montrer sa motivation ?", a:["Par des exemples concrets","Dire 'je suis motivé' sans preuve","Rien faire"], correct:0, points:35 },
-    { q:"Qu'est-ce qu'une lettre d'accompagnement ?", a:["Un texte pour contextualiser le CV","Un CV détourné","Un document inutile"], correct:0, points:25 },
-    { q:"Pourquoi soigner son profil en ligne ?", a:["Les recruteurs regardent souvent","Personne ne regarde","C'est interdit"], correct:0, points:25 },
-    { q:"Citer une soft skill importante ?", a:["Capacité d'écoute","Savoir tout faire","Ignorance"], correct:0, points:20 },
-    { q:"Que faire en cas de retard ?", a:["Prévenir et s'excuser","Rester silencieux","Ignorer"], correct:0, points:20 },
-    { q:"Quelle info pour un recruteur ?", a:["Expériences récentes et pertinentes","Vos secrets","Infos bancaires"], correct:0, points:30 },
-    { q:"Qu'est-ce que la ponctualité ?", a:["Arriver à l'heure","Arriver quand on veut","Partir tôt"], correct:0, points:15 },
-    { q:"Pourquoi personnaliser sa candidature ?", a:["Montrer l'adéquation avec l'offre","Gagner du temps","Faire n'importe quoi"], correct:0, points:25 },
-    { q:"Que faire avec un trou dans le CV ?", a:["Expliquer brièvement en valorisant","Cacher tout","Mentir"], correct:0, points:20 },
-    { q:"Quel document joindre ?", a:["CV + lettre adaptée","Rien","Tout ce qu'on a"], correct:0, points:20 },
-    { q:"Où demander de l'aide ?", a:["Mission Locale / Pôle emploi / réseau","Personne","La rue"], correct:0, points:20 },
-    { q:"Comment se former ?", a:["Par formations, MOOC, stages","Rien","Regarder la télé"], correct:0, points:25 },
-    { q:"Que montre une bonne attitude ?", a:["Curiosité et respect","Arrogance","Indifférence"], correct:0, points:30 },
-    { q:"Pourquoi relire son CV ?", a:["Éviter fautes et incohérences","Pour le style fantaisiste","Pour l'oublier"], correct:0, points:20 },
-    { q:"Que signifie 'Candidature spontanée' ?", a:["Envoyer son CV sans offre précise","Attendre une offre","Appeler en criant"], correct:0, points:25 },
-    { q:"Comment préparer un entretien ?", a:["Se renseigner sur l'entreprise","Y aller sans préparation","Ignorer l'entreprise"], correct:0, points:30 },
-    { q:"Quel est l'objectif d'une lettre ?", a:["Montrer l'adéquation avec l'offre","Remplir un espace","Raconter sa vie"], correct:0, points:20 },
-    { q:"Pourquoi valoriser un stage ?", a:["Montrer des compétences réelles","Le cacher","Ne rien dire"], correct:0, points:20 },
-    { q:"Qu'est-ce qu'une alternance ?", a:["Formation en entreprise + école","Vacances prolongées","Un job permanent"], correct:0, points:20 },
-    { q:"Que faire après un entretien ?", a:["Remercier et relancer si besoin","Oublier tout","Attendre une semaine sans rien"], correct:0, points:20 },
-    { q:"Quel est un bon comportement en équipe ?", a:["Partager l'information","Tout garder pour soi","S'opposer systématiquement"], correct:0, points:30 },
-    { q:"Pourquoi être honnête ?", a:["La confiance facilite l'embauche","On nez","C'est inutile"], correct:0, points:30 },
-    { q:"Que chercher dans une offre ?", a:["Mots-clés compétences et missions","Juste le salaire","Rien"], correct:0, points:25 },
-    { q:"Que fait un conseiller Mission Locale ?", a:["Aide, orientation, formations","Rien","Décore des bureaux"], correct:0, points:20 }
-  ];
+    <div class="header">
+    <img id="logo" class="logo" alt="Logo Mission Locale" src="REPLACE_LOGO">
+    <img id="mascotte" class="mascotte" alt="Mascotte" src="REPLACE_MASCOTTE">
+</div>
+
+<h2>Consigne</h2>
+<p>
+   Saut: Espace / Taper l'écran — Réponds si tu perds pour continuer Lis chaque question attentivement et coche la réponse qui te semble correcte.
+</p>
+
+<div class="questionnaire">
+
+    <p><strong>Que doit-on apporter lors d’un entretien d’embauche ?</strong><br>
+    A. Un CV<br>
+    B. Une console de jeux<br>
+    C. Rien du tout<br>
+    D. Un casque audio</p>
+
+    <p><strong>Arriver à l’heure signifie :</strong><br>
+    A. Arriver quand on veut<br>
+    B. Arriver 10 à 15 minutes avant<br>
+    C. Arriver 1 heure en retard<br>
+    D. Prévenir après l’heure prévue</p>
+
+    <p><strong>À quoi sert un stage ?</strong><br>
+    A. À découvrir un métier<br>
+    B. À prendre des vacances<br>
+    C. À jouer toute la journée<br>
+    D. À éviter de travailler</p>
+
+    <p><strong>Où peut-on trouver des offres d’emploi ?</strong><br>
+    A. Sur des sites spécialisés<br>
+    B. Sous son oreiller<br>
+    C. Dans un jeu vidéo<br>
+    D. Dans une publicité de parfum</p>
+
+    <p><strong>Lorsqu’on ne comprend pas une consigne, il faut :</strong><br>
+    A. Faire semblant d’avoir compris<br>
+    B. Demander des explications<br>
+    C. S’énerver<br>
+    D. Partir</p>
+
+    <p><strong>Quel comportement est professionnel ?</strong><br>
+    A. Dire bonjour<br>
+    B. Crier sur les collègues<br>
+    C. Utiliser son téléphone toutes les 5 minutes<br>
+    D. Ne parler à personne</p>
+
+    <p><strong>Un CV doit contenir :</strong><br>
+    A. Les compétences et les expériences<br>
+    B. Les photos de vacances<br>
+    C. Les notes du collège uniquement<br>
+    D. Les réseaux sociaux personnels</p>
+
+    <p><strong>Pour se présenter à un entretien, il est préférable de :</strong><br>
+    A. Venir habillé proprement<br>
+    B. Venir en pyjama<br>
+    C. Venir en tenue de sport sale<br>
+    D. Venir avec une casquette baissée</p>
+
+    <p><strong>Pour être en forme au travail, il est important de :</strong><br>
+    A. Bien dormir<br>
+    B. Passer la nuit à jouer<br>
+    C. Ne rien manger le matin<br>
+    D. Ne jamais se reposer</p>
+
+    <p><strong>Si un métier ne convient pas, il est possible de :</strong><br>
+    A. Ne plus rien faire<br>
+    B. Chercher un autre métier ou une formation<br>
+    C. Abandonner définitivement<br>
+    D. Ne plus parler à personne</p>
+
+    <p><strong>Lors d’un entretien, il est important de :</strong><br>
+    A. Regarder son téléphone<br>
+    B. Regarder la personne qui parle<br>
+    C. Manger un sandwich<br>
+    D. Rester silencieux sans répondre</p>
+
+    <p><strong>Dire « merci » et « s’il vous plaît » montre :</strong><br>
+    A. De la politesse<br>
+    B. De la fatigue<br>
+    C. De l’ennui<br>
+    D. De la colère</p>
+
+    <p><strong>Que doit-on faire lorsqu’on ne peut pas venir au travail ?</strong><br>
+    A. Ne rien dire<br>
+    B. Prévenir le plus tôt possible<br>
+    C. Prévenir le lendemain<br>
+    D. Envoyer un message à un ami</p>
+
+    <p><strong>Quel document raconte votre parcours professionnel ?</strong><br>
+    A. Un coloriage<br>
+    B. Un CV<br>
+    C. Une carte de bus<br>
+    D. Une facture</p>
+
+    <p><strong>Quand on travaille en équipe, on doit :</strong><br>
+    A. Échanger et s’entraider<br>
+    B. Garder toutes les informations pour soi<br>
+    C. Faire faire tout le travail aux autres<br>
+    D. Partir sans prévenir</p>
+
+    <p><strong>Lors d’un stage, il est important de :</strong><br>
+    A. Poser des questions<br>
+    B. Dormir pendant les pauses<br>
+    C. Dire « Je sais tout »<br>
+    D. Refuser toutes les tâches</p>
+
+    <p><strong>Quel comportement donne une bonne image ?</strong><br>
+    A. Être respectueux<br>
+    B. Couper la parole<br>
+    C. Arriver en retard<br>
+    D. Ne pas répondre aux messages</p>
+
+    <p><strong>Pour ne pas oublier un rendez-vous, on peut :</strong><br>
+    A. Le noter dans un agenda<br>
+    B. Espérer s’en rappeler<br>
+    C. Ne rien faire<br>
+    D. Compter sur quelqu’un d’autre</p>
+
+    <p><strong>Pour rester concentré durant la journée, il faut :</strong><br>
+    A. Boire de l’eau<br>
+    B. Se priver de sommeil<br>
+    C. Sauter tous les repas<br>
+    D. Regarder des vidéos en continu</p>
+
+    <p><strong>Pour trouver une formation adaptée, on peut :</strong><br>
+    A. Demander conseil à la Mission locale<br>
+    B. Choisir au hasard<br>
+    C. Prendre la même formation que ses amis</p>
+
+</div>
 
   /* ===== quiz handling ===== */
   function showQuiz(onCorrect){
