@@ -219,7 +219,7 @@
   }
 
   /* ===== background aesthetic elements (no interaction) ===== */
-  const bgWords = ['CV','Compétences','Entretien','Savoir-être','Mission Locale','Stage','Emploi','Projet, la Réunion, ];
+  const bgWords = ['CV','Compétences','Entretien','Savoir-être','Mission Locale','Stage','Emploi','Projet'];
   function drawBackground(){
     // subtle background words/icons for aesthetic only
     ctx.save();
@@ -236,129 +236,50 @@
   }
   /* ===== quiz bank: questions variées (beaucoup) ===== */
   const quizBank = [
-  const questions = [
-  {
-    instruction: "Réponds correctement pour continuer ta progression !",
-    question: "Que doit-on apporter lors d’un entretien d’embauche ?",
-    answers: ["Un CV", "Une console de jeux", "Rien du tout", "Un casque audio"],
-    correct: 0
-  },
-  {
-    instruction: "Lis bien la question avant de répondre.",
-    question: "Arriver à l’heure signifie :",
-    answers: ["Arriver quand on veut", "Arriver 10 à 15 minutes avant", "Arriver 1 heure en retard", "Prévenir après l’heure prévue"],
-    correct: 1
-  },
-  {
-    instruction: "Réponds pour gagner des points !",
-    question: "À quoi sert un stage ?",
-    answers: ["À découvrir un métier", "À prendre des vacances", "À jouer toute la journée", "À éviter de travailler"],
-    correct: 0
-  },
-  {
-    instruction: "Connais-tu la réponse ?",
-    question: "Où peut-on trouver des offres d’emploi ?",
-    answers: ["Sur des sites spécialisés", "Sous son oreiller", "Dans un jeu vidéo", "Dans une publicité de parfum"],
-    correct: 0
-  },
-  {
-    instruction: "Une erreur enlève tous les points !",
-    question: "Lorsqu’on ne comprend pas une consigne, il faut :",
-    answers: ["Faire semblant d’avoir compris", "Demander des explications", "S’énerver", "Partir"],
-    correct: 1
-  },
-  {
-    instruction: "Quel comportement semblera professionnel ?",
-    question: "Quel comportement est professionnel ?",
-    answers: ["Dire bonjour", "Crier sur les collègues", "Utiliser son téléphone toutes les 5 minutes", "Ne parler à personne"],
-    correct: 0
-  },
-  {
-    instruction: "Connais-tu le but d’un CV ?",
-    question: "Un CV doit contenir :",
-    answers: ["Les compétences et les expériences", "Les photos de vacances", "Les notes du collège uniquement", "Les réseaux sociaux personnels"],
-    correct: 0
-  },
-  {
-    instruction: "Voici une question simple.",
-    question: "Pour se présenter à un entretien, il est préférable de :",
-    answers: ["Venir habillé proprement", "Venir en pyjama", "Venir en tenue de sport sale", "Venir avec une casquette baissée"],
-    correct: 0
-  },
-  {
-    instruction: "Santé = efficacité !",
-    question: "Pour être en forme au travail, il est important de :",
-    answers: ["Bien dormir", "Passer la nuit à jouer", "Ne rien manger le matin", "Ne jamais se reposer"],
-    correct: 0
-  },
-  {
-    instruction: "À toi de jouer !",
-    question: "Si un métier ne convient pas, il est possible de :",
-    answers: ["Ne plus rien faire", "Chercher un autre métier ou une formation", "Abandonner définitivement", "Ne plus parler à personne"],
-    correct: 1
-  },
-  {
-    instruction: "Observe bien la question.",
-    question: "Lors d’un entretien, il est important de :",
-    answers: ["Regarder son téléphone", "Regarder la personne qui parle", "Manger un sandwich", "Rester silencieux"],
-    correct: 1
-  },
-  {
-    instruction: "Un peu de politesse !",
-    question: "Dire « merci » et « s’il vous plaît » montre :",
-    answers: ["De la politesse", "De la fatigue", "De l’ennui", "De la colère"],
-    correct: 0
-  },
-  {
-    instruction: "Comportement professionnel = réussite",
-    question: "Que doit-on faire lorsqu’on ne peut pas venir au travail ?",
-    answers: ["Ne rien dire", "Prévenir le plus tôt possible", "Prévenir le lendemain", "Envoyer un message à un ami"],
-    correct: 1
-  },
-  {
-    instruction: "Tu connais sûrement celle-là.",
-    question: "Quel document raconte votre parcours professionnel ?",
-    answers: ["Un coloriage", "Un CV", "Une carte de bus", "Une facture"],
-    correct: 1
-  },
-  {
-    instruction: "Travail d’équipe !",
-    question: "Quand on travaille en équipe, on doit :",
-    answers: ["Échanger et s’entraider", "Garder toutes les informations pour soi", "Faire faire tout le travail aux autres", "Partir sans prévenir"],
-    correct: 0
-  },
-  {
-    instruction: "Le stage sert à découvrir.",
-    question: "Lors d’un stage, il est important de :",
-    answers: ["Poser des questions", "Dormir pendant les pauses", "Dire « Je sais tout »", "Refuser toutes les tâches"],
-    correct: 0
-  },
-  {
-    instruction: "Image professionnelle = essentiel",
-    question: "Quel comportement donne une bonne image ?",
-    answers: ["Être respectueux", "Couper la parole", "Arriver en retard", "Ne pas répondre aux messages"],
-    correct: 0
-  },
-  {
-    instruction: "Méthode pour ne rien oublier.",
-    question: "Pour ne pas oublier un rendez-vous, on peut :",
-    answers: ["Le noter dans un agenda", "Espérer s’en rappeler", "Ne rien faire", "Compter sur quelqu’un d’autre"],
-    correct: 0
-  },
-  {
-    instruction: "Concentration = réussite",
-    question: "Pour rester concentré durant la journée, il faut :",
-    answers: ["Boire de l’eau", "Se priver de sommeil", "Sauter tous les repas", "Regarder des vidéos en continu"],
-    correct: 0
-  },
-  {
-    instruction: "La Mission Locale peut t'aider !",
-    question: "Pour trouver une formation adaptée, on peut :",
-    answers: ["Demander conseil à la Mission Locale", "Choisir au hasard", "Prendre la même formation que ses amis", "Ignorer le sujet"],
-    correct: 0
-  }
-];
-
+    { q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0, points:50 },
+    { q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0, points:40 },
+    { q:"Que signifie 'soft skill' ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0, points:30 },
+    { q:"Que faire après une candidature ?", a:["Relancer poliment","Ne rien faire","Envoyer tous les jours"], correct:0, points:30 },
+    { q:"En entretien, comment commencer ?", a:["Bonjour + présentation brève","Raconter sa vie privée","Faire un sketch"], correct:0, points:40 },
+    { q:"Quelle est une bonne qualité professionnelle ?", a:["Ponctualité","Arriver en retard","Manque de respect"], correct:0, points:30 },
+    { q:"Comment adapter son CV à une offre ?", a:["Mettre en avant compétences demandées","Envoyer le même CV","Changer juste la police"], correct:0, points:35 },
+    { q:"Qu'est-ce qu'une lettre de motivation ?", a:["Un texte adapté à l'offre","Un CV en plus long","Une liste de notes personnelles"], correct:0, points:25 },
+    { q:"Où trouver des offres ?","a":["Sites d'emploi","Sur la Lune"], correct:0, points:20 }, // fallback, won't be used if system parses
+    { q:"Quel comportement éviter en entretien ?", a:["Regarder son téléphone","Écouter le recruteur","Demander des précisions"], correct:0, points:30 },
+    { q:"Qu'est-ce qu'un 'stage' ?", a:["Une période d'apprentissage en entreprise","Un travail permanent","Un abonnement"], correct:0, points:20 },
+    { q:"Pourquoi relancer une candidature ?", a:["Montrer l'intérêt","Manquer d'organisation","Crier"], correct:0, points:25 },
+    { q:"Comment se présenter ?", a:["Nom + objectif pro bref","Raconter un long épisode","Chanter"], correct:0, points:30 },
+    { q:"Qu'est-ce qu'un bon CV ?", a:["Clairement structuré","Brouillon","Sans contact"], correct:0, points:35 },
+    { q:"Quelle information NE doit PAS figurer ?", a:["Informations médicales sensibles","Compétences","Contact"], correct:0, points:30 },
+    { q:"Que signifie 'références' dans un CV ?", a:["Personnes pouvant témoigner de vous","Des références bibliographiques","Un mystère"], correct:0, points:20 },
+    { q:"Qu'est-ce qu'une compétence transférable ?", a:["Capacité utile dans plusieurs emplois","Un seul logiciel","Un diplôme précis"], correct:0, points:30 },
+    { q:"Que faire si on ne sait pas répondre en entretien ?", a:["Admettre et proposer comment trouver la réponse","Inventer une fausse réponse","Ignorer"], correct:0, points:40 },
+    { q:"Quel ton adopter en entretien ?", a:["Professionnel et cordial","Hautain","Trop familier"], correct:0, points:30 },
+    { q:"Comment montrer sa motivation ?", a:["Par des exemples concrets","Dire 'je suis motivé' sans preuve","Rien faire"], correct:0, points:35 },
+    { q:"Qu'est-ce qu'une lettre d'accompagnement ?", a:["Un texte pour contextualiser le CV","Un CV détourné","Un document inutile"], correct:0, points:25 },
+    { q:"Pourquoi soigner son profil en ligne ?", a:["Les recruteurs regardent souvent","Personne ne regarde","C'est interdit"], correct:0, points:25 },
+    { q:"Citer une soft skill importante ?", a:["Capacité d'écoute","Savoir tout faire","Ignorance"], correct:0, points:20 },
+    { q:"Que faire en cas de retard ?", a:["Prévenir et s'excuser","Rester silencieux","Ignorer"], correct:0, points:20 },
+    { q:"Quelle info pour un recruteur ?", a:["Expériences récentes et pertinentes","Vos secrets","Infos bancaires"], correct:0, points:30 },
+    { q:"Qu'est-ce que la ponctualité ?", a:["Arriver à l'heure","Arriver quand on veut","Partir tôt"], correct:0, points:15 },
+    { q:"Pourquoi personnaliser sa candidature ?", a:["Montrer l'adéquation avec l'offre","Gagner du temps","Faire n'importe quoi"], correct:0, points:25 },
+    { q:"Que faire avec un trou dans le CV ?", a:["Expliquer brièvement en valorisant","Cacher tout","Mentir"], correct:0, points:20 },
+    { q:"Quel document joindre ?", a:["CV + lettre adaptée","Rien","Tout ce qu'on a"], correct:0, points:20 },
+    { q:"Où demander de l'aide ?", a:["Mission Locale / Pôle emploi / réseau","Personne","La rue"], correct:0, points:20 },
+    { q:"Comment se former ?", a:["Par formations, MOOC, stages","Rien","Regarder la télé"], correct:0, points:25 },
+    { q:"Que montre une bonne attitude ?", a:["Curiosité et respect","Arrogance","Indifférence"], correct:0, points:30 },
+    { q:"Pourquoi relire son CV ?", a:["Éviter fautes et incohérences","Pour le style fantaisiste","Pour l'oublier"], correct:0, points:20 },
+    { q:"Que signifie 'Candidature spontanée' ?", a:["Envoyer son CV sans offre précise","Attendre une offre","Appeler en criant"], correct:0, points:25 },
+    { q:"Comment préparer un entretien ?", a:["Se renseigner sur l'entreprise","Y aller sans préparation","Ignorer l'entreprise"], correct:0, points:30 },
+    { q:"Quel est l'objectif d'une lettre ?", a:["Montrer l'adéquation avec l'offre","Remplir un espace","Raconter sa vie"], correct:0, points:20 },
+    { q:"Pourquoi valoriser un stage ?", a:["Montrer des compétences réelles","Le cacher","Ne rien dire"], correct:0, points:20 },
+    { q:"Qu'est-ce qu'une alternance ?", a:["Formation en entreprise + école","Vacances prolongées","Un job permanent"], correct:0, points:20 },
+    { q:"Que faire après un entretien ?", a:["Remercier et relancer si besoin","Oublier tout","Attendre une semaine sans rien"], correct:0, points:20 },
+    { q:"Quel est un bon comportement en équipe ?", a:["Partager l'information","Tout garder pour soi","S'opposer systématiquement"], correct:0, points:30 },
+    { q:"Pourquoi être honnête ?", a:["La confiance facilite l'embauche","On nez","C'est inutile"], correct:0, points:30 },
+    { q:"Que chercher dans une offre ?", a:["Mots-clés compétences et missions","Juste le salaire","Rien"], correct:0, points:25 },
+    { q:"Que fait un conseiller Mission Locale ?", a:["Aide, orientation, formations","Rien","Décore des bureaux"], correct:0, points:20 }
+  ];
 
   /* ===== quiz handling ===== */
   function showQuiz(onCorrect){
@@ -556,4 +477,3 @@
 </script>
 </body>
 </html>
-
