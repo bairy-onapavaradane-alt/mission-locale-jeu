@@ -56,7 +56,9 @@ const questions=[
   { q:"En entretien, comment commencer ?", a:["Bonjour + présentation brève","Raconter sa vie privée","Faire un sketch"], correct:0, points:40 },
   { q:"Quelle est une bonne qualité professionnelle ?", a:["Ponctualité","Arriver en retard","Manque de respect"], correct:0, points:30 },
   { q:"Comment adapter son CV à une offre ?", a:["Mettre en avant les compétences demandées","Envoyer le même CV","Changer juste la police"], correct:0, points:35 },
-  
+  { q:"Qu'est-ce qu'une lettre de motivation ?", a:["Un texte adapté à l'offre","Un CV plus long","Une liste de notes personnelles"], correct:0, points:25 },
+  { q:"Où trouver des offres ?", a:["Sites d'emploi","Sur la Lune"], correct:0, points:20 },
+  { q:"Quel comportement éviter en entretien ?", a:["Regarder son téléphone","Écouter le recruteur","Demander des précisions"], correct:0, points:30 }]
 
 function startGame(){
 document.getElementById('start').style.display='none';
@@ -110,6 +112,10 @@ qu.a.forEach((t,i)=>{const b=document.createElement('button');b.innerText=t;b.on
 
 document.getElementById('startBtn').addEventListener('click',startGame);
 window.addEventListener('keydown',e=>{if(e.code==='Space'&&running)player.vy=-14});
+</script>
+</body>
+</html>
+
 </script>
 </body>
 </html>
