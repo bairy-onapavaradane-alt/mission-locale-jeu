@@ -1,189 +1,251 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parcours Pro – Mission Locale</title>
-<style>
-body{margin:0;font-family:Arial;background:#eef3f9;display:flex;justify-content:center}
-#app{max-width:900px;width:100%;background:#fff}
-header{background:#1e88e5;color:#fff;padding:10px;display:flex;justify-content:space-between;font-size:14px}
-canvas{display:block;background:#f9fbff}
-#wrapper{position:relative}
-.overlay{position:absolute;inset:0;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;z-index:10}
-.card{background:#fff;padding:20px;border-radius:12px;max-width:500px;width:100%;text-align:center}
-button{padding:12px 20px;border:none;border-radius:20px;background:#fdd835;font-size:16px;cursor:pointer}
-.answers button{background:#1e88e5;color:#fff;margin-top:8px;width:100%}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Runner Mission Locale</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0d47a1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+    }
+    canvas {
+      background: linear-gradient(#ffffff, #e3f2fd);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .overlay {
+      position: absolute;
+      max-width: 600px;
+      background: white;
+      color: #0d47a1;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    button {
+      padding: 12px 20px;
+      margin-top: 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #ffca28;
+      cursor: pointer;
+    }
+    button:hover { background: #ffc107; }
+    .qcm button { display: block; width: 100%; }
+  </style>
 </head>
 <body>
-<div id="app">
-<header>
-<div>ESPACE pour sauter</div>
-<div id="hud">Score : 0 | Niveau : 1</div>
-</header>
-<div id="wrapper">
-<canvas id="game" width="900" height="420"></canvas>
 
-<div class="overlay" id="start">
-  <div class="card">
-    <h2>Parcours Pro – Mission Locale</h2>
-    <p>Évite les obstacles et progresse</p>
-    <button id="startBtn">Démarrer</button>
-  </div>
+<canvas id="game" width="800" height="400"></canvas>
+
+<div id="startScreen" class="overlay">
+  <h2>Jeu Mission Locale</h2>
+  <p><strong>Règles :</strong></p>
+  <p>Sauter pour éviter les obstacles. Le jeu est infini et la difficulté augmente progressivement.</p>
+  <p>Objectif : battre votre score.</p>
+  <p>Commande : clic / espace / toucher écran.</p>
+  <button onclick="startGame()">Démarrer</button>
 </div>
 
-<div class="overlay" id="quiz" style="display:none">
-  <div class="card">
-    <h3 id="q"></h3>
-    <div class="answers" id="a"></div>
-  </div>
-</div>
-</div>
-</div>
+<div id="questionScreen" class="overlay" style="display:none"></div>
 
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-let running = false;
+let gameRunning = false;
 let score = 0;
 let level = 1;
 let speed = 4;
-let isAsking = false; // empêche les boucles
+let gravity = 0.6;
 
-const player = { x:100, y:340, r:22, vy:0 };
+const player = {
+  x: 80,
+  y: 300,
+  r: 22,
+  vy: 0,
+  jump() {
+    if (this.y >= 300) this.vy = -12;
+  }
+};
+
 let obstacles = [];
 
-const questions = [
- [
-  { q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0, points:50 },
-  { q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0, points:40 },
-  { q:"Que signifie \"soft skill\" ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0, points:30 },
-  { q:"Que faire après une candidature ?", a:["Relancer poliment","Ne rien faire","Envoyer tous les jours"], correct:0, points:30 },
-  { q:"En entretien, comment commencer ?", a:["Bonjour + présentation brève","Raconter sa vie privée","Faire un sketch"], correct:0, points:40 },
-  { q:"Quelle est une bonne qualité professionnelle ?", a:["Ponctualité","Arriver en retard","Manque de respect"], correct:0, points:30 },
-  { q:"Comment adapter son CV à une offre ?", a:["Mettre en avant les compétences demandées","Envoyer le même CV","Changer juste la police"], correct:0, points:35 },
-  { q:"Qu'est-ce qu'une lettre de motivation ?", a:["Un texte adapté à l'offre","Un CV plus long","Une liste de notes personnelles"], correct:0, points:25 },
-  { q:"Où trouver des offres ?", a:["Sites d'emploi","Sur la Lune"], correct:0, points:20 },
-  { q:"Quel comportement éviter en entretien ?", a:["Regarder son téléphone","Écouter le recruteur","Demander des précisions"], correct:0, points:30 },
-  { q:"Qu'est-ce qu'un \"stage\" ?", a:["Une période d'apprentissage en entreprise","Un travail permanent","Un abonnement"], correct:0, points:20 },
-  { q:"Pourquoi relancer une candidature ?", a:["Montrer son intérêt","Manquer d'organisation","Crier"], correct:0, points:25 },
-  { q:"Comment se présenter ?", a:["Nom + objectif professionnel bref","Raconter un long épisode","Chanter"], correct:0, points:30 },
-  { q:"Qu'est-ce qu'un bon CV ?", a:["Clairement structuré","Brouillon","Sans contact"], correct:0, points:35 },
+const words = [
+  'Mission Locale', 'Emploi', 'Formation', 'Insertion', 'CV', 'Entretien',
+  'Projet Pro', 'Alternance', 'Orientation', 'Compétences'
+];
 
-function startGame(){
-  document.getElementById('start').style.display='none';
+const questions = [
+  {
+    q: 'À quoi sert un CV ?',
+    choices: ['Raconter sa vie', 'Présenter ses compétences', 'Jouer'],
+    answer: 1
+  },
+  {
+    q: 'La Mission Locale aide surtout les :',
+    choices: ['Jeunes', 'Retraités', 'Enfants'],
+    answer: 0
+  },
+  {
+    q: 'Un entretien sert à :',
+    choices: ['Dormir', 'Évaluer un candidat', 'Regarder un film'],
+    answer: 1
+  }
+];
+
+function startGame() {
+  document.getElementById('startScreen').style.display = 'none';
   resetGame();
-  running = true;
+  gameRunning = true;
   requestAnimationFrame(loop);
 }
 
-function resetGame(){
-  score = 0; level = 1; speed = 4;
+function resetGame() {
+  score = 0;
+  level = 1;
+  speed = 4;
   obstacles = [];
-  player.y = 340; player.vy = 0;
-  isAsking = false;
+  player.y = 300;
 }
 
-function loop(){
-  if(!running) return;
-  ctx.clearRect(0,0,900,420);
+function spawnObstacle() {
+  const type = level >= 5 && Math.random() < 0.4 ? 'air' : 'ground';
+  obstacles.push({
+    x: canvas.width + 20,
+    y: type === 'ground' ? 320 : 200 + Math.random()*80,
+    w: 20,
+    h: 40,
+    type
+  });
+}
 
-  ctx.fillStyle='#e0e6ef';
-  ctx.fillRect(0,380,900,40);
+function drawBackground() {
+  ctx.fillStyle = '#bbdefb';
+  words.forEach((w, i) => {
+    ctx.globalAlpha = 0.15;
+    ctx.font = '20px Arial';
+    ctx.fillText(w, (i*120 + score) % canvas.width, 50 + (i%3)*100);
+  });
+  ctx.globalAlpha = 1;
+}
 
-  player.vy += 0.8;
-  player.y += player.vy;
-  if(player.y > 340){ player.y = 340; player.vy = 0; }
-
+function drawPlayer() {
   ctx.beginPath();
-  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-  ctx.fillStyle='#ffb74d'; ctx.fill();
-  ctx.strokeStyle='#1e88e5'; ctx.lineWidth=4; ctx.stroke();
-  ctx.fillStyle='#000'; ctx.textAlign='center'; ctx.fillText('MLE',player.x,player.y+4);
+  ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
+  ctx.fillStyle = '#ffb300';
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#1565c0';
+  ctx.stroke();
+  ctx.fillStyle = '#0d47a1';
+  ctx.font = '12px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('MLE', player.x, player.y+4);
+}
 
-  obstacles.forEach(o=>{
+function loop() {
+  if (!gameRunning) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  drawBackground();
+
+  // Player physics
+  player.vy += gravity;
+  player.y += player.vy;
+  if (player.y > 300) { player.y = 300; player.vy = 0; }
+
+  drawPlayer();
+
+  // Obstacles
+  if (Math.random() < 0.02) spawnObstacle();
+
+  obstacles.forEach(o => {
     o.x -= speed;
-    ctx.fillStyle = o.air ? '#e53935' : '#fdd835';
-    ctx.fillRect(o.x,o.y,o.w,o.h);
+    ctx.fillStyle = '#e53935';
+    ctx.fillRect(o.x, o.y, o.w, o.h);
 
-    if(o.x < player.x+player.r && o.x+o.w > player.x-player.r &&
-       o.y < player.y+player.r && o.y+o.h > player.y-player.r){
-      lose();
+    // Collision
+    // Collision cercle-rectangle fiable
+    const closestX = Math.max(o.x, Math.min(player.x, o.x + o.w));
+    const closestY = Math.max(o.y, Math.min(player.y, o.y + o.h));
+    const dx = player.x - closestX;
+    const dy = player.y - closestY;
+    if (dx * dx + dy * dy < player.r * player.r) {
+      gameRunning = false;
+      showQuestion();
     }
   });
 
-  obstacles = obstacles.filter(o=>o.x+o.w>0);
-
-  if(Math.random()<0.03) addObstacle();
+  obstacles = obstacles.filter(o => o.x + o.w > 0);
 
   score++;
-  if(score % 600 === 0){ level++; speed += 0.4; }
+  if (score % 500 === 0) { level++; speed += 0.5; }
 
-  document.getElementById('hud').innerText = `Score : ${score} | Niveau : ${level}`;
+  ctx.fillStyle = '#0d47a1';
+  ctx.font = '14px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('Score : ' + score, 10, 20);
+  ctx.fillText('Niveau : ' + level, 10, 40);
+  ctx.font = '12px Arial';
+  ctx.fillText('Consigne : sauter pour éviter les obstacles', 10, 60);
+
   requestAnimationFrame(loop);
 }
 
-function addObstacle(){
-  const air = Math.random() < Math.min(0.2 + level*0.05, 0.5);
-  obstacles.push({
-    x:900,
-    y: air ? 220 + Math.random()*100 : 350,
-    w:30,
-    h: air ? 30 : 40,
-    air
-  });
-}
+function showQuestion() {
+  const q = questions[Math.floor(Math.random()*questions.length)];
+  const box = document.getElementById('questionScreen');
+  box.innerHTML = `<h3>${q.q}</h3><div class="qcm"></div>`;
+  box.style.display = 'block';
 
-function lose(){
-  if(isAsking) return;
-  running = false;
-  isAsking = true;
-  showQuiz();
-}
-
-function showQuiz(){
-  document.getElementById('quiz').style.display='flex';
-  const qu = questions[Math.floor(Math.random()*questions.length)];
-  document.getElementById('q').innerText = qu.q;
-  const a = document.getElementById('a');
-  a.innerHTML='';
-
-  qu.a.forEach((t,i)=>{
-    const b=document.createElement('button');
-    b.innerText=t;
-    b.onclick=()=>{
-      document.getElementById('quiz').style.display='none';
-      if(i===qu.correct) countdown('Bonne réponse');
-      else countdown('GAME OVER', true);
+  q.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = c;
+    btn.onclick = () => {
+      box.style.display = 'none';
+      if (i === q.answer) {
+        countdown();
+      } else {
+        alert('Game Over');
+        resetGame();
+        gameRunning = true;
+        requestAnimationFrame(loop);
+      }
     };
-    a.appendChild(b);
+    box.querySelector('.qcm').appendChild(btn);
   });
 }
 
-function countdown(text, restart=false){
-  let c=3;
-  const o=document.createElement('div');
-  o.className='overlay';
-  o.innerHTML=`<div class="card"><h2>${text}</h2><h1 id="c">${c}</h1></div>`;
-  document.getElementById('wrapper').appendChild(o);
-
-  const t=setInterval(()=>{
+function countdown() {
+  let c = 3;
+  const box = document.getElementById('questionScreen');
+  box.style.display = 'block';
+  const interval = setInterval(() => {
+    box.innerHTML = `<h2>${c}</h2>`;
     c--;
-    o.querySelector('#c').innerText=c;
-    if(c===0){
-      clearInterval(t);
-      o.remove();
-      if(restart) resetGame();
-      running=true;
+    if (c < 0) {
+      clearInterval(interval);
+      box.style.display = 'none';
+      gameRunning = true;
       requestAnimationFrame(loop);
     }
-  },1000);
+  }, 1000);
 }
 
-document.getElementById('startBtn').onclick=startGame;
-window.addEventListener('keydown',e=>{ if(e.code==='Space' && running) player.vy=-14; });
+window.addEventListener('keydown', e => { if (e.code === 'Space') player.jump(); });
+canvas.addEventListener('click', () => player.jump());
+canvas.addEventListener('touchstart', () => player.jump());
 </script>
+
 </body>
 </html>
