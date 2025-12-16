@@ -1,122 +1,231 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Jeu Dinosaure</title>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: #f5f5f5;
-      font-family: Arial, sans-serif;
-    }
-    canvas {
-      background: #fff;
-      border: 2px solid #333;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLE Runner – Jeu simple</title>
+<style>
+body{
+  margin:0;
+  background:#0d47a1;
+  font-family:Arial,Helvetica,sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+#container{position:relative;}
+canvas{
+  background:linear-gradient(#ffffff,#e3f2fd);
+  border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+}
+.overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,.95);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  color:#0d47a1;
+  border-radius:14px;
+}
+button{
+  margin-top:15px;
+  padding:12px 24px;
+  font-size:16px;
+  border:none;
+  border-radius:8px;
+  background:#ffca28;
+  cursor:pointer;
+}
+button:hover{background:#ffc107;}
+.qcm button{width:100%;margin:6px 0;}
+</style>
 </head>
 <body>
-  <canvas id="game" width="600" height="200"></canvas>
 
-  <script>
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
+<div id="container">
+  <canvas id="game" width="800" height="400"></canvas>
 
-    let gameSpeed = 4;
-    let gravity = 0.6;
-    let score = 0;
-    let gameOver = false;
+  <div id="start" class="overlay">
+    <h2>Runner Mission Locale</h2>
+    <p>Sauter pour éviter les obstacles</p>
+    <p>Objectif : battre ton score</p>
+    <button id="startBtn">Démarrer</button>
+  </div>
 
-    const dino = {
-      x: 50,
-      y: 150,
-      width: 20,
-      height: 40,
-      vy: 0,
-      jump() {
-        if (this.y >= 150) {
-          this.vy = -12;
-        }
-      },
-      update() {
-        this.vy += gravity;
-        this.y += this.vy;
-        if (this.y > 150) {
-          this.y = 150;
-          this.vy = 0;
-        }
-      },
-      draw() {
-        ctx.fillStyle = "#333";
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+  <div id="question" class="overlay" style="display:none"></div>
+</div>
+
+<script>
+// ================== VARIABLES GLOBALES ==================
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+let state = 'menu'; // menu | play | question
+let score = 0;
+let speed = 4;
+let immunity = 0; // frames
+
+const groundY = 300;
+
+const player = {
+  x: 120,
+  y: groundY,
+  r: 22,
+  vy: 0
+};
+
+let obstacles = [];
+
+const words = ['Mission Locale','Emploi','Formation','Insertion','CV','Entretien','Projet pro'];
+
+const questions = [
+  {q:'À quoi sert un CV ?',c:['Dormir','Présenter ses compétences','Jouer'],a:1},
+  {q:'Un entretien sert à ?',c:['Évaluer un candidat','Regarder un film','Dormir'],a:0},
+  {q:'La Mission Locale accompagne surtout les ?',c:['Jeunes','Animaux','Objets'],a:0}
+];
+
+// ================== DÉMARRAGE ==================
+document.getElementById('startBtn').onclick = () => startGame();
+
+function startGame(){
+  document.getElementById('start').style.display='none';
+  resetGame();
+  state = 'play';
+}
+
+function resetGame(){
+  score = 0;
+  speed = 4;
+  obstacles = [];
+  player.y = groundY;
+  player.vy = 0;
+  immunity = 120; // 2 secondes
+}
+
+// ================== CONTRÔLES ==================
+function jump(){
+  if(state==='play' && player.y>=groundY){
+    player.vy = -12;
+  }
+}
+window.addEventListener('keydown',e=>{if(e.code==='Space') jump();});
+canvas.addEventListener('click',jump);
+canvas.addEventListener('touchstart',jump);
+
+// ================== QUESTIONS ==================
+function showQuestion(){
+  state = 'question';
+  const q = questions[Math.floor(Math.random()*questions.length)];
+  const box = document.getElementById('question');
+  box.innerHTML = `<h3>${q.q}</h3><div class="qcm"></div>`;
+  box.style.display='flex';
+
+  q.c.forEach((txt,i)=>{
+    const b=document.createElement('button');
+    b.textContent=txt;
+    b.onclick=()=>{
+      box.style.display='none';
+      if(i===q.a){
+        obstacles = [];
+        immunity = 120;
+        state = 'play';
+      } else {
+        state = 'menu';
+        document.getElementById('start').style.display='flex';
       }
     };
+    box.querySelector('.qcm').appendChild(b);
+  });
+}
 
-    const cactus = {
-      x: 600,
-      y: 160,
-      width: 20,
-      height: 30,
-      update() {
-        this.x -= gameSpeed;
-        if (this.x + this.width < 0) {
-          this.x = 600;
-          score++;
-        }
-      },
-      draw() {
-        ctx.fillStyle = "green";
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-      }
-    };
+// ================== OBSTACLES ==================
+function spawnObstacle(){
+  obstacles.push({
+    x: canvas.width + 30,
+    y: groundY + player.r - 10,
+    w: 26,
+    h: 40
+  });
+}
 
-    function collision(a, b) {
-      return (
-        a.x < b.x + b.width &&
-        a.x + a.width > b.x &&
-        a.y < b.y + b.height &&
-        a.y + a.height > b.y
-      );
-    }
+// ================== DESSINS ==================
+function drawBackground(){
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = '#90caf9';
+  ctx.font = '20px Arial';
+  words.forEach((w,i)=>{
+    ctx.fillText(w,(i*160+score)%canvas.width,70+(i%3)*120);
+  });
+  ctx.globalAlpha = 1;
+}
 
-    function loop() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+function drawPlayer(){
+  ctx.beginPath();
+  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
+  ctx.fillStyle = '#ffb300';
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#1565c0';
+  ctx.stroke();
+  ctx.fillStyle = '#0d47a1';
+  ctx.font = '12px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('MLE',player.x,player.y+4);
+}
 
-      if (!gameOver) {
-        dino.update();
-        cactus.update();
+// ================== BOUCLE PRINCIPALE ==================
+function loop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawBackground();
 
-        if (collision(dino, cactus)) {
-          gameOver = true;
-        }
-      }
+  if(state==='play'){
+    // physique
+    player.vy += 0.6;
+    player.y += player.vy;
+    if(player.y > groundY){ player.y = groundY; player.vy = 0; }
 
-      dino.draw();
-      cactus.draw();
+    // obstacles
+    if(Math.random() < 0.02) spawnObstacle();
 
-      ctx.fillStyle = "#000";
-      ctx.fillText("Score : " + score, 10, 20);
+    obstacles.forEach(o=>{
+      o.x -= speed;
+      ctx.fillStyle = immunity>0 ? '#81c784' : '#e53935';
+      ctx.fillRect(o.x,o.y,o.w,o.h);
 
-      if (gameOver) {
-        ctx.fillText("GAME OVER – Appuie sur R", 220, 100);
-      }
+      const cx = Math.max(o.x, Math.min(player.x, o.x+o.w));
+      const cy = Math.max(o.y, Math.min(player.y, o.y+o.h));
+      const dx = player.x - cx;
+      const dy = player.y - cy;
 
-      requestAnimationFrame(loop);
-    }
-
-    document.addEventListener("keydown", (e) => {
-      if (e.code === "Space") dino.jump();
-      if (e.code === "KeyR" && gameOver) {
-        gameOver = false;
-        score = 0;
-        cactus.x = 600;
+      if(immunity<=0 && dx*dx + dy*dy < player.r*player.r){
+        showQuestion();
       }
     });
 
-    loop();
-  </script>
+    obstacles = obstacles.filter(o=>o.x+o.w>0);
+
+    score++;
+    if(score % 600 === 0) speed += 0.5;
+    if(immunity>0) immunity--;
+  }
+
+  drawPlayer();
+
+  ctx.fillStyle = '#0d47a1';
+  ctx.font = '14px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('Score : '+score,10,20);
+  if(immunity>0) ctx.fillText('Immunité',10,40);
+
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+</script>
 </body>
 </html>
