@@ -1,213 +1,135 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MLE Runner</title>
-<style>
-body{
-  margin:0;
-  background:#0d47a1;
-  font-family:Arial,Helvetica,sans-serif;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-#container{position:relative;}
-canvas{
-  background:linear-gradient(#ffffff,#e3f2fd);
-  border-radius:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.35);
-}
-.overlay{
-  position:absolute;
-  inset:0;
-  background:rgba(255,255,255,.95);
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  color:#0d47a1;
-  border-radius:16px;
-}
-button{
-  margin-top:15px;
-  padding:12px 22px;
-  font-size:16px;
-  border:none;
-  border-radius:8px;
-  background:#ffca28;
-  cursor:pointer;
-}
-button:hover{background:#ffc107;}
-.qcm button{width:100%;margin:6px 0;}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Locale – Jeu d'accueil</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #4f46e5, #22c55e);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .game {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 30px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    p {
+      text-align: center;
+    }
+    .question {
+      font-size: 1.2rem;
+      margin: 20px 0;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      background: #fff;
+      color: #111;
+      transition: transform 0.1s, background 0.2s;
+    }
+    button:hover {
+      background: #e5e7eb;
+      transform: scale(1.02);
+    }
+    .score {
+      text-align: center;
+      font-size: 1.1rem;
+      margin-top: 15px;
+    }
+  </style>
 </head>
 <body>
+  <div class="game">
+    <h1>Bienvenue à la Mission Locale</h1>
+    <p>Découvre ce que nous pouvons faire pour toi 👋</p>
 
-<div id="container">
-  <canvas id="game" width="800" height="400"></canvas>
-
-  <div id="start" class="overlay">
-    <h2>Runner Mission Locale</h2>
-    <p>Sauter pour éviter les obstacles</p>
-    <p>Objectif : battre ton score</p>
-    <button id="startBtn">Démarrer</button>
+    <div class="question" id="question"></div>
+    <div id="answers"></div>
+    <div class="score" id="score"></div>
   </div>
 
-  <div id="question" class="overlay" style="display:none"></div>
-</div>
-
-<script>
-// ================= BASE =================
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-
-let playing = false;
-let score = 0;
-let speed = 4;
-let immunity = 0; // frames
-
-const player = { x:120, y:300, r:22, vy:0 };
-let obstacles = [];
-
-const words = ['Mission Locale','Emploi','Formation','CV','Entretien','Projet pro'];
-
-const questions = [
- {q:'À quoi sert un CV ?',c:['S’amuser','Présenter ses compétences','Dormir'],a:1},
- {q:'Un entretien permet de ?',c:['Évaluer un candidat','Jouer','Regarder un film'],a:0},
- {q:'La Mission Locale aide surtout les ?',c:['Jeunes','Animaux','Voitures'],a:0}
-];
-
-// ================= DÉMARRAGE =================
-document.getElementById('startBtn').onclick = () => {
-  document.getElementById('start').style.display='none';
-  resetGame();
-  playing = true;
-};
-
-function resetGame(){
-  score = 0;
-  speed = 4;
-  obstacles = [];
-  player.y = 300;
-  player.vy = 0;
-  immunity = 120;
-}
-
-// ================= CONTRÔLES =================
-function jump(){ if(player.y>=300) player.vy=-12; }
-window.addEventListener('keydown',e=>{if(e.code==='Space') jump();});
-canvas.addEventListener('click',jump);
-canvas.addEventListener('touchstart',jump);
-
-// ================= QUESTIONS =================
-function askQuestion(){
-  playing = false;
-  const q = questions[Math.floor(Math.random()*questions.length)];
-  const box = document.getElementById('question');
-  box.innerHTML = `<h3>${q.q}</h3><div class="qcm"></div>`;
-  box.style.display='flex';
-
-  q.c.forEach((txt,i)=>{
-    const b=document.createElement('button');
-    b.textContent=txt;
-    b.onclick=()=>{
-      box.style.display='none';
-      if(i===q.a){
-        immunity = 180;
-        obstacles = [];
-        playing = true;
-      } else {
-        document.getElementById('start').style.display='flex';
+  <script>
+    const questions = [
+      {
+        q: "La Mission Locale aide principalement les jeunes de :",
+        answers: ["16 à 25 ans", "25 à 40 ans", "Tous les âges"],
+        correct: 0
+      },
+      {
+        q: "Quel type d'aide propose la Mission Locale ?",
+        answers: ["Emploi et formation", "Logement, santé, mobilité", "Toutes les réponses"],
+        correct: 2
+      },
+      {
+        q: "Les services de la Mission Locale sont :",
+        answers: ["Payants", "Gratuits", "Sur abonnement"],
+        correct: 1
+      },
+      {
+        q: "Qui peut t'accompagner à la Mission Locale ?",
+        answers: ["Un conseiller", "Un coach sportif", "Un professeur"],
+        correct: 0
       }
-    };
-    box.querySelector('.qcm').appendChild(b);
-  });
-}
+    ];
 
-// ================= OBSTACLES =================
-function spawnObstacle(){
-  obstacles.push({
-    x: canvas.width+30,
-    y: player.y+player.r-10,
-    w: 26,
-    h: 40
-  });
-}
+    let current = 0;
+    let score = 0;
 
-// ================= DESSIN =================
-function drawBackground(){
-  ctx.globalAlpha=.15;
-  ctx.fillStyle='#90caf9';
-  ctx.font='20px Arial';
-  words.forEach((w,i)=>{
-    ctx.fillText(w,(i*160+score)%canvas.width,70+(i%3)*120);
-  });
-  ctx.globalAlpha=1;
-}
+    const questionEl = document.getElementById("question");
+    const answersEl = document.getElementById("answers");
+    const scoreEl = document.getElementById("score");
 
-function drawPlayer(){
-  ctx.beginPath();
-  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-  ctx.fillStyle='#ffb300';
-  ctx.fill();
-  ctx.lineWidth=4;
-  ctx.strokeStyle='#1565c0';
-  ctx.stroke();
-  ctx.fillStyle='#0d47a1';
-  ctx.font='12px Arial';
-  ctx.textAlign='center';
-  ctx.fillText('MLE',player.x,player.y+4);
-}
-
-// ================= BOUCLE =================
-function loop(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawBackground();
-
-  if(playing){
-    player.vy+=0.6;
-    player.y+=player.vy;
-    if(player.y>300){player.y=300;player.vy=0;}
-
-    if(Math.random()<0.02) spawnObstacle();
-
-    obstacles.forEach(o=>{
-      o.x-=speed;
-      ctx.fillStyle=immunity>0?'#81c784':'#e53935';
-      ctx.fillRect(o.x,o.y,o.w,o.h);
-
-      const cx=Math.max(o.x,Math.min(player.x,o.x+o.w));
-      const cy=Math.max(o.y,Math.min(player.y,o.y+o.h));
-      const dx=player.x-cx;
-      const dy=player.y-cy;
-      if(immunity<=0 && dx*dx+dy*dy<player.r*player.r){
-        askQuestion();
+    function loadQuestion() {
+      if (current >= questions.length) {
+        questionEl.innerHTML = "🎉 Bravo ! Tu as terminé le jeu.";
+        answersEl.innerHTML = "";
+        scoreEl.innerHTML = `Score final : ${score} / ${questions.length}`;
+        return;
       }
-    });
 
-    obstacles=obstacles.filter(o=>o.x+o.w>0);
-    score++;
-    if(score%600===0) speed+=0.5;
-    if(immunity>0) immunity--;
-  }
+      const q = questions[current];
+      questionEl.textContent = q.q;
+      answersEl.innerHTML = "";
 
-  drawPlayer();
+      q.answers.forEach((answer, index) => {
+        const btn = document.createElement("button");
+        btn.textContent = answer;
+        btn.onclick = () => checkAnswer(index);
+        answersEl.appendChild(btn);
+      });
 
-  ctx.fillStyle='#0d47a1';
-  ctx.font='14px Arial';
-  ctx.textAlign='left';
-  ctx.fillText('Score : '+score,10,20);
-  if(immunity>0) ctx.fillText('Immunité',10,40);
+      scoreEl.textContent = `Score : ${score}`;
+    }
 
-  requestAnimationFrame(loop);
-}
+    function checkAnswer(index) {
+      if (index === questions[current].correct) {
+        score++;
+      }
+      current++;
+      loadQuestion();
+    }
 
-requestAnimationFrame(loop);
-</script>
+    loadQuestion();
+  </script>
 </body>
 </html>
 
