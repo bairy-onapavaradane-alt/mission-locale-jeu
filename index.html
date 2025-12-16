@@ -1,1 +1,62 @@
-<!DOCTYPE html> <html lang="fr"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Test démarrage jeu</title> <style> body{ margin:0; font-family:Arial; background:#eef; display:flex; justify-content:center; align-items:center; height:100vh; } #start{ padding:20px 30px; font-size:20px; border:none; border-radius:10px; background:#0f7780; color:white; } canvas{ display:none; background:white; border:2px solid black; } </style> </head> <body> <button id="start">DÉMARRER</button> <canvas id="game" width="400" height="200"></canvas> <script> const btn = document.getElementById("start"); const canvas = document.getElementById("game"); const ctx = canvas.getContext("2d"); btn.onclick = () => { btn.style.display = "none"; canvas.style.display = "block"; loop(); }; let x = 10; function loop(){ ctx.clearRect(0,0,400,200); ctx.fillStyle = "red"; ctx.fillRect(x,80,30,30); x += 2; requestAnimationFrame(loop); } </script> </body> </html>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test démarrage jeu</title>
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#eef;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+#start{
+  padding:20px 30px;
+  font-size:20px;
+  border:none;
+  border-radius:10px;
+  background:#0f7780;
+  color:white;
+}
+canvas{
+  display:none;
+  background:white;
+  border:2px solid black;
+}
+</style>
+</head>
+
+<body>
+
+<button id="start">DÉMARRER</button>
+<canvas id="game" width="400" height="200"></canvas>
+
+<script>
+const btn = document.getElementById("start");
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+btn.onclick = () => {
+  btn.style.display = "none";
+  canvas.style.display = "block";
+  loop();
+};
+
+let x = 10;
+
+function loop(){
+  ctx.clearRect(0,0,400,200);
+  ctx.fillStyle = "red";
+  ctx.fillRect(x,80,30,30);
+  x += 2;
+  requestAnimationFrame(loop);
+}
+</script>
+
+</body>
+</html>
+
