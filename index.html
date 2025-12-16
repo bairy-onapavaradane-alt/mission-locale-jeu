@@ -1,10 +1,319 @@
-<!DOCTYPE html> 
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test démarrage jeu</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MissionLocale — Mini-jeu pro</title>
+<style>
+  :root{
+    --bg:#f6f7fb; --card:#fff; --accent:#2563eb; --muted:#6b7280;
+  }
+  *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+  body.skin <div class="skin">
+  <div class="inner-circle">MLE</div>
+</div>
+ {
+  width: 120px;
+  height: 120px;
+  background-color: #f6b26b; /* orange clair */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
+.inner-circle {
+  width: 80px;
+  height: 80px;
+  background-color: #3c78d8; /* bleu */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 24px;
+  font-family: Arial, sans-serif;
+}
+
+  .app{width:100%;max-width:900px;}
+  .card{background:var(--card);border-radius:12px;box-shadow:0 6px 20px rgba(16,24,40,.08);padding:22px;}
+  header{display:flex;align-items:center;gap:14px;margin-bottom:12px;}
+  header h1{font-size:20px;margin:0;}
+  .intro p{margin:8px 0;color:var(--muted);}
+  .btn{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600;}
+  .mutebtn{background:transparent;border:1px solid #e6e9ef;color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer;}
+  .center{text-align:center;}
+  .grid{display:grid;gap:12px;}
+  .hidden{display:none;}
+  .question{font-size:18px;margin-bottom:12px;}
+  .answers{display:grid;grid-template-columns:1fr;gap:8px;}
+  .answer{padding:10px;border-radius:10px;border:1px solid #e6e9ef;background:#fbfcff;cursor:pointer;}
+  .answer.correct{border-color:green;background:#ecfdf5;}
+  .answer.wrong{border-color:#fca5a5;background:#fff1f0;}
+  .footer{display:flex;justify-content:space-between;align-items:center;margin-top:16px;color:var(--muted);}
+  .progress{height:10px;background:#eef2ff;border-radius:10px;overflow:hidden;}
+  .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#7c3aed);width:0%;}
+  .score{font-weight:700;}
+  .meta{font-size:13px;color:var(--muted);}
+  /* responsive */
+  @media(min-width:700px){ .answers{grid-template-columns:1fr 1fr;} }
+</style>
+</head>
+<body>
+<div class="app card" role="application" aria-label="Jeu Mission Locale">
+  <header>
+    <img src="" alt="" aria-hidden="true" style="width:52px;height:52px;border-radius:8px;background:linear-gradient(135deg,#eff6ff,#ede9fe)"/>
+    <div>
+      <h1>Parcours pro — Mission Locale</h1>
+      <div class="meta">Jeu court : quiz + scénarios — Pas d'installation, fonctionne en navigateur</div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="start" class="intro">
+      <p>Bienvenue ! Choisis un parcours pour travailler des compétences professionnelles : <strong>CV</strong>, <strong>Entretien</strong>, <strong>Recherche d'emploi</strong>.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+        <button class="btn" data-mode="cv">Parcours CV</button>
+        <button class="btn" data-mode="entretien">Parcours Entretien</button>
+        <button class="btn" data-mode="recherche">Parcours Recherche</button>
+        <button class="mutebtn" id="customize">Personnaliser questions</button>
+      </div>
+      <p style="margin-top:12px;color:var(--muted)">Le jeu contient quiz à choix multiple et mini-scénarios à choix. Résultats sauvegardés localement.</p>
+    </section>
+
+    <section id="game" class="hidden">
+      <div id="qmeta" class="meta"></div>
+      <div id="question" class="question"></div>
+      <div class="answers" id="answers" role="list"></div>
+      <div class="footer">
+        <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+        <div class="score" id="score">0</div>
+      </div>
+    </section>
+
+    <section id="result" class="hidden center">
+      <h2 id="resultTitle">Bravo !</h2>
+      <p id="resultText"></p>
+      <p class="meta">Score : <span id="finalScore"></span> / <span id="maxScore"></span></p>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+        <button class="btn" id="retry">Refaire</button>
+        <button class="mutebtn" id="printCert">Imprimer certificat</button>
+      </div>
+    </section>
+
+    <section id="editor" class="hidden">
+      <h3>Éditeur simple de questions</h3>
+      <p class="meta">Ajoute ou édite des questions visibles immédiatement. Sauvegarde dans le navigateur.</p>
+      <div style="display:flex;gap:8px;flex-direction:column;">
+        <input id="qtext" placeholder="Texte de la question" />
+        <input id="opt1" placeholder="Option 1 (réponse correcte si coché)" />
+        <input id="opt2" placeholder="Option 2" />
+        <input id="opt3" placeholder="Option 3 (optionnel)" />
+        <div style="display:flex;gap:8px;align-items:center;">
+          <label><input type="checkbox" id="correct1"> correcte</label>
+          <label><input type="checkbox" id="correct2"> correcte</label>
+          <label><input type="checkbox" id="correct3"> correcte</label>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" id="addQ">Ajouter</button>
+          <button class="mutebtn" id="doneEdit">Terminé</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* Données de questions par défaut (français) */
+const defaultBanks = {
+[
+  { q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0, points:50 },
+  { q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0, points:40 },
+  { q:"Que signifie \"soft skill\" ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0, points:30 },
+  { q:"Que faire après une candidature ?", a:["Relancer poliment","Ne rien faire","Envoyer tous les jours"], correct:0, points:30 },
+  { q:"En entretien, comment commencer ?", a:["Bonjour + présentation brève","Raconter sa vie privée","Faire un sketch"], correct:0, points:40 },
+  { q:"Quelle est une bonne qualité professionnelle ?", a:["Ponctualité","Arriver en retard","Manque de respect"], correct:0, points:30 },
+  { q:"Comment adapter son CV à une offre ?", a:["Mettre en avant les compétences demandées","Envoyer le même CV","Changer juste la police"], correct:0, points:35 },
+  { q:"Qu'est-ce qu'une lettre de motivation ?", a:["Un texte adapté à l'offre","Un CV plus long","Une liste de notes personnelles"], correct:0, points:25 },
+  { q:"Où trouver des offres ?", a:["Sites d'emploi","Sur la Lune"], correct:0, points:20 },
+  { q:"Quel comportement éviter en entretien ?", a:["Regarder son téléphone","Écouter le recruteur","Demander des précisions"], correct:0, points:30 },
+  { q:"Qu'est-ce qu'un \"stage\" ?", a:["Une période d'apprentissage en entreprise","Un travail permanent","Un abonnement"], correct:0, points:20 },
+  { q:"Pourquoi relancer une candidature ?", a:["Montrer son intérêt","Manquer d'organisation","Crier"], correct:0, points:25 },
+  { q:"Comment se présenter ?", a:["Nom + objectif professionnel bref","Raconter un long épisode","Chanter"], correct:0, points:30 },
+  { q:"Qu'est-ce qu'un bon CV ?", a:["Clairement structuré","Brouillon","Sans contact"], correct:0, points:35 },
+  { q:"Quelle information NE doit PAS figurer ?", a:["Informations médicales sensibles","Compétences","Contact"], correct:0, points:30 },
+  { q:"Que signifie \"références\" dans un CV ?", a:["Personnes pouvant témoigner de vous","Des références bibliographiques","Un mystère"], correct:0, points:20 },
+  { q:"Qu'est-ce qu'une compétence transférable ?", a:["Capacité utile dans plusieurs emplois","Un seul logiciel","Un diplôme précis"], correct:0, points:30 },
+  { q:"Que faire si on ne sait pas répondre en entretien ?", a:["Admettre et proposer comment trouver la réponse","Inventer une fausse réponse","Ignorer"], correct:0, points:40 },
+  { q:"Quel ton adopter en entretien ?", a:["Professionnel et cordial","Hautain","Trop familier"], correct:0, points:30 },
+  { q:"Comment montrer sa motivation ?", a:["Par des exemples concrets","Dire \"je suis motivé\" sans preuve","Ne rien faire"], correct:0, points:35 },
+  { q:"Qu'est-ce qu'une lettre d'accompagnement ?", a:["Un texte pour contextualiser le CV","Un CV détourné","Un document inutile"], correct:0, points:25 },
+  { q:"Pourquoi soigner son profil en ligne ?", a:["Les recruteurs regardent souvent","Personne ne regarde","C'est interdit"], correct:0, points:25 },
+  { q:"Citer une soft skill importante ?", a:["Capacité d'écoute","Savoir tout faire","Ignorance"], correct:0, points:20 },
+  { q:"Que faire en cas de retard ?", a:["Prévenir et s'excuser","Rester silencieux","Ignorer"], correct:0, points:20 },
+  { q:"Quelle information est utile pour un recruteur ?", a:["Expériences récentes et pertinentes","Vos secrets","Informations bancaires"], correct:0, points:30 },
+  { q:"Qu'est-ce que la ponctualité ?", a:["Arriver à l'heure","Arriver quand on veut","Partir tôt"], correct:0, points:15 },
+  { q:"Pourquoi personnaliser sa candidature ?", a:["Montrer l'adéquation avec l'offre","Gagner du temps","Faire n'importe quoi"], correct:0, points:25 },
+  { q:"Que faire avec un trou dans le CV ?", a:["Expliquer brièvement en valorisant","Tout cacher","Mentir"], correct:0, points:20 },
+  { q:"Quel document joindre ?", a:["CV + lettre adaptée","Rien","Tout ce qu'on a"], correct:0, points:20 },
+  { q:"Où demander de l'aide ?", a:["Mission Locale / Pôle emploi / réseau","Personne","La rue"], correct:0, points:20 },
+  { q:"Comment se former ?", a:["Par des formations, des MOOC, des stages","Rien","Regarder la télé"], correct:0, points:25 },
+  { q:"Que montre une bonne attitude ?", a:["Curiosité et respect","Arrogance","Indifférence"], correct:0, points:30 },
+  { q:"Pourquoi relire son CV ?", a:["Éviter les fautes et les incohérences","Pour le style fantaisiste","Pour l'oublier"], correct:0, points:20 },
+  { q:"Que signifie \"candidature spontanée\" ?", a:["Envoyer son CV sans offre précise","Attendre une offre","Appeler en criant"], correct:0, points:25 },
+  { q:"Comment préparer un entretien ?", a:["Se renseigner sur l'entreprise","Y aller sans préparation","Ignorer l'entreprise"], correct:0, points:30 },
+  { q:"Quel est l'objectif d'une lettre ?", a:["Montrer l'adéquation avec l'offre","Remplir un espace","Raconter sa vie"], correct:0, points:20 },
+  { q:"Pourquoi valoriser un stage ?", a:["Montrer des compétences réelles","Le cacher","Ne rien dire"], correct:0, points:20 },
+  { q:"Qu'est-ce qu'une alternance ?", a:["Formation en entreprise + école","Vacances prolongées","Un emploi permanent"], correct:0, points:20 },
+  { q:"Que faire après un entretien ?", a:["Remercier et relancer si besoin","Tout oublier","Attendre une semaine sans rien faire"], correct:0, points:20 },
+  { q:"Quel est un bon comportement en équipe ?", a:["Partager l'information","Tout garder pour soi","S'opposer systématiquement"], correct:0, points:30 },
+  { q:"Pourquoi être honnête ?", a:["La confiance facilite l'embauche","On ne sait pas","C'est inutile"], correct:0, points:30 },
+  { q:"Que chercher dans une offre ?", a:["Mots-clés, compétences et missions","Juste le salaire","Rien"], correct:0, points:25 },
+  { q:"Que fait un conseiller Mission Locale ?", a:["Aide, orientation, formations","Rien","Décore des bureaux"], correct:0, points:20 }
+]
+
+
+/* État */
+let bank = [];
+let mode = 'cv';
+let idx = 0;
+let score = 0;
+
+/* Utilitaires DOM */
+const id = s=>document.getElementById(s);
+const startSec = id('start'), gameSec = id('game'), resultSec = id('result'), editorSec = id('editor');
+
+function loadBank(selected){
+  mode = selected;
+  const saved = localStorage.getItem('ml_bank_'+mode);
+  bank = saved ? JSON.parse(saved) : (defaultBanks[selected] || []);
+}
+
+/* UI control */
+function show(el){ [startSec,gameSec,resultSec,editorSec].forEach(x=>x.classList.add('hidden')); el.classList.remove('hidden'); }
+function startGame(selected){
+  loadBank(selected);
+  if(!bank.length){ alert("Aucune question pour ce parcours — ajoutez-en via 'Personnaliser questions'."); return; }
+  idx = 0; score = 0;
+  id('score').textContent = score;
+  renderQuestion();
+  show(gameSec);
+  id('qmeta').textContent = `Parcours : ${selected.toUpperCase()} — question ${idx+1}/${bank.length}`;
+  updateProgress();
+}
+function renderQuestion(){
+  const q = bank[idx];
+  id('question').textContent = q.q;
+  const answers = id('answers'); answers.innerHTML = '';
+  q.opts.forEach((opt,i)=>{
+    const btn = document.createElement('button');
+    btn.className='answer';
+    btn.setAttribute('role','option');
+    btn.innerText = opt;
+    btn.onclick = ()=>selectAnswer(i, btn);
+    answers.appendChild(btn);
+  });
+  id('qmeta').textContent = `Parcours : ${mode.toUpperCase()} — question ${idx+1}/${bank.length}`;
+}
+
+function selectAnswer(i, btn){
+  const q = bank[idx];
+  const correctIndex = q.a;
+  // mark
+  const nodes = [...id('answers').children];
+  nodes.forEach((n,j)=> n.classList.add(j===correctIndex ? 'correct' : (j===i && j!==correctIndex ? 'wrong' : '')));
+  if(i===correctIndex){ score += 1; id('score').textContent = score; }
+  // lock answers
+  Array.from(id('answers').children).forEach(n=>n.onclick=null);
+  // next
+  setTimeout(()=>{
+    idx++;
+    if(idx>=bank.length) finish();
+    else { renderQuestion(); updateProgress(); }
+  }, 800);
+}
+
+function updateProgress(){ const pct = Math.round((idx / bank.length) * 100); id('bar').style.width = pct + '%'; }
+
+function finish(){
+  show(resultSec);
+  id('finalScore').textContent = score;
+  id('maxScore').textContent = bank.length;
+  id('resultText').textContent = score === bank.length ? "Excellent — vous maîtrisez bien ce sujet !" : "Bon travail — voyez où vous pouvez progresser.";
+}
+
+/* Editor */
+id('customize').onclick = ()=>{ loadBank(mode); id('qtext').value=''; id('opt1').value=''; id('opt2').value=''; id('opt3').value=''; show(editorSec); };
+id('doneEdit').onclick = ()=>{ show(startSec); };
+id('addQ').onclick = ()=>{
+  const q = id('qtext').value.trim();
+  const o1 = id('opt1').value.trim(), o2 = id('opt2').value.trim(), o3 = id('opt3').value.trim();
+  if(!q || !o1 || !o2){ alert("Question, option 1 et option 2 obligatoires."); return; }
+  const opts = [o1,o2]; if(o3) opts.push(o3);
+  let a = 0;
+  if(id('correct2').checked) a = 1;
+  if(id('correct3').checked && opts[2]) a = 2;
+  const newQ = {q, opts, a};
+  const savedKey = 'ml_bank_'+(mode||'cv');
+  const cur = localStorage.getItem(savedKey);
+  const arr = cur ? JSON.parse(cur) : (defaultBanks[mode] ? defaultBanks[mode].slice() : []);
+  arr.push(newQ);
+  localStorage.setItem(savedKey, JSON.stringify(arr));
+  alert("Question ajoutée et sauvegardée localement.");
+  id('qtext').value=''; id('opt1').value=''; id('opt2').value=''; id('opt3').value='';
+  id('correct1').checked = id('correct2').checked = id('correct3').checked = false;
+};
+
+/* Start buttons */
+document.querySelectorAll('button[data-mode]').forEach(b=> b.addEventListener('click', e=> startGame(e.target.dataset.mode)));
+id('retry').onclick = ()=> startGame(mode);
+
+/* Print certificate */
+id('printCert').onclick = ()=>{
+  const name = prompt("Nom du participant (pour le certificat) :", "Nom Prénom") || "Participant";
+  const html = `
+    <html><head><meta charset="utf-8"><title>Certificat</title>
+    <style>body{font-family:Arial;padding:30px;color:#111} .card{border:2px solid #2563eb;padding:30px;border-radius:12px} h1{color:#2563eb}</style>
+    </head><body><div class="card"><h1>Attestation de participation</h1>
+    <p>${name}</p>
+    <p>Parcours : <strong>${mode.toUpperCase()}</strong></p>
+    <p>Score : <strong>${score}</strong> / ${bank.length}</p>
+    <p>Date : ${new Date().toLocaleDateString()}</p>
+    <p style="margin-top:20px;font-size:13px;color:#666">Mission Locale — Exercice format court</p>
+    </div></body></html>`;
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  w.print();
+};
+
+/* Accessibility: keyboard navigation for answers */
+document.addEventListener('keydown', (e)=>{
+  if(gameSec.classList.contains('hidden')) return;
+  const answers = Array.from(id('answers').children);
+  if(!answers.length) return;
+  const focused = document.activeElement;
+  let i = answers.indexOf(focused);
+  if(e.key === 'ArrowDown' || e.key === 'ArrowRight'){ i = (i+1) % answers.length; answers[i].focus(); }
+  if(e.key === 'ArrowUp' || e.key === 'ArrowLeft'){ i = (i-1+answers.length) % answers.length; answers[i].focus(); }
+  if(e.key === 'Enter' && answers.includes(focused)){ focused.click(); }
+});
+
+/* On load: show start */
+show(startSec);
+
+/* Optional: preload banks into localStorage first-run */
+if(!localStorage.getItem('ml_init')){
+  Object.keys(defaultBanks).forEach(k=>{
+    localStorage.setItem('ml_bank_'+k, JSON.stringify(defaultBanks[k]));
+  });
+  localStorage.setItem('ml_init','1');
+}
+</script>
+</body>
+</html>
 <style>
 body{
   margin:0;
