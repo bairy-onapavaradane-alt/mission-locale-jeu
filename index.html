@@ -4,246 +4,156 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mission Locale – Parcours Pro</title>
+<title>Mission Locale – Jeu</title>
 
 <style>
 body{
   margin:0;
-  font-family: Arial, sans-serif;
-  background:#f4fbfc;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:100vh;
+  font-family:Arial,sans-serif;
+  background:#eef7f8;
+  text-align:center;
 }
 
-#startScreen{
+#menu{
   position:fixed;
   inset:0;
-  background:#f4fbfc;
+  background:#eef7f8;
   display:flex;
   justify-content:center;
   align-items:center;
   z-index:10;
 }
 
-.start-card{
-  background:white;
-  padding:24px;
-  border-radius:14px;
-  max-width:420px;
-  text-align:center;
-  box-shadow:0 10px 30px rgba(0,0,0,0.2);
-}
-
-.start-card h1{
-  color:#0f7780;
-}
-
-.start-card button{
-  margin-top:16px;
-  padding:12px 20px;
-  font-size:16px;
-  font-weight:bold;
-  background:#0f7780;
-  color:white;
-  border:none;
-  border-radius:10px;
-  cursor:pointer;
-}
-
-.logo{
-  position:fixed;
-  top:10px;
-  right:10px;
-  width:160px;
-}
-
-#gameContainer{
-  width:100%;
-  max-width:900px;
-}
-
-canvas{
-  width:100%;
-  background:linear-gradient(#e9f7f8,#ffffff);
-  border-radius:10px;
-}
-
-#hud{
-  display:flex;
-  justify-content:space-between;
-  margin-top:8px;
-  font-weight:bold;
-}
-
-#quizModal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.6);
-  justify-content:center;
-  align-items:center;
-  z-index:20;
-}
-
-.quiz-card{
+.menu-box{
   background:white;
   padding:20px;
   border-radius:12px;
   max-width:400px;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
 }
 
-.quiz-card h3{
-  color:#0f7780;
-}
-
-.answer{
-  margin-top:8px;
-  padding:10px;
+button{
+  padding:12px 20px;
+  font-size:16px;
+  background:#0f7780;
+  color:white;
+  border:none;
   border-radius:8px;
-  border:1px solid #ccc;
   cursor:pointer;
+}
+
+canvas{
+  background:white;
+  display:block;
+  margin:20px auto;
+  border-radius:10px;
+}
+
+#hud{
+  font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
-<img src="images/logo-mle.png" class="logo" alt="Logo Mission Locale">
-
-<div id="startScreen">
-  <div class="start-card">
-    <h1>🎯 Parcours Pro – Mission Locale</h1>
+<div id="menu">
+  <div class="menu-box">
+    <h2>🎯 Parcours Pro – Mission Locale</h2>
     <p>
-      Évite les obstacles et avance le plus loin possible.<br><br>
-      👉 Si tu touches un obstacle, une question professionnelle apparaît.<br>
-      ✔ Bonne réponse : tu continues<br>
-      ❌ Mauvaise réponse : le score revient à 0
+      Clique ou appuie sur ESPACE pour sauter.<br><br>
+      Si tu touches un obstacle, une question apparaît.<br>
+      Mauvaise réponse = score à 0.
     </p>
-    <p>
-      Sauter : clic ou espace<br>
-      Certains obstacles se passent sans sauter
-    </p>
-    <button id="startBtn">Démarrer le jeu</button>
+    <button id="play">Démarrer</button>
   </div>
 </div>
 
-<div id="gameContainer">
-  <canvas id="game" width="900" height="300"></canvas>
-  <div id="hud">
-    <div>Score : <span id="score">0</span></div>
-    <div>Niveau : <span id="level">1</span></div>
-  </div>
-</div>
+<canvas id="game" width="800" height="300"></canvas>
 
-<div id="quizModal">
-  <div class="quiz-card">
-    <h3 id="quizQuestion"></h3>
-    <div id="quizAnswers"></div>
-  </div>
+<div id="hud">
+  Score : <span id="score">0</span> |
+  Niveau : <span id="level">1</span>
 </div>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let running=false;
+let playing=false;
 let score=0;
 let level=1;
-let speed=3;
+let speed=4;
 
-const player={
-  x:80,
-  y:210,
-  r:16,
-  vy:0,
-  jump:false
-};
-
+const player={x:80,y:220,r:15,vy:0,jump:false};
 let obstacles=[];
-let airObstacles=[];
 
 const questions=[
- {q:"Que doit-on apporter à un entretien ?",a:["Un CV","Une console","Rien"],c:0},
- {q:"Arriver à l’heure signifie ?",a:["10 minutes avant","En retard","Quand on veut"],c:0},
- {q:"À quoi sert un stage ?",a:["Découvrir un métier","Jouer","Ne rien faire"],c:0},
- {q:"Que faire si on ne comprend pas ?",a:["Demander","Faire semblant","Partir"],c:0},
- {q:"Quel comportement est professionnel ?",a:["Dire bonjour","Crier","Téléphone"],c:0}
+ {q:"Que doit-on apporter à un entretien ?",r:["Un CV","Une console"],c:0},
+ {q:"Arriver à l’heure signifie ?",r:["10 min avant","En retard"],c:0},
+ {q:"À quoi sert un stage ?",r:["Découvrir un métier","Jouer"],c:0}
 ];
 
-function drawPlayer(){
-  ctx.beginPath();
-  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-  ctx.fillStyle="#0f7780";
-  ctx.fill();
-  ctx.fillStyle="white";
-  ctx.font="12px Arial";
-  ctx.fillText("MLE",player.x-12,player.y+4);
+function jump(){
+  if(!player.jump){
+    player.vy=-14;
+    player.jump=true;
+  }
 }
 
 function spawnObstacle(){
   obstacles.push({x:canvas.width,y:230,w:30,h:30});
 }
 
-function spawnAir(){
-  airObstacles.push({x:canvas.width,y:140,w:40,h:25});
-}
-
 function showQuiz(){
-  running=false;
+  playing=false;
   const q=questions[Math.floor(Math.random()*questions.length)];
-  document.getElementById("quizQuestion").textContent=q.q;
-  const ansDiv=document.getElementById("quizAnswers");
-  ansDiv.innerHTML="";
-  q.a.forEach((txt,i)=>{
-    const d=document.createElement("div");
-    d.className="answer";
-    d.textContent=txt;
-    d.onclick=()=>{
-      document.getElementById("quizModal").style.display="none";
-      if(i!==q.c) score=0;
-      running=true;
-      loop();
-    };
-    ansDiv.appendChild(d);
-  });
-  document.getElementById("quizModal").style.display="flex";
+  const good=confirm(q.q+"\n\nOK = "+q.r[0]+"\nAnnuler = "+q.r[1]);
+  if(!good) score=0;
+  playing=true;
 }
 
 function loop(){
-  if(!running) return;
+  if(!playing) return;
+
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
+  // sol
+  ctx.fillStyle="#ddd";
+  ctx.fillRect(0,245,canvas.width,5);
+
+  // joueur
   player.vy+=0.8;
   player.y+=player.vy;
-  if(player.y>210){player.y=210;player.vy=0;player.jump=false;}
+  if(player.y>220){player.y=220;player.vy=0;player.jump=false;}
 
+  ctx.beginPath();
+  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
+  ctx.fillStyle="#0f7780";
+  ctx.fill();
+
+  // obstacles
   if(Math.random()<0.02) spawnObstacle();
-  if(level>=4 && Math.random()<0.01) spawnAir();
 
   obstacles.forEach(o=>{
     o.x-=speed;
     ctx.fillStyle="#333";
     ctx.fillRect(o.x,o.y,o.w,o.h);
-    if(o.x<player.x+player.r && o.x+o.w>player.x-player.r && player.y+player.r>o.y){
+
+    if(
+      o.x < player.x+player.r &&
+      o.x+o.w > player.x-player.r &&
+      player.y+player.r > o.y
+    ){
+      obstacles=[];
       showQuiz();
     }
   });
 
-  airObstacles.forEach(o=>{
-    o.x-=speed;
-    ctx.fillStyle="#ff9800";
-    ctx.fillRect(o.x,o.y,o.w,o.h);
-    if(player.jump && o.x<player.x+player.r && o.x+o.w>player.x-player.r){
-      showQuiz();
-    }
-  });
-
-  drawPlayer();
+  obstacles = obstacles.filter(o=>o.x>-40);
 
   score++;
-  if(score%300===0){level++;speed+=0.4;}
+  if(score%400===0){level++;speed+=0.5;}
 
   document.getElementById("score").textContent=score;
   document.getElementById("level").textContent=level;
@@ -251,25 +161,17 @@ function loop(){
   requestAnimationFrame(loop);
 }
 
-document.addEventListener("keydown",e=>{
-  if(e.code==="Space" && !player.jump){
-    player.jump=true;
-    player.vy=-14;
-  }
-});
-
-canvas.addEventListener("click",()=>{
-  if(!player.jump){
-    player.jump=true;
-    player.vy=-14;
-  }
-});
-
-document.getElementById("startBtn").onclick=()=>{
-  document.getElementById("startScreen").style.display="none";
-  running=true;
+document.getElementById("play").onclick=()=>{
+  document.getElementById("menu").style.display="none";
+  playing=true;
   loop();
 };
+
+document.addEventListener("keydown",e=>{
+  if(e.code==="Space") jump();
+});
+
+canvas.addEventListener("click",jump);
 </script>
 
 </body>
