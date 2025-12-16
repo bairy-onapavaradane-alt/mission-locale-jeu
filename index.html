@@ -45,7 +45,9 @@
 </head>
 <body>
 
+<div style="position:relative">
 <canvas id="game" width="800" height="400"></canvas>
+</div>
 
 <div id="startScreen" class="overlay">
   <h2>Jeu Mission Locale</h2>
@@ -107,8 +109,10 @@ const questions = [
 
 function startGame() {
   document.getElementById('startScreen').style.display = 'none';
-  resetGame();
   gameRunning = true;
+  immunity = false;
+  immunityTimer = 0;
+  resetGame();
   requestAnimationFrame(loop);
 }
 
@@ -180,7 +184,40 @@ function loop() {
 
   obstacles.forEach(o => {
     o.x -= speed;
-    ctx.fillStyle = immunitynFrame(loop);
+    ctx.fillStyle = immunity ? '#81c784' : '#e53935';
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+
+    const closestX = Math.max(o.x, Math.min(player.x, o.x + o.w));
+    const closestY = Math.max(o.y, Math.min(player.y, o.y + o.h));
+    const dx = player.x - closestX;
+    const dy = player.y - closestY;
+
+    if (!immunity && dx * dx + dy * dy < player.r * player.r) {
+      gameRunning = false;
+      showQuestion();
+    }
+  });
+
+  obstacles = obstacles.filter(o => o.x + o.w > 0);
+
+  score++;
+  if (score % 500 === 0) { level++; speed += 0.5; }
+
+  ctx.fillStyle = '#0d47a1';
+  ctx.font = '14px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('Score : ' + score, 10, 20);
+  ctx.fillText('Niveau : ' + level, 10, 40);
+  ctx.font = '12px Arial';
+  ctx.fillText('Consigne : sauter pour éviter les obstacles', 10, 60);
+
+  if (immunity) {
+    ctx.fillStyle = '#2e7d32';
+    ctx.fillText('Immunité...', 10, 80);
+  }
+
+  requestAnimationFrame(loop);
+}
 }
 
 function showQuestion() {
@@ -261,4 +298,3 @@ canvas.addEventListener('touchstart', () => player.jump());
 
 </body>
 </html>
-
