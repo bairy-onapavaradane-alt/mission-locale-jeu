@@ -3,113 +3,164 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MLE Runner – Mission Locale</title>
+<title>Parcours Pro – Mission Locale</title>
 <style>
-body{margin:0;font-family:Arial;background:#e3f2fd;display:flex;justify-content:center}
-#container{width:100%;max-width:900px}
-header{background:#1e88e5;color:#fff;padding:10px;display:flex;justify-content:space-between;font-size:14px}
-canvas{background:#f5f7fb;display:block}
-.overlay{position:absolute;inset:0;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center}
-.box{background:#fff;padding:20px;border-radius:12px;max-width:500px;width:100%;text-align:center}
-button{padding:12px 20px;border:none;border-radius:20px;background:#fdd835;font-size:16px;cursor:pointer}
-.answers button{background:#1e88e5;color:#fff;margin-top:8px;width:100%}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eef3f9;display:flex;justify-content:center}
+#app{max-width:900px;width:100%;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.1)}
+header{background:#1e88e5;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+header span{font-size:14px}
+canvas{display:block;background:#f9fbff}
+#overlay{position:absolute;inset:0;background:rgba(255,255,255,.96);display:flex;align-items:center;justify-content:center}
+.card{background:#fff;border-radius:14px;padding:24px;max-width:520px;width:100%;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.15)}
+button{background:#fdd835;border:none;border-radius:24px;padding:12px 22px;font-size:16px;cursor:pointer}
+button:hover{opacity:.9}
+.answers button{display:block;width:100%;margin-top:10px;background:#1e88e5;color:#fff}
 #wrapper{position:relative}
 </style>
 </head>
 <body>
-<div id="container">
+<div id="app">
 <header>
-<div id="consigne">Saute pour éviter les obstacles</div>
-<div id="score">Score : 0 | Niveau : 1</div>
+<span id="info">Saute avec ESPACE – Objectif : avancer dans ton parcours pro</span>
+<span id="hud">Score : 0 | Niveau : 1</span>
 </header>
 <div id="wrapper">
-<canvas id="game" width="900" height="400"></canvas>
-<div class="overlay" id="start">
-<div class="box">
-<h2>MLE Runner</h2>
-<p>Espace ou touche écran pour sauter.<br>Jeu infini – bats ton score.</p>
-<button id="btnStart">Démarrer</button>
+<canvas id="game" width="900" height="420"></canvas>
+<div id="overlay">
+<div class="card" id="startCard">
+<h2>Parcours Pro – Mission Locale</h2>
+<p>
+Un mini-jeu simple et accessible.<br><br>
+• Appuie sur <b>ESPACE</b> pour sauter<br>
+• Évite les obstacles<br>
+• Le jeu devient progressivement plus difficile<br>
+• À chaque échec, une question professionnelle t’aide à continuer
+</p>
+<button id="startBtn">Commencer</button>
 </div>
-</div>
-<div class="overlay" id="quiz" style="display:none">
-<div class="box">
-<h3 id="q"></h3>
-<div class="answers" id="a"></div>
+<div class="card" id="quizCard" style="display:none">
+<h3 id="question"></h3>
+<div class="answers" id="answers"></div>
 </div>
 </div>
 </div>
 </div>
 <script>
-const canvas=document.getElementById('game');
-const ctx=canvas.getContext('2d');
-let running=false,score=0,level=1,speed=4;
-const player={x:80,y:300,r:22,vy:0};
-let obstacles=[];
-const questions=[
-[
-  { q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0, points:50 },
-  { q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0, points:40 },
-  { q:"Que signifie \"soft skill\" ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0, points:30 },
-  { q:"Que faire après une candidature ?", a:["Relancer poliment","Ne rien faire","Envoyer tous les jours"], correct:0, points:30 },
-  { q:"En entretien, comment commencer ?", a:["Bonjour + présentation brève","Raconter sa vie privée","Faire un sketch"], correct:0, points:40 },
-  { q:"Quelle est une bonne qualité professionnelle ?", a:["Ponctualité","Arriver en retard","Manque de respect"], correct:0, points:30 },
-  { q:"Comment adapter son CV à une offre ?", a:["Mettre en avant les compétences demandées","Envoyer le même CV","Changer juste la police"], correct:0, points:35 },
-  { q:"Qu'est-ce qu'une lettre de motivation ?", a:["Un texte adapté à l'offre","Un CV plus long","Une liste de notes personnelles"], correct:0, points:25 },
-  { q:"Où trouver des offres ?", a:["Sites d'emploi","Sur la Lune"], correct:0, points:20 },
-  { q:"Quel comportement éviter en entretien ?", a:["Regarder son téléphone","Écouter le recruteur","Demander des précisions"], correct:0, points:30 },
-  { q:"Qu'est-ce qu'un \"stage\" ?", a:["Une période d'apprentissage en entreprise","Un travail permanent","Un abonnement"], correct:0, points:20 },
-  { q:"Pourquoi relancer une candidature ?", a:["Montrer son intérêt","Manquer d'organisation","Crier"], correct:0, points:25 },
-  { q:"Comment se présenter ?", a:["Nom + objectif professionnel bref","Raconter un long épisode","Chanter"], correct:0, points:30 },
-  { q:"Qu'est-ce qu'un bon CV ?", a:["Clairement structuré","Brouillon","Sans contact"], correct:0, points:35 },
-  { q:"Quelle information NE doit PAS figurer ?", a:["Informations médicales sensibles","Compétences","Contact"], correct:0, points:30 },
-  { q:"Que signifie \"références\" dans un CV ?", a:["Personnes pouvant témoigner de vous","Des références bibliographiques","Un mystère"], correct:0, points:20 },
-  { q:"Qu'est-ce qu'une compétence transférable ?", a:["Capacité utile dans plusieurs emplois","Un seul logiciel","Un diplôme précis"], correct:0, points:30 },
-  { q:"Que faire si on ne sait pas répondre en entretien ?", a:["Admettre et proposer comment trouver la réponse","Inventer une fausse réponse","Ignorer"], correct:0, points:40 },
-  { q:"Quel ton adopter en entretien ?", a:["Professionnel et cordial","Hautain","Trop familier"], correct:0, points:30 },
-  { q:"Comment montrer sa motivation ?", a:["Par des exemples concrets","Dire \"je suis motivé\" sans preuve","Ne rien faire"], correct:0, points:35 },
-  { q:"Qu'est-ce qu'une lettre d'accompagnement ?", a:["Un texte pour contextualiser le CV","Un CV détourné","Un document inutile"], correct:0, points:25 },
-  { q:"Pourquoi soigner son profil en ligne ?", a:["Les recruteurs regardent souvent","Personne ne regarde","C'est interdit"], correct:0, points:25 },
-  { q:"Citer une soft skill importante ?", a:["Capacité d'écoute","Savoir tout faire","Ignorance"], correct:0, points:20 },
-  { q:"Que faire en cas de retard ?", a:["Prévenir et s'excuser","Rester silencieux","Ignorer"], correct:0, points:20 },
-  { q:"Quelle information est utile pour un recruteur ?", a:["Expériences récentes et pertinentes","Vos secrets","Informations bancaires"], correct:0, points:30 },
-  { q:"Qu'est-ce que la ponctualité ?", a:["Arriver à l'heure","Arriver quand on veut","Partir tôt"], correct:0, points:15 },
-  { q:"Pourquoi personnaliser sa candidature ?", a:["Montrer l'adéquation avec l'offre","Gagner du temps","Faire n'importe quoi"], correct:0, points:25 },
-  { q:"Que faire avec un trou dans le CV ?", a:["Expliquer brièvement en valorisant","Tout cacher","Mentir"], correct:0, points:20 },
-  { q:"Quel document joindre ?", a:["CV + lettre adaptée","Rien","Tout ce qu'on a"], correct:0, points:20 },
-  { q:"Où demander de l'aide ?", a:["Mission Locale / Pôle emploi / réseau","Personne","La rue"], correct:0, points:20 },
-  { q:"Comment se former ?", a:["Par des formations, des MOOC, des stages","Rien","Regarder la télé"], correct:0, points:25 },
-  { q:"Que montre une bonne attitude ?", a:["Curiosité et respect","Arrogance","Indifférence"], correct:0, points:30 },
-  { q:"Pourquoi relire son CV ?", a:["Éviter les fautes et les incohérences","Pour le style fantaisiste","Pour l'oublier"], correct:0, points:20 },
-  { q:"Que signifie \"candidature spontanée\" ?", a:["Envoyer son CV sans offre précise","Attendre une offre","Appeler en criant"], correct:0, points:25 },
-  { q:"Comment préparer un entretien ?", a:["Se renseigner sur l'entreprise","Y aller sans préparation","Ignorer l'entreprise"], correct:0, points:30 },
-  { q:"Quel est l'objectif d'une lettre ?", a:["Montrer l'adéquation avec l'offre","Remplir un espace","Raconter sa vie"], correct:0, points:20 },
-  { q:"Pourquoi valoriser un stage ?", a:["Montrer des compétences réelles","Le cacher","Ne rien dire"], correct:0, points:20 },
-  { q:"Qu'est-ce qu'une alternance ?", a:["Formation en entreprise + école","Vacances prolongées","Un emploi permanent"], correct:0, points:20 },
-  { q:"Que faire après un entretien ?", a:["Remercier et relancer si besoin","Tout oublier","Attendre une semaine sans rien faire"], correct:0, points:20 },
-  { q:"Quel est un bon comportement en équipe ?", a:["Partager l'information","Tout garder pour soi","S'opposer systématiquement"], correct:0, points:30 },
-  { q:"Pourquoi être honnête ?", a:["La confiance facilite l'embauche","On ne sait pas","C'est inutile"], correct:0, points:30 },
-  { q:"Que chercher dans une offre ?", a:["Mots-clés, compétences et missions","Juste le salaire","Rien"], correct:0, points:25 },
-  { q:"Que fait un conseiller Mission Locale ?", a:["Aide, orientation, formations","Rien","Décore des bureaux"], correct:0, points:20 }
-]
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
 
-function start(){document.getElementById('start').style.display='none';reset();running=true;loop();}
-function reset(){score=0;level=1;speed=4;obstacles=[];player.y=300;player.vy=0;}
-function addObs(){const air=level>=5&&Math.random()<0.3;obstacles.push({x:canvas.width,y:air?240:320,w:30,h:air?30:50});}
-function loop(){if(!running)return;ctx.clearRect(0,0,900,400);
-player.vy+=0.6;player.y+=player.vy;if(player.y>300){player.y=300;player.vy=0}
-ctx.beginPath();ctx.arc(player.x,player.y,player.r,0,Math.PI*2);ctx.fillStyle='#ffb74d';ctx.fill();ctx.strokeStyle='#1e88e5';ctx.lineWidth=4;ctx.stroke();ctx.fillStyle='#000';ctx.textAlign='center';ctx.fillText('MLE',player.x,player.y+4);
-obstacles.forEach(o=>{o.x-=speed;ctx.fillStyle=o.y<300?'#e53935':'#fdd835';ctx.fillRect(o.x,o.y,o.w,o.h);
-if(o.x<player.x+player.r&&o.x+o.w>player.x-player.r&&o.y<player.y+player.r&&o.y+o.h>player.y-player.r){lose();}});
+let running=false;
+let score=0;
+let level=1;
+let speed=4;
+
+const player={x:100,y:320,r:22,vy:0};
+let obstacles=[];
+
+const decorWords=["Mission Locale","Projet professionnel","Formation","Emploi","Insertion","CV","Compétences","Orientation"];
+
+const questions=[
+{ q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0, points:50 },
+{ q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0, points:40 },
+{ q:"Que signifie \"soft skill\" ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0, points:30 },
+{ q:"Que faire après une candidature ?", a:["Relancer poliment","Ne rien faire","Envoyer tous les jours"], correct:0, points:30 },
+{ q:"En entretien, comment commencer ?", a:["Bonjour + présentation brève","Raconter sa vie privée","Faire un sketch"], correct:0, points:40 },
+{ q:"Quelle est une bonne qualité professionnelle ?", a:["Ponctualité","Arriver en retard","Manque de respect"], correct:0, points:30 },
+{ q:"Comment adapter son CV à une offre ?", a:["Mettre en avant les compétences demandées","Envoyer le même CV","Changer juste la police"], correct:0, points:35 },
+{ q:"Qu'est-ce qu'une lettre de motivation ?", a:["Un texte adapté à l'offre","Un CV plus long","Une liste de notes personnelles"], correct:0, points:25 },
+{ q:"Où trouver des offres ?", a:["Sites d'emploi","Sur la Lune"], correct:0, points:20 },
+{ q:"Quel comportement éviter en entretien ?", a:["Regarder son téléphone","Écouter le recruteur","Demander des précisions"], correct:0, points:30 },
+{ q:"Qu'est-ce qu'un stage ?", a:["Une période d'apprentissage en entreprise","Un travail permanent","Un abonnement"], correct:0, points:20 },
+{ q:"Pourquoi relancer une candidature ?", a:["Montrer son intérêt","Manquer d'organisation","Crier"], correct:0, points:25 },
+{ q:"Comment se présenter ?", a:["Nom + objectif professionnel bref","Raconter un long épisode","Chanter"], correct:0, points:30 },
+{ q:"Qu'est-ce qu'un bon CV ?", a:["Clairement structuré","Brouillon","Sans contact"], correct:0, points:35 },
+{ q:"Quelle information NE doit PAS figurer ?", a:["Informations médicales sensibles","Compétences","Contact"], correct:0, points:30 },
+{ q:"Que signifie références dans un CV ?", a:["Personnes pouvant témoigner de vous","Des livres","Un mystère"], correct:0, points:20 },
+{ q:"Qu'est-ce qu'une compétence transférable ?", a:["Capacité utile dans plusieurs emplois","Un seul logiciel","Un diplôme précis"], correct:0, points:30 },
+{ q:"Que faire si on ne sait pas répondre ?", a:["Admettre et proposer une solution","Inventer","Ignorer"], correct:0, points:40 },
+{ q:"Quel ton adopter en entretien ?", a:["Professionnel et cordial","Hautain","Trop familier"], correct:0, points:30 },
+{ q:"Comment montrer sa motivation ?", a:["Par des exemples concrets","Sans preuve","Ne rien faire"], correct:0, points:35 },
+{ q:"Que fait un conseiller Mission Locale ?", a:["Aide, orientation, formations","Rien","Décore des bureaux"], correct:0, points:20 }
+];
+
+function startGame(){
+document.getElementById('overlay').style.display='none';
+reset();
+running=true;
+requestAnimationFrame(loop);
+}
+
+function reset(){score=0;level=1;speed=4;obstacles=[];player.y=320;player.vy=0}
+
+function addObstacle(){
+const air = level>=3 && Math.random()<0.45;
+obstacles.push({
+ x:canvas.width,
+ y: air ? 120+Math.random()*120 : 360-22,
+ w:30,
+ h: air ? 30 : 50
+});
+});
+}
+
+function loop(){
+if(!running)return;
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+// décor
+ctx.fillStyle='rgba(30,136,229,.08)';
+decorWords.forEach((w,i)=>ctx.fillText(w,(i*220-(score*.6)%220),80+(i%3)*70));
+
+// sol
+ctx.fillStyle='#e0e6ef';ctx.fillRect(0,360,900,60);
+
+// joueur
+player.vy+=0.7;player.y+=player.vy;
+if(player.y>320){player.y=320;player.vy=0}
+ctx.beginPath();ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
+ctx.fillStyle='#ffb74d';ctx.fill();ctx.strokeStyle='#1e88e5';ctx.lineWidth=4;ctx.stroke();
+ctx.fillStyle='#000';ctx.textAlign='center';ctx.fillText('MLE',player.x,player.y+4);
+
+// obstacles
+obstacles.forEach(o=>{
+o.x-=speed;
+ctx.fillStyle=o.y<300?'#e53935':'#fdd835';
+ctx.fillRect(o.x,o.y,o.w,o.h);
+if(o.x<player.x+player.r && o.x+o.w>player.x-player.r && o.y<player.y+player.r && o.y+o.h>player.y-player.r){lose();}
+});
 obstacles=obstacles.filter(o=>o.x+o.w>0);
-if(Math.random()<0.02)addObs();score++;if(score%500===0){level++;speed+=0.5}
-document.getElementById('score').innerText=`Score : ${score} | Niveau : ${level}`;
-requestAnimationFrame(loop);}
-function lose(){running=false;showQuiz();}
-function showQuiz(){const qu=questions[Math.floor(Math.random()*questions.length)];document.getElementById('quiz').style.display='flex';document.getElementById('q').innerText=qu.q;const a=document.getElementById('a');a.innerHTML='';qu.a.forEach((t,i)=>{const b=document.createElement('button');b.innerText=t;b.onclick=()=>{document.getElementById('quiz').style.display='none';if(i===qu.c){running=true;loop()}else{start()}};a.appendChild(b);});}
-document.getElementById('btnStart').onclick=start;
-window.addEventListener('keydown',e=>{if(e.code==='Space')player.vy=-12});
-canvas.addEventListener('touchstart',()=>player.vy=-12);
+
+if(Math.random()<0.02)addObstacle();
+score++;
+if(score%600===0){level++;speed+=0.6}
+
+document.getElementById('hud').innerText=`Score : ${score} | Niveau : ${level}`;
+requestAnimationFrame(loop);
+}
+
+function lose(){running=false;showQuiz()}
+
+function showQuiz(){
+document.getElementById('overlay').style.display='flex';
+document.getElementById('startCard').style.display='none';
+document.getElementById('quizCard').style.display='block';
+const qu=questions[Math.floor(Math.random()*questions.length)];
+document.getElementById('question').innerText=qu.q;
+const a=document.getElementById('answers');a.innerHTML='';
+qu.a.forEach((txt,i)=>{
+const b=document.createElement('button');b.innerText=txt;
+b.onclick=()=>{
+document.getElementById('overlay').style.display='none';
+document.getElementById('startCard').style.display='block';
+document.getElementById('quizCard').style.display='none';
+if(i===qu.c){running=true;requestAnimationFrame(loop)}else{reset();running=true;requestAnimationFrame(loop)}
+};a.appendChild(b);
+});
+}
+
+document.getElementById('startBtn').onclick=startGame;
+window.addEventListener('keydown',e=>{if(e.code==='Space' && running)player.vy=-12});
+canvas.addEventListener('touchstart',()=>{if(running)player.vy=-12});
 </script>
 </body>
 </html>
-
