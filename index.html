@@ -2,7 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Mini Jeu Amélioré</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeu Mission Locale</title>
 
 <style>
 body{
@@ -43,17 +44,24 @@ const btn = document.getElementById("start");
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// --- État du jeu ---
 let running = false;
-let score = 0;
 
 // --- Joueur ---
 let player = {
-  x: 180,
-  y: 80,
+  x: 50,
+  y: 130,
   w: 30,
   h: 30,
   speed: 4
+};
+
+// --- Obstacle ---
+let obstacle = {
+  x: 400,
+  y: 130,
+  w: 30,
+  h: 30,
+  speed: 3
 };
 
 // --- Clavier ---
@@ -80,28 +88,77 @@ function loop(){
 
 // --- Mise à jour ---
 function update(){
+  // Déplacement joueur
   if(keys["ArrowLeft"]) player.x -= player.speed;
   if(keys["ArrowRight"]) player.x += player.speed;
 
   // Limites écran
   player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
 
-  score++;
+  // Mouvement obstacle
+  obstacle.x -= obstacle.speed;
+  if(obstacle.x + obstacle.w < 0){
+    obstacle.x = canvas.width;
+  }
+
+  // Collision
+  if(checkCollision(player, obstacle)){
+    running = false;
+    askQuestion();
+  }
 }
 
 // --- Dessin ---
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
+  // Consigne
+  ctx.fillStyle = "black";
+  ctx.font = "12px Arial";
+  ctx.fillText("Consigne : évite les obstacles", 10, 15);
+
   // Joueur
-  ctx.fillStyle = "red";
+  ctx.fillStyle = "blue";
   ctx.fillRect(player.x, player.y, player.w, player.h);
 
-  // Score
-  ctx.fillStyle = "black";
-  ctx.font = "16px Arial";
-  ctx.fillText("Score : " + score, 10, 20);
+  // Obstacle
+  ctx.fillStyle = "red";
+  ctx.fillRect(obstacle.x, obstacle.y, obstacle.w, obstacle.h);
 }
+
+// --- Collision ---
+function checkCollision(a, b){
+  return (
+    a.x < b.x + b.w &&
+    a.x + a.w > b.x &&
+    a.y < b.y + b.h &&
+    a.y + a.h > b.y
+  );
+}
+
+// --- Question Mission Locale ---
+function askQuestion(){
+  let answer = prompt(
+    "❌ Tu as perdu !\n\nQuestion Mission Locale :\n" +
+    "À quoi sert la Mission Locale ?\n\n" +
+    "A) Jouer à des jeux\n" +
+    "B) Aider les jeunes à s’insérer (emploi, formation)\n" +
+    "C) Faire du sport"
+  );
+
+  if(answer && answer.toUpperCase() === "B"){
+    alert("✅ Bonne réponse ! Tu peux rejouer.");
+  } else {
+    alert("❌ Mauvaise réponse.\nLa Mission Locale aide les jeunes dans leur insertion.");
+  }
+
+  location.reload();
+}
+</script>
+
+</body>
+</html>
+
 </script>
 
 </body>
