@@ -3,14 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mission Locale – Jeu MLE</title>
+<title>Jeu Mission Locale</title>
 
 <style>
-:root{
-  --blue:#0f7780;
-  --orange:#f59e0b;
-}
-
 body{
   margin:0;
   font-family:Arial, sans-serif;
@@ -21,229 +16,107 @@ body{
   min-height:100vh;
 }
 
-.logo{
-  position:fixed;
-  top:10px;
-  right:10px;
-  width:180px;
-  max-width:40vw;
-  z-index:10;
-}
-
-/* ===== ÉCRAN DE DÉMARRAGE ===== */
 #startScreen{
   position:fixed;
   inset:0;
   background:#f7fcfd;
   display:flex;
-  align-items:center;
   justify-content:center;
-  z-index:100;
+  align-items:center;
+  z-index:10;
 }
 
-.startCard{
+.startBox{
   background:white;
   padding:24px;
-  max-width:420px;
   border-radius:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
   text-align:center;
+  max-width:400px;
 }
 
-.startCard h1{
-  color:var(--blue);
+.startBox h1{
+  color:#0f7780;
 }
 
-.startCard button{
+.startBox button{
   margin-top:16px;
   padding:12px 20px;
   border:none;
   border-radius:10px;
-  background:var(--blue);
+  background:#0f7780;
   color:white;
   font-size:16px;
-  font-weight:bold;
   cursor:pointer;
-}
-
-/* ===== JEU ===== */
-#gameBox{
-  background:white;
-  padding:12px;
-  border-radius:12px;
-  box-shadow:0 6px 20px rgba(0,0,0,.1);
-  width:100%;
-  max-width:900px;
 }
 
 canvas{
-  width:100%;
   background:linear-gradient(#eaf7f8,#fff);
-  border-radius:10px;
-}
-
-/* ===== QUIZ ===== */
-#quiz{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:200;
-}
-
-.quizBox{
-  background:white;
-  padding:24px;
-  border-radius:16px;
-  max-width:420px;
-  width:90%;
-  text-align:center;
-}
-
-.quizBox h2{
-  color:var(--blue);
-}
-
-.quizBox button{
-  display:block;
-  width:100%;
-  margin-top:10px;
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #ddd;
-  background:#f9fafb;
-  cursor:pointer;
+  border-radius:12px;
 }
 </style>
 </head>
 
 <body>
 
-<img src="images/20251016_Logotype_MLE_Label_Landscape_Blanc_CMJN_Transparent.png"
-     alt="Logo Mission Locale" class="logo">
-
-<!-- Écran de démarrage -->
 <div id="startScreen">
-  <div class="startCard">
+  <div class="startBox">
     <h1>🎯 Jeu Mission Locale</h1>
     <p>
-      Évite les obstacles et avance le plus loin possible.<br><br>
-      🟢 Bonne réponse → tu continues<br>
-      🔴 Mauvaise réponse → score remis à zéro
+      Saute pour éviter les obstacles.<br>
+      Barre espace ou toucher l’écran.
     </p>
-    <p>
-      👉 Sauter : toucher l’écran ou barre espace<br>
-      👉 Obstacles aériens à partir du niveau 5
-    </p>
-    <button id="startBtn">Démarrer le jeu</button>
+    <button id="startBtn">Démarrer</button>
   </div>
 </div>
 
-<div id="gameBox">
-  <canvas id="game" width="900" height="260"></canvas>
-</div>
-
-<!-- Quiz -->
-<div id="quiz">
-  <div class="quizBox">
-    <h2 id="question"></h2>
-    <div id="answers"></div>
-  </div>
-</div>
+<canvas id="game" width="900" height="260"></canvas>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let running=false;
-let speed=4;
-let score=0;
-let level=1;
-let obstacles=[];
-let airObstacles=[];
-let showQuiz=false;
+let gameRunning = false;
+let speed = 4;
+let obstacles = [];
 
-const player={
-  x:60,
+const player = {
+  x:80,
   y:180,
   r:22,
   vy:0,
-  jump:false
+  jumping:false
 };
 
-const words=["CV","Entretien","Compétences","Mission Locale","Stage","Emploi","Projet"];
-
-const questions=[
-  [
-  { q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0, points:50 },
-  { q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0, points:40 },
-  { q:"Que signifie \"soft skill\" ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0, points:30 },
-  { q:"Que faire après une candidature ?", a:["Relancer poliment","Ne rien faire","Envoyer tous les jours"], correct:0, points:30 },
-  { q:"En entretien, comment commencer ?", a:["Bonjour + présentation brève","Raconter sa vie privée","Faire un sketch"], correct:0, points:40 },
-  { q:"Quelle est une bonne qualité professionnelle ?", a:["Ponctualité","Arriver en retard","Manque de respect"], correct:0, points:30 },
-  { q:"Comment adapter son CV à une offre ?", a:["Mettre en avant les compétences demandées","Envoyer le même CV","Changer juste la police"], correct:0, points:35 },
-  { q:"Qu'est-ce qu'une lettre de motivation ?", a:["Un texte adapté à l'offre","Un CV plus long","Une liste de notes personnelles"], correct:0, points:25 },
-  { q:"Où trouver des offres ?", a:["Sites d'emploi","Sur la Lune"], correct:0, points:20 },
-  { q:"Quel comportement éviter en entretien ?", a:["Regarder son téléphone","Écouter le recruteur","Demander des précisions"], correct:0, points:30 },
-  { q:"Qu'est-ce qu'un \"stage\" ?", a:["Une période d'apprentissage en entreprise","Un travail permanent","Un abonnement"], correct:0, points:20 },
-  { q:"Pourquoi relancer une candidature ?", a:["Montrer son intérêt","Manquer d'organisation","Crier"], correct:0, points:25 },
-  { q:"Comment se présenter ?", a:["Nom + objectif professionnel bref","Raconter un long épisode","Chanter"], correct:0, points:30 },
-  { q:"Qu'est-ce qu'un bon CV ?", a:["Clairement structuré","Brouillon","Sans contact"], correct:0, points:35 },
-  { q:"Quelle information NE doit PAS figurer ?", a:["Informations médicales sensibles","Compétences","Contact"], correct:0, points:30 },
-  { q:"Que signifie \"références\" dans un CV ?", a:["Personnes pouvant témoigner de vous","Des références bibliographiques","Un mystère"], correct:0, points:20 },
-  { q:"Qu'est-ce qu'une compétence transférable ?", a:["Capacité utile dans plusieurs emplois","Un seul logiciel","Un diplôme précis"], correct:0, points:30 },
-  { q:"Que faire si on ne sait pas répondre en entretien ?", a:["Admettre et proposer comment trouver la réponse","Inventer une fausse réponse","Ignorer"], correct:0, points:40 },
-  { q:"Quel ton adopter en entretien ?", a:["Professionnel et cordial","Hautain","Trop familier"], correct:0, points:30 },
-  { q:"Comment montrer sa motivation ?", a:["Par des exemples concrets","Dire \"je suis motivé\" sans preuve","Ne rien faire"], correct:0, points:35 },
-  { q:"Qu'est-ce qu'une lettre d'accompagnement ?", a:["Un texte pour contextualiser le CV","Un CV détourné","Un document inutile"], correct:0, points:25 },
-  { q:"Pourquoi soigner son profil en ligne ?", a:["Les recruteurs regardent souvent","Personne ne regarde","C'est interdit"], correct:0, points:25 },
-  { q:"Citer une soft skill importante ?", a:["Capacité d'écoute","Savoir tout faire","Ignorance"], correct:0, points:20 },
-  { q:"Que faire en cas de retard ?", a:["Prévenir et s'excuser","Rester silencieux","Ignorer"], correct:0, points:20 },
-  { q:"Quelle information est utile pour un recruteur ?", a:["Expériences récentes et pertinentes","Vos secrets","Informations bancaires"], correct:0, points:30 },
-  { q:"Qu'est-ce que la ponctualité ?", a:["Arriver à l'heure","Arriver quand on veut","Partir tôt"], correct:0, points:15 },
-  { q:"Pourquoi personnaliser sa candidature ?", a:["Montrer l'adéquation avec l'offre","Gagner du temps","Faire n'importe quoi"], correct:0, points:25 },
-  { q:"Que faire avec un trou dans le CV ?", a:["Expliquer brièvement en valorisant","Tout cacher","Mentir"], correct:0, points:20 },
-  { q:"Quel document joindre ?", a:["CV + lettre adaptée","Rien","Tout ce qu'on a"], correct:0, points:20 },
-  { q:"Où demander de l'aide ?", a:["Mission Locale / Pôle emploi / réseau","Personne","La rue"], correct:0, points:20 },
-  { q:"Comment se former ?", a:["Par des formations, des MOOC, des stages","Rien","Regarder la télé"], correct:0, points:25 },
-  { q:"Que montre une bonne attitude ?", a:["Curiosité et respect","Arrogance","Indifférence"], correct:0, points:30 },
-  { q:"Pourquoi relire son CV ?", a:["Éviter les fautes et les incohérences","Pour le style fantaisiste","Pour l'oublier"], correct:0, points:20 },
-  { q:"Que signifie \"candidature spontanée\" ?", a:["Envoyer son CV sans offre précise","Attendre une offre","Appeler en criant"], correct:0, points:25 },
-  { q:"Comment préparer un entretien ?", a:["Se renseigner sur l'entreprise","Y aller sans préparation","Ignorer l'entreprise"], correct:0, points:30 },
-  { q:"Quel est l'objectif d'une lettre ?", a:["Montrer l'adéquation avec l'offre","Remplir un espace","Raconter sa vie"], correct:0, points:20 },
-  { q:"Pourquoi valoriser un stage ?", a:["Montrer des compétences réelles","Le cacher","Ne rien dire"], correct:0, points:20 },
-  { q:"Qu'est-ce qu'une alternance ?", a:["Formation en entreprise + école","Vacances prolongées","Un emploi permanent"], correct:0, points:20 },
-  { q:"Que faire après un entretien ?", a:["Remercier et relancer si besoin","Tout oublier","Attendre une semaine sans rien faire"], correct:0, points:20 },
-  { q:"Quel est un bon comportement en équipe ?", a:["Partager l'information","Tout garder pour soi","S'opposer systématiquement"], correct:0, points:30 },
-  { q:"Pourquoi être honnête ?", a:["La confiance facilite l'embauche","On ne sait pas","C'est inutile"], correct:0, points:30 },
-  { q:"Que chercher dans une offre ?", a:["Mots-clés, compétences et missions","Juste le salaire","Rien"], correct:0, points:25 },
-  { q:"Que fait un conseiller Mission Locale ?", a:["Aide, orientation, formations","Rien","Décore des bureaux"], correct:0, points:20 }
-]
-
-
+// ===== FOND =====
 function drawBackground(){
   ctx.globalAlpha=0.08;
   ctx.fillStyle="#0f7780";
   ctx.font="20px Arial";
-  words.forEach((w,i)=>{
-    ctx.fillText(w,(i*150+Date.now()/20)%1000-100,40+(i*30)%120);
+  ["CV","Entretien","Mission Locale","Compétences"].forEach((w,i)=>{
+    ctx.fillText(w,(i*200 + Date.now()/30)%1000-100,50+i*30);
   });
   ctx.globalAlpha=1;
 }
 
+// ===== JOUEUR ROND MLE =====
 function drawPlayer(){
-  const grad=ctx.createLinearGradient(player.x,player.y,player.x,player.y+player.r*2);
+  const grad = ctx.createLinearGradient(
+    player.x, player.y-player.r,
+    player.x, player.y+player.r
+  );
   grad.addColorStop(0,"#f59e0b");
-  grad.addColorStop(1,"#fff");
-  ctx.fillStyle=grad;
+  grad.addColorStop(1,"#ffffff");
+
+  ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
+  ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
   ctx.fill();
+
   ctx.strokeStyle="#0f7780";
   ctx.lineWidth=4;
   ctx.stroke();
+
   ctx.fillStyle="#0f7780";
   ctx.font="bold 14px Arial";
   ctx.textAlign="center";
@@ -251,107 +124,76 @@ function drawPlayer(){
   ctx.fillText("MLE",player.x,player.y);
 }
 
+// ===== OBSTACLES =====
 function spawnObstacle(){
-  obstacles.push({x:canvas.width,y:190,w:30,h:30});
+  obstacles.push({
+    x:canvas.width,
+    y:190,
+    w:30,
+    h:30
+  });
 }
 
-function spawnAirObstacle(){
-  airObstacles.push({x:canvas.width,y:120,w:30,h:30});
+// ===== SAUT =====
+function jump(){
+  if(!player.jumping){
+    player.jumping=true;
+    player.vy=-16;
+  }
 }
 
-function loop(){
-  if(!running)return;
+// ===== BOUCLE JEU =====
+function gameLoop(){
+  if(!gameRunning) return;
+
   ctx.clearRect(0,0,canvas.width,canvas.height);
   drawBackground();
 
   ctx.fillStyle="#e6f7f7";
   ctx.fillRect(0,200,canvas.width,60);
 
-  if(player.jump){
-    player.vy+=0.9;
-    player.y+=player.vy;
-    if(player.y>=180){
-      player.y=180;
-      player.jump=false;
-      player.vy=0;
+  if(player.jumping){
+    player.vy += 0.9;
+    player.y += player.vy;
+    if(player.y >= 180){
+      player.y = 180;
+      player.jumping = false;
+      player.vy = 0;
     }
   }
 
   drawPlayer();
 
-  if(Math.random()<0.02)spawnObstacle();
-  if(level>=5 && Math.random()<0.01)spawnAirObstacle();
+  if(Math.random() < 0.02){
+    spawnObstacle();
+  }
 
   obstacles.forEach(o=>{
-    o.x-=speed;
+    o.x -= speed;
     ctx.fillStyle="#8b3eff";
     ctx.fillRect(o.x,o.y,o.w,o.h);
-    if(o.x<player.x+player.r && o.x+o.w>player.x &&
-       o.y<player.y+player.r && o.y+o.h>player.y){
-      openQuiz();
-    }
   });
 
-  airObstacles.forEach(o=>{
-    o.x-=speed;
-    ctx.fillStyle="#b45309";
-    ctx.fillRect(o.x,o.y,o.w,o.h);
-    if(player.jump &&
-       o.x<player.x+player.r && o.x+o.w>player.x){
-      openQuiz();
-    }
-  });
+  obstacles = obstacles.filter(o => o.x + o.w > 0);
 
-  score++;
-  if(score%500===0){
-    level++;
-    speed+=0.8;
-  }
-
-  requestAnimationFrame(loop);
+  requestAnimationFrame(gameLoop);
 }
 
-function jump(){
-  if(!player.jump){
-    player.jump=true;
-    player.vy=-16;
-  }
-}
-
+// ===== CONTROLES =====
 document.addEventListener("keydown",e=>{
-  if(e.code==="Space")jump();
+  if(e.code==="Space") jump();
 });
 canvas.addEventListener("click",jump);
 canvas.addEventListener("touchstart",jump);
 
-function openQuiz(){
-  running=false;
-  document.getElementById("quiz").style.display="flex";
-  const q=questions[Math.floor(Math.random()*questions.length)];
-  document.getElementById("question").textContent=q.q;
-  const aBox=document.getElementById("answers");
-  aBox.innerHTML="";
-  q.a.forEach((t,i)=>{
-    const b=document.createElement("button");
-    b.textContent=t;
-    b.onclick=()=>{
-      document.getElementById("quiz").style.display="none";
-      if(i!==q.c)score=0;
-      running=true;
-      loop();
-    };
-    aBox.appendChild(b);
-  });
-}
-
-document.getElementById("startBtn").onclick=()=>{
+// ===== DÉMARRAGE =====
+document.getElementById("startBtn").onclick = () => {
   document.getElementById("startScreen").style.display="none";
-  running=true;
-  loop();
+  gameRunning = true;
+  gameLoop();
 };
 </script>
 
 </body>
 </html>
-
 
