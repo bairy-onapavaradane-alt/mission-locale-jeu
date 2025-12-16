@@ -1,138 +1,160 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parcours Pro – Mission Locale</title>
-<style>
-body{margin:0;font-family:Arial;background:#eef3f9;display:flex;justify-content:center}
-#app{max-width:900px;width:100%;background:#fff}
-header{background:#1e88e5;color:#fff;padding:10px;display:flex;justify-content:space-between;font-size:14px}
-canvas{display:block;background:#f9fbff}
-#wrapper{position:relative}
-.overlay{position:absolute;inset:0;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center}
-.card{background:#fff;padding:20px;border-radius:12px;max-width:500px;width:100%;text-align:center}
-button{padding:12px 20px;border:none;border-radius:20px;background:#fdd835;font-size:16px;cursor:pointer}
-.answers button{background:#1e88e5;color:#fff;margin-top:8px;width:100%}
-</style>
-</head>
-<body>
-<div id="app">
-<header>
-<div>ESPACE pour sauter</div>
-<div id="hud">Score : 0 | Niveau : 1</div>
-</header>
-<div id="wrapper">
-<canvas id="game" width="900" height="420"></canvas>
-<div class="overlay" id="start">
-<div class="card">
-<h2>Parcours Pro – Mission Locale</h2>
-<p>Clique sur démarrer puis saute avec ESPACE</p>
-<button id="startBtn">Démarrer</button>
-</div>
-</div>
-<div class="overlay" id="quiz" style="display:none">
-<div class="card">
-<h3 id="q"></h3>
-<div class="answers" id="a"></div>
-</div>
-</div>
-</div>
-</div>
 <script>
-const canvas=document.getElementById('game');
-const ctx=canvas.getContext('2d');
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
 
-let running=false,score=0,level=1,speed=4;
-const player={x:100,y:340,r:22,vy:0};
-let obstacles=[];
+let running = false;
+let score = 0;
+let level = 1;
+let speed = 4;
+let canAskQuestion = true;
 
-const questions=[
-{ q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0 },
-{ q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0 }
+const player = { x:100, y:340, r:22, vy:0 };
+let obstacles = [];
+
+const questions = [
+  { q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0 },
+  { q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0 },
+  { q:"Que signifie \"soft skill\" ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0 },
+  { q:"Que faire après une candidature ?", a:["Relancer poliment","Ne rien faire","Envoyer tous les jours"], correct:0 },
+  { q:"En entretien, comment commencer ?", a:["Bonjour + présentation brève","Raconter sa vie privée","Faire un sketch"], correct:0 }
 ];
 
 function startGame(){
-document.getElementById('start').style.display='none';
-running=true;
-requestAnimationFrame(loop);
+  document.getElementById('start').style.display='none';
+  resetGame();
+  running = true;
+  requestAnimationFrame(loop);
+}
+
+function resetGame(){
+  score = 0;
+  level = 1;
+  speed = 4;
+  obstacles = [];
+  player.y = 340;
+  player.vy = 0;
+  canAskQuestion = true;
 }
 
 function loop(){
-if(!running)return;
-ctx.clearRect(0,0,900,420);
+  if(!running) return;
+  ctx.clearRect(0,0,900,420);
 
-// sol
-ctx.fillStyle='#e0e6ef';ctx.fillRect(0,380,900,40);
+  // sol
+  ctx.fillStyle='#e0e6ef';
+  ctx.fillRect(0,380,900,40);
 
-// joueur
-player.vy+=0.8;player.y+=player.vy;
-if(player.y>340){player.y=340;player.vy=0}
-ctx.beginPath();ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-ctx.fillStyle='#ffb74d';ctx.fill();ctx.strokeStyle='#1e88e5';ctx.lineWidth=4;ctx.stroke();
-ctx.fillStyle='#000';ctx.textAlign='center';ctx.fillText('MLE',player.x,player.y+4);
+  // joueur
+  player.vy += 0.8;
+  player.y += player.vy;
+  if(player.y > 340){ player.y = 340; player.vy = 0; }
 
-// obstacles
-obstacles.forEach(o=>{
-o.x-=speed;
-ctx.fillStyle=o.air?'#e53935':'#fdd835';
-ctx.fillRect(o.x,o.y,o.w,o.h);
-if(o.x<player.x+player.r&&o.x+o.w>player.x-player.r&&o.y<player.y+player.r&&o.y+o.h>player.y-player.r){lose();}
-});
-obstacles=obstacles.filter(o=>o.x+o.w>0);
+  ctx.beginPath();
+  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
+  ctx.fillStyle='#ffb74d';
+  ctx.fill();
+  ctx.strokeStyle='#1e88e5';
+  ctx.lineWidth=4;
+  ctx.stroke();
+  ctx.fillStyle='#000';
+  ctx.textAlign='center';
+  ctx.fillText('MLE',player.x,player.y+4);
 
-if(Math.random()<0.02)addObstacle();
-score++;if(score%500===0){level++;speed+=0.5}
-document.getElementById('hud').innerText=`Score : ${score} | Niveau : ${level}`;
-requestAnimationFrame(loop);
+  // obstacles
+  obstacles.forEach(o=>{
+    o.x -= speed;
+    ctx.fillStyle = o.air ? '#e53935' : '#fdd835';
+    ctx.fillRect(o.x,o.y,o.w,o.h);
+
+    if(
+      o.x < player.x + player.r &&
+      o.x + o.w > player.x - player.r &&
+      o.y < player.y + player.r &&
+      o.y + o.h > player.y - player.r
+    ){
+      lose();
+    }
+  });
+
+  obstacles = obstacles.filter(o=>o.x+o.w>0);
+
+  if(Math.random() < 0.025) addObstacle();
+
+  score++;
+  if(score % 600 === 0){
+    level++;
+    speed += 0.4;
+  }
+
+  document.getElementById('hud').innerText =
+    `Score : ${score} | Niveau : ${level}`;
+
+  requestAnimationFrame(loop);
 }
 
 function addObstacle(){
-const air=level>=3&&Math.random()<0.4;
-obstacles.push({x:900,y:air?200+Math.random()*100:350,w:30,h:air?30:40,air});
+  const airChance = Math.min(0.2 + level*0.03, 0.5);
+  const air = Math.random() < airChance;
+  obstacles.push({
+    x:900,
+    y: air ? 200 + Math.random()*120 : 350,
+    w:30,
+    h: air ? 28 : 40,
+    air
+  });
 }
 
-function lose(){running=false;showQuiz();}
+function lose(){
+  if(!canAskQuestion) return;
+  running = false;
+  canAskQuestion = false;
+  showQuiz();
+}
 
 function showQuiz(){
   document.getElementById('quiz').style.display='flex';
   const qu = questions[Math.floor(Math.random()*questions.length)];
   document.getElementById('q').innerText = qu.q;
-  const a=document.getElementById('a');
+  const a = document.getElementById('a');
   a.innerHTML='';
+
   qu.a.forEach((t,i)=>{
-    const b=document.createElement('button');
-    b.innerText=t;
-    b.onclick=()=>{
+    const b = document.createElement('button');
+    b.innerText = t;
+    b.onclick = ()=>{
       document.getElementById('quiz').style.display='none';
-      startCountdown(i===qu.correct);
+      if(i === qu.correct){
+        countdown("Bonne réponse !");
+      } else {
+        countdown("GAME OVER", true);
+      }
     };
     a.appendChild(b);
   });
 }
 
-function startCountdown(good){
+function countdown(text, restart=false){
   let count = 3;
   const overlay = document.createElement('div');
-  overlay.className = 'overlay';
-  overlay.innerHTML = `<div class="card"><h2 id="count">${count}</h2><p>Reprise de la partie...</p></div>`;
+  overlay.className='overlay';
+  overlay.innerHTML=`<div class="card"><h2>${text}</h2><h1 id="c">${count}</h1></div>`;
   document.getElementById('wrapper').appendChild(overlay);
 
   const timer = setInterval(()=>{
     count--;
-    overlay.querySelector('#count').innerText = count;
+    overlay.querySelector('#c').innerText = count;
     if(count===0){
       clearInterval(timer);
       overlay.remove();
-      if(!good){score=0;level=1;speed=4;obstacles=[];player.y=340;player.vy=0;}
-      running=true;
+      if(restart) resetGame();
+      running = true;
       requestAnimationFrame(loop);
     }
   },1000);
 }
 
-document.getElementById('startBtn').addEventListener('click',startGame);
-window.addEventListener('keydown',e=>{if(e.code==='Space'&&running)player.vy=-14});
+document.getElementById('startBtn').onclick = startGame;
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space' && running) player.vy = -14;
+});
 </script>
-</body>
-</html>
