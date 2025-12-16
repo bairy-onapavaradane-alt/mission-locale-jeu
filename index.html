@@ -69,27 +69,30 @@
 
   <script>
     const questions = [
-      {
-        q: "La Mission Locale aide principalement les jeunes de :",
-        answers: ["16 à 25 ans", "25 à 40 ans", "Tous les âges"],
-        correct: 0
-      },
-      {
-        q: "Quel type d'aide propose la Mission Locale ?",
-        answers: ["Emploi et formation", "Logement, santé, mobilité", "Toutes les réponses"],
-        correct: 2
-      },
-      {
-        q: "Les services de la Mission Locale sont :",
-        answers: ["Payants", "Gratuits", "Sur abonnement"],
-        correct: 1
-      },
-      {
-        q: "Qui peut t'accompagner à la Mission Locale ?",
-        answers: ["Un conseiller", "Un coach sportif", "Un professeur"],
-        correct: 0
-      }
-    ];
+  { q:"Qu'est-ce qu'une lettre d'accompagnement ?", answers:["Un texte pour contextualiser le CV","Un CV détourné","Un document inutile"], correct:0, points:25 },
+  { q:"Pourquoi soigner son profil en ligne ?", answers:["Les recruteurs regardent souvent","Personne ne regarde","C'est interdit"], correct:0, points:25 },
+  { q:"Citer une soft skill importante ?", answers:["Capacité d'écoute","Savoir tout faire","Ignorance"], correct:0, points:20 },
+  { q:"Que faire en cas de retard ?", answers:["Prévenir et s'excuser","Rester silencieux","Ignorer"], correct:0, points:20 },
+  { q:"Quelle information est utile pour un recruteur ?", answers:["Expériences récentes et pertinentes","Vos secrets","Informations bancaires"], correct:0, points:30 },
+  { q:"Qu'est-ce que la ponctualité ?", answers:["Arriver à l'heure","Arriver quand on veut","Partir tôt"], correct:0, points:15 },
+  { q:"Pourquoi personnaliser sa candidature ?", answers:["Montrer l'adéquation avec l'offre","Gagner du temps","Faire n'importe quoi"], correct:0, points:25 },
+  { q:"Que faire avec un trou dans le CV ?", answers:["Expliquer brièvement en valorisant","Tout cacher","Mentir"], correct:0, points:20 },
+  { q:"Quel document joindre ?", answers:["CV + lettre adaptée","Rien","Tout ce qu'on a"], correct:0, points:20 },
+  { q:"Où demander de l'aide ?", answers:["Mission Locale / Pôle emploi / réseau","Personne","La rue"], correct:0, points:20 },
+  { q:"Comment se former ?", answers:["Par des formations, des MOOC, des stages","Rien","Regarder la télé"], correct:0, points:25 },
+  { q:"Que montre une bonne attitude ?", answers:["Curiosité et respect","Arrogance","Indifférence"], correct:0, points:30 },
+  { q:"Pourquoi relire son CV ?", answers:["Éviter les fautes et les incohérences","Pour le style fantaisiste","Pour l'oublier"], correct:0, points:20 },
+  { q:"Que signifie \"candidature spontanée\" ?", answers:["Envoyer son CV sans offre précise","Attendre une offre","Appeler en criant"], correct:0, points:25 },
+  { q:"Comment préparer un entretien ?", answers:["Se renseigner sur l'entreprise","Y aller sans préparation","Ignorer l'entreprise"], correct:0, points:30 },
+  { q:"Quel est l'objectif d'une lettre ?", answers:["Montrer l'adéquation avec l'offre","Remplir un espace","Raconter sa vie"], correct:0, points:20 },
+  { q:"Pourquoi valoriser un stage ?", answers:["Montrer des compétences réelles","Le cacher","Ne rien dire"], correct:0, points:20 },
+  { q:"Qu'est-ce qu'une alternance ?", answers:["Formation en entreprise + école","Vacances prolongées","Un emploi permanent"], correct:0, points:20 },
+  { q:"Que faire après un entretien ?", answers:["Remercier et relancer si besoin","Tout oublier","Attendre une semaine sans rien faire"], correct:0, points:20 },
+  { q:"Quel est un bon comportement en équipe ?", answers:["Partager l'information","Tout garder pour soi","S'opposer systématiquement"], correct:0, points:30 },
+  { q:"Pourquoi être honnête ?", answers:["La confiance facilite l'embauche","On ne sait pas","C'est inutile"], correct:0, points:30 },
+  { q:"Que chercher dans une offre ?", answers:["Mots-clés, compétences et missions","Juste le salaire","Rien"], correct:0, points:25 },
+  { q:"Que fait un conseiller Mission Locale ?", answers:["Aide, orientation, formations","Rien","Décore des bureaux"], correct:0, points:20 }
+];
 
     let current = 0;
     let score = 0;
