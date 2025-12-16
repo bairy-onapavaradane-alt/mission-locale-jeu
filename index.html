@@ -10,7 +10,7 @@ body{margin:0;font-family:Arial;background:#eef3f9;display:flex;justify-content:
 header{background:#1e88e5;color:#fff;padding:10px;display:flex;justify-content:space-between;font-size:14px}
 canvas{display:block;background:#f9fbff}
 #wrapper{position:relative}
-.overlay{position:absolute;inset:0;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center}
+.overlay{position:absolute;inset:0;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;z-index:10}
 .card{background:#fff;padding:20px;border-radius:12px;max-width:500px;width:100%;text-align:center}
 button{padding:12px 20px;border:none;border-radius:20px;background:#fdd835;font-size:16px;cursor:pointer}
 .answers button{background:#1e88e5;color:#fff;margin-top:8px;width:100%}
@@ -20,8 +20,8 @@ button{padding:12px 20px;border:none;border-radius:20px;background:#fdd835;font-
 <body>
 <div id="app">
 <header>
-<div>ESPACE pour sauter</div>
-<div id="hud">Score : 0 | Niveau : 1</div>
+  <div>ESPACE pour sauter</div>
+  <div id="hud">Score : 0 | Niveau : 1</div>
 </header>
 
 <div id="wrapper">
@@ -30,7 +30,7 @@ button{padding:12px 20px;border:none;border-radius:20px;background:#fdd835;font-
 <div class="overlay" id="start">
   <div class="card">
     <h2>Parcours Pro – Mission Locale</h2>
-    <p>Clique sur démarrer puis saute avec ESPACE</p>
+    <p>Évite les obstacles et bats ton score</p>
     <button id="startBtn">Démarrer</button>
   </div>
 </div>
@@ -49,19 +49,25 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
 let running=false, score=0, level=1, speed=4;
+let questionAsked=false;
+
 const player={x:100,y:340,r:22,vy:0};
 let obstacles=[];
 
-const questions = [
-  { q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0 },
-  { q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0 },
-  { q:"Que signifie \"soft skill\" ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0 },
-  { q:"Que faire après une candidature ?", a:["Relancer poliment","Ne rien faire","Envoyer tous les jours"], correct:0 },
-  { q:"En entretien, comment commencer ?", a:["Bonjour + présentation brève","Raconter sa vie privée","Faire un sketch"], correct:0 }
+const questions=[
+{ q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0 },
+{ q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0 },
+{ q:"Que signifie soft skill ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0 },
+{ q:"Que faire après une candidature ?", a:["Relancer poliment","Ne rien faire","Envoyer tous les jours"], correct:0 },
+{ q:"Comment commencer un entretien ?", a:["Bonjour + présentation brève","Raconter sa vie","Faire un sketch"], correct:0 }
 ];
 
 function startGame(){
   document.getElementById('start').style.display='none';
+  score=0; level=1; speed=4;
+  obstacles=[];
+  questionAsked=false;
+  player.y=340; player.vy=0;
   running=true;
   requestAnimationFrame(loop);
 }
@@ -110,12 +116,17 @@ function loop(){
 
 function addObstacle(){
   const air = level>=3 && Math.random()<0.4;
-  obstacles.push({x:900,y:air?200+Math.random()*100:350,w:30,h:air?30:40,air});
+  obstacles.push({x:900,y:air?200+Math.random()*120:350,w:30,h:air?30:40,air});
 }
 
 function lose(){
   running=false;
-  showQuiz();
+  if(!questionAsked){
+    questionAsked=true;
+    showQuiz();
+  } else {
+    startCountdown(false);
+  }
 }
 
 function showQuiz(){
@@ -129,15 +140,38 @@ function showQuiz(){
     b.innerText=t;
     b.onclick=()=>{
       document.getElementById('quiz').style.display='none';
-      running=true;
-      requestAnimationFrame(loop);
+      startCountdown(i===qu.correct);
     };
     a.appendChild(b);
   });
 }
 
+function startCountdown(good){
+  let count=3;
+  const overlay=document.createElement('div');
+  overlay.className='overlay';
+  overlay.innerHTML=`<div class="card"><h2 id="count">${count}</h2><p>Reprise de la partie…</p></div>`;
+  document.getElementById('wrapper').appendChild(overlay);
+
+  const timer=setInterval(()=>{
+    count--;
+    overlay.querySelector('#count').innerText=count;
+    if(count===0){
+      clearInterval(timer);
+      overlay.remove();
+      if(!good){score=0;level=1;speed=4;obstacles=[];}
+      player.y=340;player.vy=0;
+      running=true;
+      requestAnimationFrame(loop);
+    }
+  },1000);
+}
+
 document.getElementById('startBtn').onclick=startGame;
-window.addEventListener('keydown',e=>{if(e.code==='Space'&&running)player.vy=-14});
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space' && running) player.vy=-14;
+});
 </script>
 </body>
 </html>
+
