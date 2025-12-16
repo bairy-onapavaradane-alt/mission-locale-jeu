@@ -122,11 +122,12 @@ function spawnObstacle() {
   const type = level >= 5 && Math.random() < 0.4 ? 'air' : 'ground';
   obstacles.push({
     x: canvas.width + 20,
-    y: type === 'ground' ? 320 : 200 + Math.random()*80,
-    w: 20,
+    y: type === 'ground' ? player.y + player.r - 10 : player.y - 60 - Math.random()*40,
+    w: 26,
     h: 40,
     type
   });
+}
 }
 
 function drawBackground() {
@@ -214,6 +215,26 @@ function showQuestion() {
     btn.onclick = () => {
       box.style.display = 'none';
       if (i === q.answer) {
+        obstacles = [];
+        countdown();
+      } else {
+        alert('Game Over');
+        resetGame();
+        gameRunning = true;
+        requestAnimationFrame(loop);
+      }
+    };
+    box.querySelector('.qcm').appendChild(btn);
+  });
+}</h3><div class="qcm"></div>`;
+  box.style.display = 'block';
+
+  q.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = c;
+    btn.onclick = () => {
+      box.style.display = 'none';
+      if (i === q.answer) {
         countdown();
       } else {
         alert('Game Over');
@@ -249,3 +270,4 @@ canvas.addEventListener('touchstart', () => player.jump());
 
 </body>
 </html>
+
