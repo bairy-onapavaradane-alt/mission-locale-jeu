@@ -1,139 +1,71 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mission Locale – Jeu d'accueil</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #4f46e5, #22c55e);
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .game {
-      background: rgba(0, 0, 0, 0.3);
-      padding: 30px;
-      border-radius: 16px;
-      width: 100%;
-      max-width: 500px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    p {
-      text-align: center;
-    }
-    .question {
-      font-size: 1.2rem;
-      margin: 20px 0;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      cursor: pointer;
-      background: #fff;
-      color: #111;
-      transition: transform 0.1s, background 0.2s;
-    }
-    button:hover {
-      background: #e5e7eb;
-      transform: scale(1.02);
-    }
-    .score {
-      text-align: center;
-      font-size: 1.1rem;
-      margin-top: 15px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Tire ta carte</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  color: white;
+  text-align: center;
+  padding: 40px;
+}
+
+.card {
+  background: white;
+  color: #333;
+  padding: 30px;
+  border-radius: 20px;
+  max-width: 400px;
+  margin: 30px auto;
+  font-size: 1.2em;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+button {
+  padding: 15px 30px;
+  font-size: 1.1em;
+  border: none;
+  border-radius: 30px;
+  background: #22c55e;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #16a34a;
+}
+</style>
 </head>
+
 <body>
-  <div class="game">
-    <h1>Bienvenue à la Mission Locale</h1>
-    <p>Découvre ce que nous pouvons faire pour toi 👋</p>
 
-    <div class="question" id="question"></div>
-    <div id="answers"></div>
-    <div class="score" id="score"></div>
-  </div>
+<h1>🎲 Tire ta carte</h1>
+<p>Clique et réponds en 30 secondes</p>
 
-  <script>
-    const questions = [
-  { q:"Qu'est-ce qu'une lettre d'accompagnement ?", answers:["Un texte pour contextualiser le CV","Un CV détourné","Un document inutile"], correct:0, points:25 },
-  { q:"Pourquoi soigner son profil en ligne ?", answers:["Les recruteurs regardent souvent","Personne ne regarde","C'est interdit"], correct:0, points:25 },
-  { q:"Citer une soft skill importante ?", answers:["Capacité d'écoute","Savoir tout faire","Ignorance"], correct:0, points:20 },
-  { q:"Que faire en cas de retard ?", answers:["Prévenir et s'excuser","Rester silencieux","Ignorer"], correct:0, points:20 },
-  { q:"Quelle information est utile pour un recruteur ?", answers:["Expériences récentes et pertinentes","Vos secrets","Informations bancaires"], correct:0, points:30 },
-  { q:"Qu'est-ce que la ponctualité ?", answers:["Arriver à l'heure","Arriver quand on veut","Partir tôt"], correct:0, points:15 },
-  { q:"Pourquoi personnaliser sa candidature ?", answers:["Montrer l'adéquation avec l'offre","Gagner du temps","Faire n'importe quoi"], correct:0, points:25 },
-  { q:"Que faire avec un trou dans le CV ?", answers:["Expliquer brièvement en valorisant","Tout cacher","Mentir"], correct:0, points:20 },
-  { q:"Quel document joindre ?", answers:["CV + lettre adaptée","Rien","Tout ce qu'on a"], correct:0, points:20 },
-  { q:"Où demander de l'aide ?", answers:["Mission Locale / Pôle emploi / réseau","Personne","La rue"], correct:0, points:20 },
-  { q:"Comment se former ?", answers:["Par des formations, des MOOC, des stages","Rien","Regarder la télé"], correct:0, points:25 },
-  { q:"Que montre une bonne attitude ?", answers:["Curiosité et respect","Arrogance","Indifférence"], correct:0, points:30 },
-  { q:"Pourquoi relire son CV ?", answers:["Éviter les fautes et les incohérences","Pour le style fantaisiste","Pour l'oublier"], correct:0, points:20 },
-  { q:"Que signifie \"candidature spontanée\" ?", answers:["Envoyer son CV sans offre précise","Attendre une offre","Appeler en criant"], correct:0, points:25 },
-  { q:"Comment préparer un entretien ?", answers:["Se renseigner sur l'entreprise","Y aller sans préparation","Ignorer l'entreprise"], correct:0, points:30 },
-  { q:"Quel est l'objectif d'une lettre ?", answers:["Montrer l'adéquation avec l'offre","Remplir un espace","Raconter sa vie"], correct:0, points:20 },
-  { q:"Pourquoi valoriser un stage ?", answers:["Montrer des compétences réelles","Le cacher","Ne rien dire"], correct:0, points:20 },
-  { q:"Qu'est-ce qu'une alternance ?", answers:["Formation en entreprise + école","Vacances prolongées","Un emploi permanent"], correct:0, points:20 },
-  { q:"Que faire après un entretien ?", answers:["Remercier et relancer si besoin","Tout oublier","Attendre une semaine sans rien faire"], correct:0, points:20 },
-  { q:"Quel est un bon comportement en équipe ?", answers:["Partager l'information","Tout garder pour soi","S'opposer systématiquement"], correct:0, points:30 },
-  { q:"Pourquoi être honnête ?", answers:["La confiance facilite l'embauche","On ne sait pas","C'est inutile"], correct:0, points:30 },
-  { q:"Que chercher dans une offre ?", answers:["Mots-clés, compétences et missions","Juste le salaire","Rien"], correct:0, points:25 },
-  { q:"Que fait un conseiller Mission Locale ?", answers:["Aide, orientation, formations","Rien","Décore des bureaux"], correct:0, points:20 }
+<div class="card" id="card">
+  Clique sur le bouton pour commencer
+</div>
+
+<button onclick="tirerCarte()">Tirer une carte</button>
+
+<script>
+const cartes = [
+  "💡 Si tu pouvais avoir un job demain, lequel ?",
+  "🎯 Cite une qualité que tu as",
+  "🚀 Un métier que tu aimerais découvrir",
+  "🧠 Une chose que tu sais bien faire",
+  "🔥 Ton objectif ce mois-ci",
+  "🤝 Cite une qualité pour travailler en équipe",
+  "❓ Une question que tu aimerais poser à la Mission Locale"
 ];
 
-    let current = 0;
-    let score = 0;
+function tirerCarte() {
+  const carte = cartes[Math.floor(Math.random() * cartes.length)];
+  document.getElementById("card").innerText = carte;
+}
+</script>
 
-    const questionEl = document.getElementById("question");
-    const answersEl = document.getElementById("answers");
-    const scoreEl = document.getElementById("score");
-
-    function loadQuestion() {
-      if (current >= questions.length) {
-        questionEl.innerHTML = "🎉 Bravo ! Tu as terminé le jeu.";
-        answersEl.innerHTML = "";
-        scoreEl.innerHTML = `Score final : ${score} / ${questions.length}`;
-        return;
-      }
-
-      const q = questions[current];
-      questionEl.textContent = q.q;
-      answersEl.innerHTML = "";
-
-      q.answers.forEach((answer, index) => {
-        const btn = document.createElement("button");
-        btn.textContent = answer;
-        btn.onclick = () => checkAnswer(index);
-        answersEl.appendChild(btn);
-      });
-
-      scoreEl.textContent = `Score : ${score}`;
-    }
-
-    function checkAnswer(index) {
-      if (index === questions[current].correct) {
-        score++;
-      }
-      current++;
-      loadQuestion();
-    }
-
-    loadQuestion();
-  </script>
 </body>
 </html>
-
- 
