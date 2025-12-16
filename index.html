@@ -160,8 +160,13 @@ function drawPlayer() {
   ctx.fillText('MLE', player.x, player.y+4);
 }
 
+// Boucle principale toujours active
 function loop() {
-  if (!gameRunning) return;
+  // le jeu peut être en pause mais la boucle continue
+  if (!gameRunning) {
+    requestAnimationFrame(loop);
+    return;
+  }
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   drawBackground();
@@ -290,6 +295,9 @@ function countdown() {
     }
   }, 1000);
 }
+
+// Lancement automatique de la boucle au chargement
+requestAnimationFrame(loop);
 
 window.addEventListener('keydown', e => { if (e.code === 'Space') player.jump(); });
 canvas.addEventListener('click', () => player.jump());
