@@ -4,7 +4,42 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Mission Locale — le jeu Mission locale  (Infini + Quiz & Niveaux)</title>
-<style>
+<style>.start-screen {
+  position: fixed;
+  inset: 0;
+  background: #f7fcfd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.start-card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+}
+
+.start-card h1 {
+  color: #0f7780;
+  margin-bottom: 12px;
+}
+
+.start-card button {
+  margin-top: 16px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  background: #0f7780;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
   :root{
     --bg: #f7fcfd;
     --primary: #0f7780;
@@ -37,7 +72,27 @@
   }
 </style>
 </head>
-<body>
+<body> <div id="startScreen" class="start-screen">
+  <div class="start-card">
+    <h1>🎯 Parcours Pro — Mission Locale</h1>
+
+    <p>
+      Évite les obstacles et avance le plus loin possible.<br>
+      Si tu touches un obstacle, une question professionnelle apparaît.<br>
+      👉 Bonne réponse : tu continues<br>
+      👉 Mauvaise réponse : ton score revient à 0
+    </p>
+
+    <ul>
+      <li>Sauter : Espace ou clic</li>
+      <li>Certains obstacles se passent sans sauter</li>
+      <li>Le jeu est infini</li>
+    </ul>
+
+    <button id="startGameBtn">Démarrer le jeu</button>
+  </div>
+</div>
+
   <!-- Remplace REPLACE_LOGO par ton base64 (ou par le nom du fichier image dans le repo) -->
   <img id="logo" class="logo" alt="Logo Mission Locale" src="REPLACE_LOGO">
   <div class="container">
@@ -478,3 +533,14 @@
 </script>
 </body>
 </html>
+<script>
+const startScreen = document.getElementById("startScreen");
+const startGameBtn = document.getElementById("startGameBtn");
+
+startGameBtn.addEventListener("click", () => {
+  startScreen.style.display = "none";
+  running = true;
+  paused = false;
+  requestAnimationFrame(gameLoop);
+});
+</script>
