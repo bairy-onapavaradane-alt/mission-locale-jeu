@@ -1,546 +1,276 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Mission Locale — le jeu Mission locale  (Infini + Quiz & Niveaux)</title>
-<style>.start-screen {
-  position: fixed;
-  inset: 0;
-  background: #f7fcfd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission Locale – Parcours Pro</title>
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#f4fbfc;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
 }
 
-.start-card {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  max-width: 420px;
-  text-align: center;
-  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+#startScreen{
+  position:fixed;
+  inset:0;
+  background:#f4fbfc;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:10;
 }
 
-.start-card h1 {
-  color: #0f7780;
-  margin-bottom: 12px;
+.start-card{
+  background:white;
+  padding:24px;
+  border-radius:14px;
+  max-width:420px;
+  text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
 
-.start-card button {
-  margin-top: 16px;
-  padding: 12px 20px;
-  border-radius: 10px;
-  border: none;
-  background: #0f7780;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
+.start-card h1{
+  color:#0f7780;
 }
 
-  :root{
-    --bg: #f7fcfd;
-    --primary: #0f7780;
-    --accent: #d1346f;
-    --muted: #6b7280;
-    --card: #ffffff;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;font-family:Inter, Arial, Helvetica, sans-serif}
-  html,body{height:100%}
-  body{background:var(--bg);display:flex;align-items:center;justify-content:center;padding:12px}
-  .container{width:100%;max-width:980px}
-  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:12px}
-  .title{font-size:18px;color:var(--primary);font-weight:700}
-  .meta{font-size:13px;color:var(--muted)}
-  .logo{position:fixed;top:12px;right:12px;width:220px;max-width:34vw;z-index:40}
-  .card{background:var(--card);border-radius:12px;box-shadow:0 6px 20px rgba(16,24,40,.08);padding:12px}
-  canvas{display:block;width:100%;height:auto;border-radius:8px;background:linear-gradient(180deg,#eaf7f8,#fff);touch-action:none}
-  .controls{display:flex;gap:8px;align-items:center;margin-top:8px}
-  .btn{padding:8px 12px;border-radius:8px;border:0;background:var(--primary);color:white;cursor:pointer;font-weight:700}
-  .btnGhost{background:transparent;border:1px solid #e6eef0;color:var(--muted);padding:6px 10px;border-radius:8px}
-  #hud{margin-left:auto;color:var(--muted);font-weight:700}
-  #quizModal{display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--card);padding:16px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:60;width:min(92%,420px)}
-  #quizModal h3{color:var(--primary);margin-bottom:8px}
-  .answerBtn{display:block;width:100%;text-align:left;margin:6px 0;padding:10px;border-radius:8px;border:1px solid #e6eef0;background:#fbfeff;cursor:pointer}
-  .flash{position:fixed;left:50%;top:14%;transform:translateX(-50%);padding:8px 12px;color:white;border-radius:8px;z-index:70}
-  @media (max-width:600px){
-    .logo{width:140px}
-    .title{font-size:16px}
-    canvas{max-height:54vh}
-  }
+.start-card button{
+  margin-top:16px;
+  padding:12px 20px;
+  font-size:16px;
+  font-weight:bold;
+  background:#0f7780;
+  color:white;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.logo{
+  position:fixed;
+  top:10px;
+  right:10px;
+  width:160px;
+}
+
+#gameContainer{
+  width:100%;
+  max-width:900px;
+}
+
+canvas{
+  width:100%;
+  background:linear-gradient(#e9f7f8,#ffffff);
+  border-radius:10px;
+}
+
+#hud{
+  display:flex;
+  justify-content:space-between;
+  margin-top:8px;
+  font-weight:bold;
+}
+
+#quizModal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  justify-content:center;
+  align-items:center;
+  z-index:20;
+}
+
+.quiz-card{
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  max-width:400px;
+}
+
+.quiz-card h3{
+  color:#0f7780;
+}
+
+.answer{
+  margin-top:8px;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  cursor:pointer;
+}
 </style>
 </head>
-<body> <div id="startScreen" class="start-screen">
+
+<body>
+
+<img src="images/logo-mle.png" class="logo" alt="Logo Mission Locale">
+
+<div id="startScreen">
   <div class="start-card">
-    <h1>🎯 Parcours Pro — Mission Locale</h1>
-
+    <h1>🎯 Parcours Pro – Mission Locale</h1>
     <p>
-      Évite les obstacles et avance le plus loin possible.<br>
-      Si tu touches un obstacle, une question professionnelle apparaît.<br>
-      👉 Bonne réponse : tu continues<br>
-      👉 Mauvaise réponse : ton score revient à 0
+      Évite les obstacles et avance le plus loin possible.<br><br>
+      👉 Si tu touches un obstacle, une question professionnelle apparaît.<br>
+      ✔ Bonne réponse : tu continues<br>
+      ❌ Mauvaise réponse : le score revient à 0
     </p>
-
-    <ul>
-      <li>Sauter : Espace ou clic</li>
-      <li>Certains obstacles se passent sans sauter</li>
-      <li>Le jeu est infini</li>
-    </ul>
-
-    <button id="startGameBtn">Démarrer le jeu</button>
+    <p>
+      Sauter : clic ou espace<br>
+      Certains obstacles se passent sans sauter
+    </p>
+    <button id="startBtn">Démarrer le jeu</button>
   </div>
 </div>
 
-  <!-- Remplace REPLACE_LOGO par ton base64 (ou par le nom du fichier image dans le repo) -->
-  <img id="logo" class="logo" alt="Logo Mission Locale" src="REPLACE_LOGO">
-  <div class="container">
-    <div class="card">
-      <div class="header">
-        <div>
-          <div class="title">Parcours pro — Mini-jeu Infini</div>
-          <div class="meta">Saut: Espace / Taper l'écran — Réponds si tu perds pour continuer</div>
-        </div>
-        <div id="status">
-          <span class="meta">Niveau: <strong id="level">1</strong></span>
-          <span style="margin-left:12px" class="meta">Score: <strong id="score">0</strong></span>
-        </div>
-      </div>
-
-      <canvas id="gameCanvas" width="900" height="260" aria-label="Zone de jeu"></canvas>
-
-      <div class="controls">
-        <button id="startBtn" class="btn">Démarrer / Réinitialiser</button>
-        <button id="pauseBtn" class="btnGhost">Pause</button>
-        <button id="fullBtn" class="btnGhost">Plein écran</button>
-        <div id="hud" aria-live="polite">Vitesse : normale</div>
-      </div>
-    </div>
+<div id="gameContainer">
+  <canvas id="game" width="900" height="300"></canvas>
+  <div id="hud">
+    <div>Score : <span id="score">0</span></div>
+    <div>Niveau : <span id="level">1</span></div>
   </div>
+</div>
 
-  <div id="quizModal" role="dialog" aria-modal="true" aria-hidden="true">
-    <h3 id="quizQ">Question</h3>
+<div id="quizModal">
+  <div class="quiz-card">
+    <h3 id="quizQuestion"></h3>
     <div id="quizAnswers"></div>
   </div>
+</div>
 
 <script>
-/* Partie 1 JS : déclaration des utilitaires et des variables globales */
-(function(){
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-  const startBtn = document.getElementById('startBtn');
-  const pauseBtn = document.getElementById('pauseBtn');
-  const fullBtn = document.getElementById('fullBtn');
-  const scoreEl = document.getElementById('score');
-  const levelEl = document.getElementById('level');
-  const hud = document.getElementById('hud');
-  const quizModal = document.getElementById('quizModal');
-  const quizQ = document.getElementById('quizQ');
-  const quizAnswers = document.getElementById('quizAnswers');
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-  // état du jeu
-  let running = false;
-  let paused = false;
-  let speed = 4;            // vitesse initiale (augmente avec les niveaux)
-  let obstacles = [];      // obstacles au sol et ciel
-  let airborne = [];       // obstacles aériens (formes pro)
-  let score = 0;
-  let level = 1;
-  let tick = 0;
-  let quizMode = false;
-  let waitingForAnswer = false;
-  let player = {
-    x: 60, y: 180, w: 28, h: 48, vy: 0, jumping: false
-  };
+let running=false;
+let score=0;
+let level=1;
+let speed=3;
 
-  // paramètres réglables (faciles à modifier)
-  const LEVEL_THRESHOLD = 800;    // points pour monter de niveau (x level)
-  const MAX_SPEED = 16;
-  const AIR_OBSTACLE_START_LEVEL = 4; // les obstacles aériens n'apparaissent qu'à partir du niveau 4
-  const AIR_SPAWN_CHANCE = 0.18; // probabilité d'apparition d'un obstacle aérien quand éligible
-  /* ===== utilitaires ===== */
-  function rand(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
-  function flash(text, color='#0b7777', duration=1200){
-    const el = document.createElement('div');
-    el.className = 'flash';
-    el.style.background = color;
-    el.textContent = text;
-    document.body.appendChild(el);
-    setTimeout(()=>el.remove(), duration);
-  }
-  function updateHUD(){
-    scoreEl.textContent = score;
-    levelEl.textContent = level;
-    hud.textContent = 'Vitesse : ' + Math.round(speed);
-  }
+const player={
+  x:80,
+  y:210,
+  r:16,
+  vy:0,
+  jump:false
+};
 
-  /* ===== obstacles & background ===== */
-  function spawnGroundObstacle(){
-    // cubes ou cubes avec pics (visuel différencié)
-    const kind = Math.random() < 0.45 ? 'cube' : 'cube_pics';
-    const h = kind === 'cube' ? rand(30,44) : rand(36,56);
-    const w = rand(28,46);
-    const x = canvas.width + 20;
-    const y = 200 - h;
-    obstacles.push({x,y,w,h,kind});
-  }
+let obstacles=[];
+let airObstacles=[];
 
-  function spawnAirObstacle(){
-    // uniquement à partir du level défini
-    // trois types stylisés "pro" : mallette, CV, étoile (icônes dessinées)
-    const types = ['briefcase','cv','star'];
-    const t = types[rand(0,types.length-1)];
-    const w = 40;
-    const h = 34;
-    const x = canvas.width + 20;
-    // position aérienne : plus haut
-    const y = rand(70,130);
-    airborne.push({x,y,w,h,t});
-  }
+const questions=[
+ {q:"Que doit-on apporter à un entretien ?",a:["Un CV","Une console","Rien"],c:0},
+ {q:"Arriver à l’heure signifie ?",a:["10 minutes avant","En retard","Quand on veut"],c:0},
+ {q:"À quoi sert un stage ?",a:["Découvrir un métier","Jouer","Ne rien faire"],c:0},
+ {q:"Que faire si on ne comprend pas ?",a:["Demander","Faire semblant","Partir"],c:0},
+ {q:"Quel comportement est professionnel ?",a:["Dire bonjour","Crier","Téléphone"],c:0}
+];
 
-  /* ===== draw helpers ===== */
-  function drawPlayer(){
-    // tête
-    ctx.fillStyle = '#fdebd9';
-    ctx.beginPath();
-    ctx.arc(player.x + player.w/2, player.y + 12, 8, 0, Math.PI*2);
-    ctx.fill();
-    // corps (costume)
-    ctx.fillStyle = '#0b4d52';
-    ctx.fillRect(player.x, player.y + 20, player.w, player.h - 20);
-    // cravate (accent)
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#d1346f';
-    ctx.fillRect(player.x + player.w/2 - 4, player.y + 28, 8, 16);
-  }
+function drawPlayer(){
+  ctx.beginPath();
+  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
+  ctx.fillStyle="#0f7780";
+  ctx.fill();
+  ctx.fillStyle="white";
+  ctx.font="12px Arial";
+  ctx.fillText("MLE",player.x-12,player.y+4);
+}
 
-  function drawGroundObstacle(o){
-    // cube simple
-    ctx.fillStyle = o.kind === 'cube' ? '#8b3eff' : '#6b2b2b';
-    ctx.fillRect(o.x, o.y, o.w, o.h);
-    // if pics, draw triangles on top to make it "piquant"
-    if(o.kind === 'cube_pics'){
-      ctx.fillStyle = '#3b0f0f';
-      const spikeCount = Math.max(2, Math.floor(o.w/8));
-      for(let i=0;i<spikeCount;i++){
-        const sx = o.x + (i*(o.w/spikeCount));
-        ctx.beginPath();
-        ctx.moveTo(sx, o.y);
-        ctx.lineTo(sx + (o.w/spikeCount)/2, o.y - 10);
-        ctx.lineTo(sx + (o.w/spikeCount), o.y);
-        ctx.closePath();
-        ctx.fill();
-      }
-    }
-  }
+function spawnObstacle(){
+  obstacles.push({x:canvas.width,y:230,w:30,h:30});
+}
 
-  function drawAirObstacle(a){
-    // draw stylized professional icon shapes so they se distingue du fond:
-    if(a.t === 'briefcase'){
-      // mallette
-      ctx.fillStyle = '#0b5560';
-      ctx.fillRect(a.x, a.y, a.w, a.h);
-      ctx.fillStyle = '#cdf0f0';
-      ctx.fillRect(a.x + 6, a.y + 6, a.w - 12, a.h - 12);
-      // handle
-      ctx.fillStyle = '#0b5560';
-      ctx.fillRect(a.x + a.w/2 - 10, a.y - 6, 20, 6);
-    } else if(a.t === 'cv'){
-      // rectangle CV with lines
-      ctx.fillStyle = '#225a78';
-      ctx.fillRect(a.x, a.y, a.w, a.h);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(a.x + 6, a.y + 8, a.w - 12, 6);
-      ctx.fillRect(a.x + 6, a.y + 20, a.w - 20, 6);
-      ctx.fillRect(a.x + 6, a.y + 32, a.w - 20, 6);
-    } else if(a.t === 'star'){
-      // star: quick draw
-      ctx.fillStyle = '#b47b00';
-      const cx = a.x + a.w/2;
-      const cy = a.y + a.h/2;
-      ctx.beginPath();
-      for(let i=0;i<5;i++){
-        const ang = (Math.PI*2/5)*i - Math.PI/2;
-        const rx = Math.cos(ang) * (a.w/3) + cx;
-        const ry = Math.sin(ang) * (a.h/3) + cy;
-        if(i===0) ctx.moveTo(rx,ry); else ctx.lineTo(rx,ry);
-        const ang2 = ang + Math.PI/5;
-        const rx2 = Math.cos(ang2) * (a.w/6) + cx;
-        const ry2 = Math.sin(ang2) * (a.h/6) + cy;
-        ctx.lineTo(rx2,ry2);
-      }
-      ctx.closePath(); ctx.fill();
-    }
-  }
+function spawnAir(){
+  airObstacles.push({x:canvas.width,y:140,w:40,h:25});
+}
 
-  /* ===== background aesthetic elements (no interaction) ===== */
-  const bgWords = ['CV','Compétences','Entretien','Savoir-être','Mission Locale','Stage','Emploi','Projet'];
-  function drawBackground(){
-    // subtle background words/icons for aesthetic only
-    ctx.save();
-    ctx.globalAlpha = 0.08;
-    ctx.fillStyle = '#0b4d52';
-    ctx.font = '20px Arial';
-    for(let i=0;i<6;i++){
-      const w = bgWords[i % bgWords.length];
-      const x = (i*140 + (tick*0.3)%900) % (canvas.width+200) - 80;
-      const y = 40 + (i*30)%120;
-      ctx.fillText(w, x, y);
-    }
-    ctx.restore();
-  }
-  /* ===== quiz bank: questions variées (beaucoup) ===== */
-  const quizBank = [
-  [
-  { q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0, points:50 },
-  { q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0, points:40 },
-  { q:"Que signifie \"soft skill\" ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0, points:30 },
-  { q:"Que faire après une candidature ?", a:["Relancer poliment","Ne rien faire","Envoyer tous les jours"], correct:0, points:30 },
-  { q:"En entretien, comment commencer ?", a:["Bonjour + présentation brève","Raconter sa vie privée","Faire un sketch"], correct:0, points:40 },
-  { q:"Quelle est une bonne qualité professionnelle ?", a:["Ponctualité","Arriver en retard","Manque de respect"], correct:0, points:30 },
-  { q:"Comment adapter son CV à une offre ?", a:["Mettre en avant les compétences demandées","Envoyer le même CV","Changer juste la police"], correct:0, points:35 },
-  { q:"Qu'est-ce qu'une lettre de motivation ?", a:["Un texte adapté à l'offre","Un CV plus long","Une liste de notes personnelles"], correct:0, points:25 },
-  { q:"Où trouver des offres ?", a:["Sites d'emploi","Sur la Lune"], correct:0, points:20 },
-  { q:"Quel comportement éviter en entretien ?", a:["Regarder son téléphone","Écouter le recruteur","Demander des précisions"], correct:0, points:30 },
-  { q:"Qu'est-ce qu'un \"stage\" ?", a:["Une période d'apprentissage en entreprise","Un travail permanent","Un abonnement"], correct:0, points:20 },
-  { q:"Pourquoi relancer une candidature ?", a:["Montrer son intérêt","Manquer d'organisation","Crier"], correct:0, points:25 },
-  { q:"Comment se présenter ?", a:["Nom + objectif professionnel bref","Raconter un long épisode","Chanter"], correct:0, points:30 },
-  { q:"Qu'est-ce qu'un bon CV ?", a:["Clairement structuré","Brouillon","Sans contact"], correct:0, points:35 },
-  { q:"Quelle information NE doit PAS figurer ?", a:["Informations médicales sensibles","Compétences","Contact"], correct:0, points:30 },
-  { q:"Que signifie \"références\" dans un CV ?", a:["Personnes pouvant témoigner de vous","Des références bibliographiques","Un mystère"], correct:0, points:20 },
-  { q:"Qu'est-ce qu'une compétence transférable ?", a:["Capacité utile dans plusieurs emplois","Un seul logiciel","Un diplôme précis"], correct:0, points:30 },
-  { q:"Que faire si on ne sait pas répondre en entretien ?", a:["Admettre et proposer comment trouver la réponse","Inventer une fausse réponse","Ignorer"], correct:0, points:40 },
-  { q:"Quel ton adopter en entretien ?", a:["Professionnel et cordial","Hautain","Trop familier"], correct:0, points:30 },
-  { q:"Comment montrer sa motivation ?", a:["Par des exemples concrets","Dire \"je suis motivé\" sans preuve","Ne rien faire"], correct:0, points:35 },
-  { q:"Qu'est-ce qu'une lettre d'accompagnement ?", a:["Un texte pour contextualiser le CV","Un CV détourné","Un document inutile"], correct:0, points:25 },
-  { q:"Pourquoi soigner son profil en ligne ?", a:["Les recruteurs regardent souvent","Personne ne regarde","C'est interdit"], correct:0, points:25 },
-  { q:"Citer une soft skill importante ?", a:["Capacité d'écoute","Savoir tout faire","Ignorance"], correct:0, points:20 },
-  { q:"Que faire en cas de retard ?", a:["Prévenir et s'excuser","Rester silencieux","Ignorer"], correct:0, points:20 },
-  { q:"Quelle information est utile pour un recruteur ?", a:["Expériences récentes et pertinentes","Vos secrets","Informations bancaires"], correct:0, points:30 },
-  { q:"Qu'est-ce que la ponctualité ?", a:["Arriver à l'heure","Arriver quand on veut","Partir tôt"], correct:0, points:15 },
-  { q:"Pourquoi personnaliser sa candidature ?", a:["Montrer l'adéquation avec l'offre","Gagner du temps","Faire n'importe quoi"], correct:0, points:25 },
-  { q:"Que faire avec un trou dans le CV ?", a:["Expliquer brièvement en valorisant","Tout cacher","Mentir"], correct:0, points:20 },
-  { q:"Quel document joindre ?", a:["CV + lettre adaptée","Rien","Tout ce qu'on a"], correct:0, points:20 },
-  { q:"Où demander de l'aide ?", a:["Mission Locale / Pôle emploi / réseau","Personne","La rue"], correct:0, points:20 },
-  { q:"Comment se former ?", a:["Par des formations, des MOOC, des stages","Rien","Regarder la télé"], correct:0, points:25 },
-  { q:"Que montre une bonne attitude ?", a:["Curiosité et respect","Arrogance","Indifférence"], correct:0, points:30 },
-  { q:"Pourquoi relire son CV ?", a:["Éviter les fautes et les incohérences","Pour le style fantaisiste","Pour l'oublier"], correct:0, points:20 },
-  { q:"Que signifie \"candidature spontanée\" ?", a:["Envoyer son CV sans offre précise","Attendre une offre","Appeler en criant"], correct:0, points:25 },
-  { q:"Comment préparer un entretien ?", a:["Se renseigner sur l'entreprise","Y aller sans préparation","Ignorer l'entreprise"], correct:0, points:30 },
-  { q:"Quel est l'objectif d'une lettre ?", a:["Montrer l'adéquation avec l'offre","Remplir un espace","Raconter sa vie"], correct:0, points:20 },
-  { q:"Pourquoi valoriser un stage ?", a:["Montrer des compétences réelles","Le cacher","Ne rien dire"], correct:0, points:20 },
-  { q:"Qu'est-ce qu'une alternance ?", a:["Formation en entreprise + école","Vacances prolongées","Un emploi permanent"], correct:0, points:20 },
-  { q:"Que faire après un entretien ?", a:["Remercier et relancer si besoin","Tout oublier","Attendre une semaine sans rien faire"], correct:0, points:20 },
-  { q:"Quel est un bon comportement en équipe ?", a:["Partager l'information","Tout garder pour soi","S'opposer systématiquement"], correct:0, points:30 },
-  { q:"Pourquoi être honnête ?", a:["La confiance facilite l'embauche","On ne sait pas","C'est inutile"], correct:0, points:30 },
-  { q:"Que chercher dans une offre ?", a:["Mots-clés, compétences et missions","Juste le salaire","Rien"], correct:0, points:25 },
-  { q:"Que fait un conseiller Mission Locale ?", a:["Aide, orientation, formations","Rien","Décore des bureaux"], correct:0, points:20 }
-]
-
-  /* ===== quiz handling ===== */
-  function showQuiz(onCorrect){
-    quizMode = true;
-    quizModal.style.display = 'block';
-    quizModal.setAttribute('aria-hidden','false');
-    // pick a random question (diverse)
-    const q = quizBank[Math.floor(Math.random()*quizBank.length)];
-    quizQ.textContent = q.q;
-    quizAnswers.innerHTML = '';
-    q.a.forEach((ans,i)=>{
-      const b = document.createElement('button');
-      b.className = 'answerBtn';
-      b.textContent = ans;
-      b.addEventListener('click', ()=>{
-        // if correct
-        if(i === q.correct){
-          score += q.points;
-          flash('+' + q.points, '#137f7f');
-          // small speed boost as reward
-          speed = Math.min(MAX_SPEED, speed + 0.4);
-          // continue the game
-          quizMode = false;
-          quizModal.style.display = 'none';
-          if(typeof onCorrect === 'function') onCorrect(true);
-        } else {
-          // wrong answer -> score reset to 0
-          score = 0;
-          flash('Mauvaise réponse — score remis à 0', '#b92b2b', 1500);
-          quizMode = false;
-          quizModal.style.display = 'none';
-          if(typeof onCorrect === 'function') onCorrect(false);
-        }
-        updateHUD();
-      });
-      quizAnswers.appendChild(b);
-    });
-  }
-
-  /* ===== collision & main loop ===== */
-  function checkCollision(o){
-    return (o.x < player.x + player.w &&
-            o.x + o.w > player.x &&
-            o.y < player.y + player.h &&
-            o.y + o.h > player.y);
-  }
-
-  function gameLoop(){
-    if(!running) return;
-    if(paused || quizMode) { requestAnimationFrame(gameLoop); return; }
-    tick++;
-    // clear
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    // background aesthetic
-    drawBackground();
-
-    // ground
-    ctx.fillStyle = '#e6f7f7';
-    ctx.fillRect(0,200,canvas.width,canvas.height-200);
-
-    // player physics & draw
-    if(player.jumping){
-      player.vy += 0.9;
-      player.y += player.vy;
-      if(player.y >= 180){ player.y = 180; player.jumping = false; player.vy = 0; }
-    }
-    drawPlayer();
-
-    // spawn ground obstacles (less frequent to preserve flow)
-    if(!quizMode && tick % Math.max(60, 140 - level*8) === 0){
-      if(Math.random() < 0.6) spawnGroundObstacle();
-    }
-
-    // airborne spawn only after level threshold
-    if(level >= AIR_OBSTACLE_START_LEVEL && !quizMode && tick % Math.max(120, 240 - level*12) === 0){
-      if(Math.random() < AIR_SPAWN_CHANCE) spawnAirObstacle();
-    }
-
-    // move & draw airborne obstacles
-    for(let i = airborne.length - 1; i >= 0; i--){
-      const a = airborne[i];
-      a.x -= speed;
-      drawAirObstacle(a);
-      // AIR obstacles are avoided by staying on ground (player must NOT jump)
-      if(!quizMode && a.x < player.x + player.w && a.x + a.w > player.x){
-        // if player is in air -> collision -> force quiz
-        if(player.jumping){
-          // lost: must answer to continue
-          quizMode = true;
-          showQuiz(function(correct){
-            // if wrong -> score already reset; continue regardless
-            quizMode = false;
-            // if correct, continue
-          });
-          // remove the airborne obstacle
-          airborne.splice(i,1);
-          continue;
-        }
-      }
-      if(a.x + a.w < -50) airborne.splice(i,1);
-    }
-
-    // move & draw ground obstacles
-    for(let i = obstacles.length - 1; i >= 0; i--){
-      const o = obstacles[i];
-      o.x -= speed;
-      drawGroundObstacle(o);
-      if(!quizMode && !waitingForAnswer && checkCollision(o)){
-        // collision on ground -> lost: must answer question to continue
-        waitingForAnswer = true;
-        showQuiz(function(correct){
-          waitingForAnswer = false;
-          // if wrong -> score already set to 0 in showQuiz
-          // if correct -> continue, possibly add reward already handled
-        });
-        // remove obstacle that caused collision
-        obstacles.splice(i,1);
-        continue;
-      }
-      if(o.x + o.w < -50) obstacles.splice(i,1);
-    }
-
-    // increase score slowly while running
-    if(!quizMode && !waitingForAnswer && tick % 6 === 0) score++;
-
-    // level up logic
-    const threshold = level * LEVEL_THRESHOLD;
-    if(score >= threshold){
-      level++;
-      speed = Math.min(MAX_SPEED, speed + 0.9);
-      score += 50; // bonus
-      flash('Niveau ' + level + ' !', '#0b6f6f', 1200);
-    }
-
-    updateHUD();
-    requestAnimationFrame(gameLoop);
-  }
-
-  /* ===== controls & input ===== */
-  function jump(){
-    if(!player.jumping && !quizMode && !waitingForAnswer){
-      player.jumping = true;
-      player.vy = -16;
-    }
-  }
-
-  document.addEventListener('keydown', function(e){
-    if(e.code === 'Space') { e.preventDefault(); jump(); }
+function showQuiz(){
+  running=false;
+  const q=questions[Math.floor(Math.random()*questions.length)];
+  document.getElementById("quizQuestion").textContent=q.q;
+  const ansDiv=document.getElementById("quizAnswers");
+  ansDiv.innerHTML="";
+  q.a.forEach((txt,i)=>{
+    const d=document.createElement("div");
+    d.className="answer";
+    d.textContent=txt;
+    d.onclick=()=>{
+      document.getElementById("quizModal").style.display="none";
+      if(i!==q.c) score=0;
+      running=true;
+      loop();
+    };
+    ansDiv.appendChild(d);
   });
-  canvas.addEventListener('touchstart', function(e){ e.preventDefault(); jump(); }, {passive:false});
-  canvas.addEventListener('click', function(){ jump(); });
+  document.getElementById("quizModal").style.display="flex";
+}
 
-  startBtn.addEventListener('click', function(){
-    // reset
-    running = true;
-    paused = false;
-    obstacles = [];
-    airborne = [];
-    score = 0;
-    level = 1;
-    speed = 4;
-    player.y = 180;
-    player.vy = 0;
-    player.jumping = false;
-    tick = 0;
-    quizMode = false;
-    waitingForAnswer = false;
-    updateHUD();
-    requestAnimationFrame(gameLoop);
+function loop(){
+  if(!running) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  player.vy+=0.8;
+  player.y+=player.vy;
+  if(player.y>210){player.y=210;player.vy=0;player.jump=false;}
+
+  if(Math.random()<0.02) spawnObstacle();
+  if(level>=4 && Math.random()<0.01) spawnAir();
+
+  obstacles.forEach(o=>{
+    o.x-=speed;
+    ctx.fillStyle="#333";
+    ctx.fillRect(o.x,o.y,o.w,o.h);
+    if(o.x<player.x+player.r && o.x+o.w>player.x-player.r && player.y+player.r>o.y){
+      showQuiz();
+    }
   });
 
-  pauseBtn.addEventListener('click', function(){
-    paused = !paused;
-    pauseBtn.textContent = paused ? 'Reprendre' : 'Pause';
+  airObstacles.forEach(o=>{
+    o.x-=speed;
+    ctx.fillStyle="#ff9800";
+    ctx.fillRect(o.x,o.y,o.w,o.h);
+    if(player.jump && o.x<player.x+player.r && o.x+o.w>player.x-player.r){
+      showQuiz();
+    }
   });
 
-  fullBtn.addEventListener('click', function(){
-    if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
-  });
+  drawPlayer();
 
-  /* responsive canvas fit */
-  function fitCanvas(){
-    const maxW = Math.min(window.innerWidth - 40, 980);
-    const displayW = maxW;
-    const displayH = Math.max(220, Math.round(displayW * 260 / 900));
-    canvas.style.width = displayW + 'px';
-    canvas.style.height = displayH + 'px';
+  score++;
+  if(score%300===0){level++;speed+=0.4;}
+
+  document.getElementById("score").textContent=score;
+  document.getElementById("level").textContent=level;
+
+  requestAnimationFrame(loop);
+}
+
+document.addEventListener("keydown",e=>{
+  if(e.code==="Space" && !player.jump){
+    player.jump=true;
+    player.vy=-14;
   }
-  window.addEventListener('resize', fitCanvas);
-  fitCanvas();
-  updateHUD();
+});
 
-})(); // end IIFE
+canvas.addEventListener("click",()=>{
+  if(!player.jump){
+    player.jump=true;
+    player.vy=-14;
+  }
+});
+
+document.getElementById("startBtn").onclick=()=>{
+  document.getElementById("startScreen").style.display="none";
+  running=true;
+  loop();
+};
 </script>
+
 </body>
 </html>
-<script>
-const startScreen = document.getElementById("startScreen");
-const startGameBtn = document.getElementById("startGameBtn");
-
-startGameBtn.addEventListener("click", () => {
-  startScreen.style.display = "none";
-  running = true;
-  paused = false;
-  requestAnimationFrame(gameLoop);
-});
-</script>
