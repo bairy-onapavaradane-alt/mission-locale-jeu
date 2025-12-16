@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test démarrage jeu</title>
+<title>Mini Jeu</title>
+
 <style>
 body{
   margin:0;
@@ -14,6 +14,7 @@ body{
   align-items:center;
   height:100vh;
 }
+
 #start{
   padding:20px 30px;
   font-size:20px;
@@ -21,7 +22,9 @@ body{
   border-radius:10px;
   background:#0f7780;
   color:white;
+  cursor:pointer;
 }
+
 canvas{
   display:none;
   background:white;
@@ -40,20 +43,93 @@ const btn = document.getElementById("start");
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+let running = false;
+let score = 0;
+
+// Joueur
+let player = {
+  x: 50,
+  y: 130,
+  w: 30,
+  h: 30,
+  speed: 4
+};
+
+// Obstacle
+let obstacle = {
+  x: 400,
+  y: 130,
+  w: 30,
+  h: 30,
+  speed: 3
+};
+
+// Clavier
+let keys = {};
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
 btn.onclick = () => {
   btn.style.display = "none";
   canvas.style.display = "block";
+  running = true;
   loop();
 };
 
-let x = 10;
-
 function loop(){
-  ctx.clearRect(0,0,400,200);
-  ctx.fillStyle = "red";
-  ctx.fillRect(x,80,30,30);
-  x += 2;
+  if(!running) return;
+
+  update();
+  draw();
   requestAnimationFrame(loop);
+}
+
+function update(){
+  // Déplacement joueur
+  if(keys["ArrowLeft"]) player.x -= player.speed;
+  if(keys["ArrowRight"]) player.x += player.speed;
+
+  player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
+
+  // Mouvement obstacle
+  obstacle.x -= obstacle.speed;
+  if(obstacle.x + obstacle.w < 0){
+    obstacle.x = canvas.width;
+    score++;
+  }
+
+  // Collision
+  if (
+    player.x < obstacle.x + obstacle.w &&
+    player.x + player.w > obstacle.x &&
+    player.y < obstacle.y + obstacle.h &&
+    player.y + player.h > obstacle.y
+  ) {
+    running = false;
+    alert("Game Over ! Score : " + score);
+    location.reload();
+  }
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Consigne
+  ctx.fillStyle = "black";
+  ctx.font = "12px Arial";
+  ctx.fillText("Consigne : évite l'obstacle rouge", 10, 15);
+
+  // Joueur
+  ctx.fillStyle = "blue";
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  // Obstacle
+  ctx.fillStyle = "red";
+  ctx.fillRect(obstacle.x, obstacle.y, obstacle.w, obstacle.h);
+
+  // Score
+  ctx.font = "14px Arial";
+  ctx.fillText("Score : " + score, 320, 15);
 }
 </script>
 
