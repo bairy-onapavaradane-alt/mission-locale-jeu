@@ -1,262 +1,245 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mission Locale – Jeu MLE</title>
 
 <style>
 :root{
   --primary:#0f7780;
-  --accent:#d1346f;
-  --bg:#f5fbfc;
-  --card:#ffffff;
+  --bg:#eef7f8;
 }
+
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+
 body{
   margin:0;
   background:var(--bg);
-  display:flex;
-  justify-content:center;
-  padding:12px;
-}
-.container{max-width:980px;width:100%}
-.logo{
-  position:fixed;
-  top:12px;
-  right:12px;
-  width:160px;
-}
-.card{
-  background:var(--card);
-  border-radius:12px;
-  padding:12px;
-  box-shadow:0 6px 20px rgba(0,0,0,.1);
-}
-canvas{
-  width:100%;
-  background:linear-gradient(#eaf7f8,#ffffff);
-  border-radius:8px;
+  text-align:center;
 }
 
-/* MENU */
+/* ===== MENU ===== */
 #menu{
   position:fixed;
   inset:0;
-  background:rgba(245,251,252,.96);
+  background:var(--bg);
   display:flex;
-  align-items:center;
   justify-content:center;
-  z-index:100;
+  align-items:center;
+  z-index:10;
 }
-.menuBox{
+
+.menu-card{
   background:white;
-  max-width:520px;
-  padding:20px;
+  padding:24px;
   border-radius:14px;
-  text-align:center;
+  max-width:420px;
   box-shadow:0 10px 30px rgba(0,0,0,.2);
 }
-.menuBox h1{color:var(--primary)}
-.menuBox p{color:#333;line-height:1.5}
-.btn{
-  margin-top:14px;
-  padding:12px 18px;
+
+.menu-card h1{color:var(--primary)}
+
+.menu-card button{
+  margin-top:16px;
+  padding:14px 24px;
   font-size:16px;
   border:none;
   border-radius:10px;
   background:var(--primary);
   color:white;
+  font-weight:bold;
   cursor:pointer;
 }
 
-/* QUIZ */
-#quiz{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  z-index:200;
-  align-items:center;
-  justify-content:center;
-}
-.quizBox{
+/* ===== JEU ===== */
+canvas{
   background:white;
-  padding:18px;
   border-radius:12px;
-  max-width:420px;
+  display:block;
+  margin:20px auto;
 }
-.answer{
-  width:100%;
-  margin:6px 0;
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #ddd;
-  cursor:pointer;
+
+#hud{
+  font-weight:bold;
+  margin-bottom:20px;
 }
 </style>
 </head>
 
 <body>
 
-<img class="logo" src="images/logo-mle.png" alt="Logo Mission Locale">
-
 <!-- MENU -->
 <div id="menu">
-  <div class="menuBox">
-    <h1>Jeu Mission Locale</h1>
+  <div class="menu-card">
+    <h1>🎯 Parcours Pro – Mission Locale</h1>
     <p>
-      🎯 <strong>Objectif :</strong> avance le plus loin possible en évitant les obstacles.<br><br>
-      ⬆️ Appuie sur <strong>Espace</strong> ou touche l’écran pour sauter.<br>
-      ⛔ Si tu touches un obstacle, une question apparaît.<br>
-      ❌ Mauvaise réponse = score remis à zéro.<br><br>
-      💡 À partir du niveau 4, des obstacles apparaissent dans les airs :
-      <strong>ne saute pas</strong> pour les éviter.
+      Aide la mascotte MLE à avancer dans son parcours professionnel.<br><br>
+      👉 Clique, touche l’écran ou appuie sur ESPACE pour sauter.<br>
+      👉 Évite les obstacles.<br>
+      👉 Si tu touches un obstacle, répond à une question.<br>
+      👉 Mauvaise réponse : score remis à zéro.
     </p>
-    <button id="startGame" class="btn">Démarrer le jeu</button>
+    <button id="startBtn">Démarrer le jeu</button>
   </div>
 </div>
 
-<div class="container">
-  <div class="card">
-    <p><strong>Niveau :</strong> <span id="level">1</span> — <strong>Score :</strong> <span id="score">0</span></p>
-    <canvas id="game" width="900" height="260"></canvas>
-  </div>
-</div>
+<!-- JEU -->
+<canvas id="game" width="900" height="300"></canvas>
 
-<!-- QUIZ -->
-<div id="quiz">
-  <div class="quizBox">
-    <h3 id="quizQuestion"></h3>
-    <div id="quizAnswers"></div>
-  </div>
+<div id="hud">
+  Score : <span id="score">0</span> |
+  Niveau : <span id="level">1</span>
 </div>
 
 <script>
+/* ===== INITIALISATION ===== */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let running=false, speed=4, score=0, level=1;
-let obstacles=[], air=[];
-let lastTime=performance.now();
-let player={x:60,y:180,r:18,vy:0,jump:false};
+let playing=false;
+let score=0;
+let level=1;
+let speed=4;
+let frame=0;
 
-const quizData=[
- {q:"Que faut-il apporter à un entretien ?",a:["Un CV","Une console","Rien"],c:0},
- {q:"Arriver à l’heure signifie ?",a:["À l’avance","En retard","Quand on veut"],c:0},
- {q:"Quel comportement est professionnel ?",a:["Dire bonjour","Regarder son téléphone","Crier"],c:0},
- {q:"À quoi sert un stage ?",a:["Découvrir un métier","Se reposer","Jouer"],c:0}
+/* ===== PERSONNAGE (ROND MLE) ===== */
+const player={
+  x:90,
+  y:210,
+  r:22,
+  vy:0,
+  jumping:false
+};
+
+/* ===== OBSTACLES ===== */
+let obstacles=[];
+
+/* ===== QUESTIONS ===== */
+const questions=[
+ {q:"À quoi sert la Mission Locale ?",a:["Aider les jeunes","Vendre des jeux"],c:0},
+ {q:"Que faut-il pour un entretien ?",a:["CV et ponctualité","Être en retard"],c:0},
+ {q:"Pourquoi faire un stage ?",a:["Découvrir un métier","Perdre du temps"],c:0}
 ];
 
-function drawPlayer(){
- ctx.fillStyle="#0f7780";
- ctx.beginPath();
- ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
- ctx.fill();
- ctx.fillStyle="white";
- ctx.font="bold 14px Arial";
- ctx.textAlign="center";
- ctx.fillText("MLE",player.x,player.y+5);
+/* ===== FOND AVEC MOTS ===== */
+const words=["CV","Emploi","Stage","Formation","Projet","Mission Locale","Entretien"];
+
+/* ===== FONCTIONS ===== */
+function jump(){
+  if(!player.jumping){
+    player.vy=-15;
+    player.jumping=true;
+  }
 }
 
 function spawnObstacle(){
- obstacles.push({x:canvas.width+20,w:30,h:40});
-}
-
-function spawnAir(){
- air.push({x:canvas.width+20,y:120,w:36,h:30});
-}
-
-function collision(o){
- return o.x < player.x+player.r &&
-        o.x+o.w > player.x-player.r &&
-        o.y < player.y+player.r &&
-        o.y+o.h > player.y-player.r;
+  obstacles.push({x:canvas.width,y:230,w:30,h:30});
 }
 
 function showQuiz(){
- running=false;
- const q=quizData[Math.floor(Math.random()*quizData.length)];
- document.getElementById("quizQuestion").textContent=q.q;
- const box=document.getElementById("quizAnswers");
- box.innerHTML="";
- document.getElementById("quiz").style.display="flex";
- q.a.forEach((txt,i)=>{
-   const b=document.createElement("button");
-   b.className="answer";
-   b.textContent=txt;
-   b.onclick=()=>{
-     document.getElementById("quiz").style.display="none";
-     if(i!==q.c) score=0;
-     running=true;
-     requestAnimationFrame(loop);
-   };
-   box.appendChild(b);
- });
+  playing=false;
+  const q=questions[Math.floor(Math.random()*questions.length)];
+  const ok=confirm(
+    q.q+"\n\nOK : "+q.a[0]+"\nAnnuler : "+q.a[1]
+  );
+  if(!ok) score=0;
+  playing=true;
 }
 
-function loop(now){
- if(!running) return;
- const delta=(now-lastTime)/1000;
- lastTime=now;
-
- ctx.clearRect(0,0,canvas.width,canvas.height);
-
- // sol
- ctx.fillStyle="#e6f7f7";
- ctx.fillRect(0,200,canvas.width,60);
-
- // joueur
- if(player.jump){
-   player.vy+=0.9;
-   player.y+=player.vy;
-   if(player.y>=180){player.y=180;player.jump=false;}
- }
- drawPlayer();
-
- // obstacles sol
- if(Math.random()<0.02) spawnObstacle();
- obstacles.forEach(o=>{
-   o.x-=speed*60*delta;
-   ctx.fillStyle="#8b3eff";
-   ctx.fillRect(o.x,200-o.h,o.w,o.h);
-   if(collision({x:o.x,y:200-o.h,w:o.w,h:o.h})) showQuiz();
- });
- obstacles=obstacles.filter(o=>o.x>-50);
-
- // obstacles air
- if(level>=4 && Math.random()<0.01) spawnAir();
- air.forEach(a=>{
-   a.x-=speed*60*delta;
-   ctx.fillStyle="#0b5560";
-   ctx.fillRect(a.x,a.y,a.w,a.h);
-   if(player.jump && collision({x:a.x,y:a.y,w:a.w,h:a.h})) showQuiz();
- });
- air=air.filter(a=>a.x>-50);
-
- score++;
- if(score>level*800){level++;speed+=0.5;}
-
- document.getElementById("score").textContent=score;
- document.getElementById("level").textContent=level;
-
- requestAnimationFrame(loop);
+function drawBackground(){
+  ctx.globalAlpha=0.08;
+  ctx.fillStyle="#0f7780";
+  ctx.font="20px Arial";
+  words.forEach((w,i)=>{
+    ctx.fillText(w,(frame*0.3+i*140)%canvas.width,50+(i%4)*40);
+  });
+  ctx.globalAlpha=1;
 }
+
+/* ===== BOUCLE DU JEU ===== */
+function gameLoop(){
+  if(!playing) return;
+
+  frame++;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  drawBackground();
+
+  /* sol */
+  ctx.fillStyle="#ddd";
+  ctx.fillRect(0,250,canvas.width,4);
+
+  /* joueur */
+  player.vy+=0.9;
+  player.y+=player.vy;
+  if(player.y>210){
+    player.y=210;
+    player.vy=0;
+    player.jumping=false;
+  }
+
+  ctx.beginPath();
+  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
+  ctx.fillStyle="#0f7780";
+  ctx.fill();
+
+  ctx.fillStyle="white";
+  ctx.font="bold 14px Arial";
+  ctx.textAlign="center";
+  ctx.fillText("MLE",player.x,player.y+5);
+
+  /* obstacles */
+  if(Math.random()<0.02) spawnObstacle();
+
+  obstacles.forEach(o=>{
+    o.x-=speed;
+    ctx.fillStyle="#333";
+    ctx.fillRect(o.x,o.y,o.w,o.h);
+
+    if(
+      o.x < player.x+player.r &&
+      o.x+o.w > player.x-player.r &&
+      player.y+player.r > o.y
+    ){
+      obstacles=[];
+      showQuiz();
+    }
+  });
+
+  obstacles=obstacles.filter(o=>o.x>-50);
+
+  /* score / niveau */
+  score++;
+  if(score%500===0){
+    level++;
+    speed+=0.6;
+  }
+
+  document.getElementById("score").textContent=score;
+  document.getElementById("level").textContent=level;
+
+  requestAnimationFrame(gameLoop);
+}
+
+/* ===== CONTROLES ===== */
+document.getElementById("startBtn").onclick=()=>{
+  document.getElementById("menu").style.display="none";
+  playing=true;
+  gameLoop();
+};
 
 document.addEventListener("keydown",e=>{
- if(e.code==="Space" && !player.jump){
-   player.jump=true;
-   player.vy=-16;
- }
+  if(e.code==="Space") jump();
 });
-canvas.addEventListener("click",()=>{if(!player.jump){player.jump=true;player.vy=-16;}});
 
-document.getElementById("startGame").onclick=()=>{
- document.getElementById("menu").style.display="none";
- running=true;
- requestAnimationFrame(loop);
-};
+canvas.addEventListener("click",jump);
+canvas.addEventListener("touchstart",e=>{
+  e.preventDefault();
+  jump();
+},{passive:false});
 </script>
 
 </body>
 </html>
+
