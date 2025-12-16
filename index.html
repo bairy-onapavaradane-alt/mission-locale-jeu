@@ -9,33 +9,7 @@
     --bg:#f6f7fb; --card:#fff; --accent:#2563eb; --muted:#6b7280;
   }
   *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
-  body.skin <div class="skin">
-  <div class="inner-circle">MLE</div>
-</div>
- {
-  width: 120px;
-  height: 120px;
-  background-color: #f6b26b; /* orange clair */
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.inner-circle {
-  width: 80px;
-  height: 80px;
-  background-color: #3c78d8; /* bleu */
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 24px;
-  font-family: Arial, sans-serif;
-}
-
+  body{margin:0;background:var(--bg);color:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
   .app{width:100%;max-width:900px;}
   .card{background:var(--card);border-radius:12px;box-shadow:0 6px 20px rgba(16,24,40,.08);padding:22px;}
   header{display:flex;align-items:center;gap:14px;margin-bottom:12px;}
@@ -127,52 +101,20 @@
 <script>
 /* Données de questions par défaut (français) */
 const defaultBanks = {
-[
-  { q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0, points:50 },
-  { q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0, points:40 },
-  { q:"Que signifie \"soft skill\" ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0, points:30 },
-  { q:"Que faire après une candidature ?", a:["Relancer poliment","Ne rien faire","Envoyer tous les jours"], correct:0, points:30 },
-  { q:"En entretien, comment commencer ?", a:["Bonjour + présentation brève","Raconter sa vie privée","Faire un sketch"], correct:0, points:40 },
-  { q:"Quelle est une bonne qualité professionnelle ?", a:["Ponctualité","Arriver en retard","Manque de respect"], correct:0, points:30 },
-  { q:"Comment adapter son CV à une offre ?", a:["Mettre en avant les compétences demandées","Envoyer le même CV","Changer juste la police"], correct:0, points:35 },
-  { q:"Qu'est-ce qu'une lettre de motivation ?", a:["Un texte adapté à l'offre","Un CV plus long","Une liste de notes personnelles"], correct:0, points:25 },
-  { q:"Où trouver des offres ?", a:["Sites d'emploi","Sur la Lune"], correct:0, points:20 },
-  { q:"Quel comportement éviter en entretien ?", a:["Regarder son téléphone","Écouter le recruteur","Demander des précisions"], correct:0, points:30 },
-  { q:"Qu'est-ce qu'un \"stage\" ?", a:["Une période d'apprentissage en entreprise","Un travail permanent","Un abonnement"], correct:0, points:20 },
-  { q:"Pourquoi relancer une candidature ?", a:["Montrer son intérêt","Manquer d'organisation","Crier"], correct:0, points:25 },
-  { q:"Comment se présenter ?", a:["Nom + objectif professionnel bref","Raconter un long épisode","Chanter"], correct:0, points:30 },
-  { q:"Qu'est-ce qu'un bon CV ?", a:["Clairement structuré","Brouillon","Sans contact"], correct:0, points:35 },
-  { q:"Quelle information NE doit PAS figurer ?", a:["Informations médicales sensibles","Compétences","Contact"], correct:0, points:30 },
-  { q:"Que signifie \"références\" dans un CV ?", a:["Personnes pouvant témoigner de vous","Des références bibliographiques","Un mystère"], correct:0, points:20 },
-  { q:"Qu'est-ce qu'une compétence transférable ?", a:["Capacité utile dans plusieurs emplois","Un seul logiciel","Un diplôme précis"], correct:0, points:30 },
-  { q:"Que faire si on ne sait pas répondre en entretien ?", a:["Admettre et proposer comment trouver la réponse","Inventer une fausse réponse","Ignorer"], correct:0, points:40 },
-  { q:"Quel ton adopter en entretien ?", a:["Professionnel et cordial","Hautain","Trop familier"], correct:0, points:30 },
-  { q:"Comment montrer sa motivation ?", a:["Par des exemples concrets","Dire \"je suis motivé\" sans preuve","Ne rien faire"], correct:0, points:35 },
-  { q:"Qu'est-ce qu'une lettre d'accompagnement ?", a:["Un texte pour contextualiser le CV","Un CV détourné","Un document inutile"], correct:0, points:25 },
-  { q:"Pourquoi soigner son profil en ligne ?", a:["Les recruteurs regardent souvent","Personne ne regarde","C'est interdit"], correct:0, points:25 },
-  { q:"Citer une soft skill importante ?", a:["Capacité d'écoute","Savoir tout faire","Ignorance"], correct:0, points:20 },
-  { q:"Que faire en cas de retard ?", a:["Prévenir et s'excuser","Rester silencieux","Ignorer"], correct:0, points:20 },
-  { q:"Quelle information est utile pour un recruteur ?", a:["Expériences récentes et pertinentes","Vos secrets","Informations bancaires"], correct:0, points:30 },
-  { q:"Qu'est-ce que la ponctualité ?", a:["Arriver à l'heure","Arriver quand on veut","Partir tôt"], correct:0, points:15 },
-  { q:"Pourquoi personnaliser sa candidature ?", a:["Montrer l'adéquation avec l'offre","Gagner du temps","Faire n'importe quoi"], correct:0, points:25 },
-  { q:"Que faire avec un trou dans le CV ?", a:["Expliquer brièvement en valorisant","Tout cacher","Mentir"], correct:0, points:20 },
-  { q:"Quel document joindre ?", a:["CV + lettre adaptée","Rien","Tout ce qu'on a"], correct:0, points:20 },
-  { q:"Où demander de l'aide ?", a:["Mission Locale / Pôle emploi / réseau","Personne","La rue"], correct:0, points:20 },
-  { q:"Comment se former ?", a:["Par des formations, des MOOC, des stages","Rien","Regarder la télé"], correct:0, points:25 },
-  { q:"Que montre une bonne attitude ?", a:["Curiosité et respect","Arrogance","Indifférence"], correct:0, points:30 },
-  { q:"Pourquoi relire son CV ?", a:["Éviter les fautes et les incohérences","Pour le style fantaisiste","Pour l'oublier"], correct:0, points:20 },
-  { q:"Que signifie \"candidature spontanée\" ?", a:["Envoyer son CV sans offre précise","Attendre une offre","Appeler en criant"], correct:0, points:25 },
-  { q:"Comment préparer un entretien ?", a:["Se renseigner sur l'entreprise","Y aller sans préparation","Ignorer l'entreprise"], correct:0, points:30 },
-  { q:"Quel est l'objectif d'une lettre ?", a:["Montrer l'adéquation avec l'offre","Remplir un espace","Raconter sa vie"], correct:0, points:20 },
-  { q:"Pourquoi valoriser un stage ?", a:["Montrer des compétences réelles","Le cacher","Ne rien dire"], correct:0, points:20 },
-  { q:"Qu'est-ce qu'une alternance ?", a:["Formation en entreprise + école","Vacances prolongées","Un emploi permanent"], correct:0, points:20 },
-  { q:"Que faire après un entretien ?", a:["Remercier et relancer si besoin","Tout oublier","Attendre une semaine sans rien faire"], correct:0, points:20 },
-  { q:"Quel est un bon comportement en équipe ?", a:["Partager l'information","Tout garder pour soi","S'opposer systématiquement"], correct:0, points:30 },
-  { q:"Pourquoi être honnête ?", a:["La confiance facilite l'embauche","On ne sait pas","C'est inutile"], correct:0, points:30 },
-  { q:"Que chercher dans une offre ?", a:["Mots-clés, compétences et missions","Juste le salaire","Rien"], correct:0, points:25 },
-  { q:"Que fait un conseiller Mission Locale ?", a:["Aide, orientation, formations","Rien","Décore des bureaux"], correct:0, points:20 }
-]
-
+  cv: [
+    {q:"Que doit contenir un CV moderne ?", opts:["Expériences, compétences, contact","Portrait artistique uniquement","Liste de courses"], a:0},
+    {q:"Quelle durée idéale pour un CV ciblé ?", opts:["1 page","5 pages","10 pages"], a:0},
+    {q:"Que mettre dans 'Compétences' ?", opts:["Hard + Soft skills","Informations médicales","Historique bancaire"], a:0}
+  ],
+  entretien: [
+    {q:"Comment commencer une réponse en entretien ?", opts:["Présentez-vous brièvement","Racontez votre vie privée en détail","Silence total"], a:0},
+    {q:"Si vous ne connaissez pas la réponse à une question technique ?", opts:["Admettre et proposer comment trouver la réponse","Inventer","Rire et changer de sujet"], a:0}
+  ],
+  recherche: [
+    {q:"Où chercher des offres adaptées ?", opts:["Sites d'emploi + réseaux locaux","Seulement les réseaux sociaux","Aucune recherche nécessaire"], a:0},
+    {q:"Que faire après une candidature ?", opts:["Relancer poliment au bout d'une semaine","Ne rien faire","Envoyer le même mail tous les jours"], a:0}
+  ]
+};
 
 /* État */
 let bank = [];
@@ -314,113 +256,4 @@ if(!localStorage.getItem('ml_init')){
 </script>
 </body>
 </html>
-<style>
-body{
-  margin:0;
-  font-family:Arial;
-  background:#eef;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
 
-#start{
-  padding:20px 30px;
-  font-size:20px;
-  border:none;
-  border-radius:10px;
-  background:#0f7780;
-  color:white;
-}
-
-canvas{
-  display:none;
-  background:white;
-  border:2px solid black;
-}
-</style>
-</head>
-
-<body>
-
-<button id="start">DÉMARRER</button>
-<canvas id="game" width="400" height="200"></canvas>
-
-<script>
-const btn = document.getElementById("start");
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-btn.onclick = () => {
-  btn.style.display = "none";
-  canvas.style.display = "block";
-  loop();
-};
-
-// ---- Ton carré (joueur) ----
-let x = 10;
-let y = 80;
-let size = 30;
-
-// ---- Obstacle ----
-let ox = 300;
-let oy = 80;
-let osize = 30;
-
-let running = true;
-
-function loop(){
-  if(!running) return;
-
-  ctx.clearRect(0,0,400,200);
-
-  // Joueur
-  ctx.fillStyle = "blue";
-  ctx.fillRect(x,y,size,size);
-  x += 2;
-
-  // Obstacle
-  ctx.fillStyle = "red";
-  ctx.fillRect(ox,oy,osize,osize);
-
-  // Collision (AJOUT IMPORTANT)
-  if(
-    x < ox + osize &&
-    x + size > ox &&
-    y < oy + osize &&
-    y + size > oy
-  ){
-    running = false;
-    questionMissionLocale();
-    return;
-  }
-
-  requestAnimationFrame(loop);
-}
-
-// ---- Question Mission Locale ----
-function questionMissionLocale(){
-  let rep = prompt(
-    "❌ Tu as perdu !\n\n" +
-    "Question Mission Locale :\n" +
-    "Quel est le rôle de la Mission Locale ?\n\n" +
-    "A - Aider les jeunes vers l’emploi et la formation\n" +
-    "B - Organiser des compétitions sportives\n" +
-    "C - Vendre des produits"
-  );
-
-  if(rep && rep.toUpperCase() === "A"){
-    alert("✅ Bonne réponse !");
-  } else {
-    alert("❌ Mauvaise réponse.\nLa Mission Locale accompagne les jeunes vers l’emploi.");
-  }
-
-  location.reload();
-}
-</script>
-
-</body>
-</html>
-
-</html>
