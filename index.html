@@ -140,7 +140,7 @@ let obstacles = [];
 const words = ["Mission Locale","Emploi","Formation","CV","Orientation","Insertion","Projet Pro","Compétences","Stage","Alternance"];
 
 const questions = [
-[
+  [
   { q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0, points:50 },
   { q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0, points:40 },
   { q:"Que signifie \"soft skill\" ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0, points:30 },
@@ -186,10 +186,13 @@ const questions = [
   { q:"Que fait un conseiller Mission Locale ?", a:["Aide, orientation, formations","Rien","Décore des bureaux"], correct:0, points:20 }
 ]
 
+
 function startGame(){
   document.getElementById('rules').style.display='none';
   reset();
   running = true;
+  requestAnimationFrame(update);
+}
 }
 
 function reset(){
