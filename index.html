@@ -3,33 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Runner Mission Locale</title>
+<title>MLE Runner</title>
 <style>
 body{
   margin:0;
-  font-family:Arial,Helvetica,sans-serif;
   background:#0d47a1;
+  font-family:Arial,Helvetica,sans-serif;
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
 }
+#container{position:relative;}
 canvas{
   background:linear-gradient(#ffffff,#e3f2fd);
-  border-radius:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,.3);
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
 }
 .overlay{
   position:absolute;
-  max-width:600px;
-  background:white;
-  color:#0d47a1;
-  padding:20px;
-  border-radius:14px;
+  inset:0;
+  background:rgba(255,255,255,.95);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
   text-align:center;
+  color:#0d47a1;
+  border-radius:16px;
 }
 button{
-  padding:12px 20px;
+  margin-top:15px;
+  padding:12px 22px;
   font-size:16px;
   border:none;
   border-radius:8px;
@@ -42,83 +47,104 @@ button:hover{background:#ffc107;}
 </head>
 <body>
 
-<canvas id="game" width="800" height="400"></canvas>
+<div id="container">
+  <canvas id="game" width="800" height="400"></canvas>
 
-<div id="startScreen" class="overlay">
-  <h2>Jeu Mission Locale</h2>
-  <p>Sauter pour éviter les obstacles.</p>
-  <p>Bonne réponse = continuer / Mauvaise = score à zéro</p>
-  <button id="startBtn">Démarrer</button>
+  <div id="start" class="overlay">
+    <h2>Runner Mission Locale</h2>
+    <p>Sauter pour éviter les obstacles</p>
+    <p>Objectif : battre ton score</p>
+    <button id="startBtn">Démarrer</button>
+  </div>
+
+  <div id="question" class="overlay" style="display:none"></div>
 </div>
 
-<div id="questionScreen" class="overlay" style="display:none"></div>
-
 <script>
-// ================== INITIALISATION ==================
+// ================= BASE =================
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-let gameRunning = false;
+let playing = false;
 let score = 0;
-let level = 1;
 let speed = 4;
-let gravity = 0.6;
-let immunity = false;
-let immunityFrames = 0;
+let immunity = 0; // frames
 
-const player = {
-  x: 100,
-  y: 300,
-  r: 22,
-  vy: 0
-};
-
+const player = { x:120, y:300, r:22, vy:0 };
 let obstacles = [];
 
-const words = ['Mission Locale','Emploi','Formation','Insertion','CV','Entretien','Compétences'];
+const words = ['Mission Locale','Emploi','Formation','CV','Entretien','Projet pro'];
 
 const questions = [
-  {q:'À quoi sert un CV ?',choices:['Jouer','Présenter ses compétences','Dormir'],answer:1},
-  {q:'La Mission Locale accompagne surtout les ?',choices:['Jeunes','Animaux','Retraités'],answer:0},
-  {q:'Un entretien sert à ?',choices:['Évaluer un candidat','Dormir','Regarder un film'],answer:0}
+ {q:'À quoi sert un CV ?',c:['S’amuser','Présenter ses compétences','Dormir'],a:1},
+ {q:'Un entretien permet de ?',c:['Évaluer un candidat','Jouer','Regarder un film'],a:0},
+ {q:'La Mission Locale aide surtout les ?',c:['Jeunes','Animaux','Voitures'],a:0}
 ];
 
-// ================== DÉMARRAGE ==================
+// ================= DÉMARRAGE =================
 document.getElementById('startBtn').onclick = () => {
-  document.getElementById('startScreen').style.display='none';
+  document.getElementById('start').style.display='none';
   resetGame();
-  gameRunning = true;
+  playing = true;
 };
 
 function resetGame(){
   score = 0;
-  level = 1;
   speed = 4;
   obstacles = [];
   player.y = 300;
   player.vy = 0;
-  immunity = true;
-  immunityFrames = 240; // 4 secondes
+  immunity = 120;
 }
 
-// ================== OBSTACLES ==================
+// ================= CONTRÔLES =================
+function jump(){ if(player.y>=300) player.vy=-12; }
+window.addEventListener('keydown',e=>{if(e.code==='Space') jump();});
+canvas.addEventListener('click',jump);
+canvas.addEventListener('touchstart',jump);
+
+// ================= QUESTIONS =================
+function askQuestion(){
+  playing = false;
+  const q = questions[Math.floor(Math.random()*questions.length)];
+  const box = document.getElementById('question');
+  box.innerHTML = `<h3>${q.q}</h3><div class="qcm"></div>`;
+  box.style.display='flex';
+
+  q.c.forEach((txt,i)=>{
+    const b=document.createElement('button');
+    b.textContent=txt;
+    b.onclick=()=>{
+      box.style.display='none';
+      if(i===q.a){
+        immunity = 180;
+        obstacles = [];
+        playing = true;
+      } else {
+        document.getElementById('start').style.display='flex';
+      }
+    };
+    box.querySelector('.qcm').appendChild(b);
+  });
+}
+
+// ================= OBSTACLES =================
 function spawnObstacle(){
-  const air = level>=5 && Math.random()<0.4;
   obstacles.push({
     x: canvas.width+30,
-    y: air ? player.y-70 : player.y+player.r-10,
+    y: player.y+player.r-10,
     w: 26,
     h: 40
   });
 }
 
-// ================== DESSINS ==================
+// ================= DESSIN =================
 function drawBackground(){
-  ctx.globalAlpha=0.15;
+  ctx.globalAlpha=.15;
   ctx.fillStyle='#90caf9';
   ctx.font='20px Arial';
   words.forEach((w,i)=>{
-    ctx.fillText(w,(i*150+score)%canvas.width,60+(i%3)*120);
+    ctx.fillText(w,(i*160+score)%canvas.width,70+(i%3)*120);
   });
   ctx.globalAlpha=1;
 }
@@ -137,30 +163,51 @@ function drawPlayer(){
   ctx.fillText('MLE',player.x,player.y+4);
 }
 
-// ================== QUESTIONS ==================
-function showQuestion(){
-  gameRunning=false;
-  const q = questions[Math.floor(Math.random()*questions.length)];
-  const box = document.getElementById('questionScreen');
-  box.innerHTML = `<h3>${q.q}</h3><div class="qcm"></div>`;
-  box.style.display='block';
+// ================= BOUCLE =================
+function loop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawBackground();
 
-  q.choices.forEach((c,i)=>{
-    const b=document.createElement('button');
-    b.textContent=c;
-    b.onclick=()=>{
-      box.style.display='none';
-      if(i===q.answer){
-        immunity=true;
-        immunityFrames=240;
-        obstacles=[];
-        gameRunning=true;
-      }else{
-        alert('Game Over');
-        resetGame();
-        gameRunning=true;
+  if(playing){
+    player.vy+=0.6;
+    player.y+=player.vy;
+    if(player.y>300){player.y=300;player.vy=0;}
+
+    if(Math.random()<0.02) spawnObstacle();
+
+    obstacles.forEach(o=>{
+      o.x-=speed;
+      ctx.fillStyle=immunity>0?'#81c784':'#e53935';
+      ctx.fillRect(o.x,o.y,o.w,o.h);
+
+      const cx=Math.max(o.x,Math.min(player.x,o.x+o.w));
+      const cy=Math.max(o.y,Math.min(player.y,o.y+o.h));
+      const dx=player.x-cx;
+      const dy=player.y-cy;
+      if(immunity<=0 && dx*dx+dy*dy<player.r*player.r){
+        askQuestion();
       }
-    };
-    box.querySelector('.qcm').appendChild(b);
-  });
+    });
+
+    obstacles=obstacles.filter(o=>o.x+o.w>0);
+    score++;
+    if(score%600===0) speed+=0.5;
+    if(immunity>0) immunity--;
+  }
+
+  drawPlayer();
+
+  ctx.fillStyle='#0d47a1';
+  ctx.font='14px Arial';
+  ctx.textAlign='left';
+  ctx.fillText('Score : '+score,10,20);
+  if(immunity>0) ctx.fillText('Immunité',10,40);
+
+  requestAnimationFrame(loop);
 }
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
+
