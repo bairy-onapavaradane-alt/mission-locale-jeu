@@ -1,71 +1,122 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Tire ta carte</title>
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #4f46e5, #06b6d4);
-  color: white;
-  text-align: center;
-  padding: 40px;
-}
-
-.card {
-  background: white;
-  color: #333;
-  padding: 30px;
-  border-radius: 20px;
-  max-width: 400px;
-  margin: 30px auto;
-  font-size: 1.2em;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-button {
-  padding: 15px 30px;
-  font-size: 1.1em;
-  border: none;
-  border-radius: 30px;
-  background: #22c55e;
-  color: white;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #16a34a;
-}
-</style>
+  <meta charset="UTF-8" />
+  <title>Jeu Dinosaure</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f5f5f5;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      background: #fff;
+      border: 2px solid #333;
+    }
+  </style>
 </head>
-
 <body>
+  <canvas id="game" width="600" height="200"></canvas>
 
-<h1>🎲 Tire ta carte</h1>
-<p>Clique et réponds en 30 secondes</p>
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
 
-<div class="card" id="card">
-  Clique sur le bouton pour commencer
-</div>
+    let gameSpeed = 4;
+    let gravity = 0.6;
+    let score = 0;
+    let gameOver = false;
 
-<button onclick="tirerCarte()">Tirer une carte</button>
+    const dino = {
+      x: 50,
+      y: 150,
+      width: 20,
+      height: 40,
+      vy: 0,
+      jump() {
+        if (this.y >= 150) {
+          this.vy = -12;
+        }
+      },
+      update() {
+        this.vy += gravity;
+        this.y += this.vy;
+        if (this.y > 150) {
+          this.y = 150;
+          this.vy = 0;
+        }
+      },
+      draw() {
+        ctx.fillStyle = "#333";
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+      }
+    };
 
-<script>
-const cartes = [
-  "💡 Si tu pouvais avoir un job demain, lequel ?",
-  "🎯 Cite une qualité que tu as",
-  "🚀 Un métier que tu aimerais découvrir",
-  "🧠 Une chose que tu sais bien faire",
-  "🔥 Ton objectif ce mois-ci",
-  "🤝 Cite une qualité pour travailler en équipe",
-  "❓ Une question que tu aimerais poser à la Mission Locale"
-];
+    const cactus = {
+      x: 600,
+      y: 160,
+      width: 20,
+      height: 30,
+      update() {
+        this.x -= gameSpeed;
+        if (this.x + this.width < 0) {
+          this.x = 600;
+          score++;
+        }
+      },
+      draw() {
+        ctx.fillStyle = "green";
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+      }
+    };
 
-function tirerCarte() {
-  const carte = cartes[Math.floor(Math.random() * cartes.length)];
-  document.getElementById("card").innerText = carte;
-}
-</script>
+    function collision(a, b) {
+      return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+      );
+    }
 
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (!gameOver) {
+        dino.update();
+        cactus.update();
+
+        if (collision(dino, cactus)) {
+          gameOver = true;
+        }
+      }
+
+      dino.draw();
+      cactus.draw();
+
+      ctx.fillStyle = "#000";
+      ctx.fillText("Score : " + score, 10, 20);
+
+      if (gameOver) {
+        ctx.fillText("GAME OVER – Appuie sur R", 220, 100);
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") dino.jump();
+      if (e.code === "KeyR" && gameOver) {
+        gameOver = false;
+        score = 0;
+        cactus.x = 600;
+      }
+    });
+
+    loop();
+  </script>
 </body>
 </html>
