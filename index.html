@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jeu Mission Locale</title>
+<title>Test démarrage jeu</title>
 
 <style>
 body{
@@ -23,7 +23,6 @@ body{
   border-radius:10px;
   background:#0f7780;
   color:white;
-  cursor:pointer;
 }
 
 canvas{
@@ -44,112 +43,68 @@ const btn = document.getElementById("start");
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let running = false;
-
-// --- Joueur ---
-let player = {
-  x: 50,
-  y: 130,
-  w: 30,
-  h: 30,
-  speed: 4
-};
-
-// --- Obstacle ---
-let obstacle = {
-  x: 400,
-  y: 130,
-  w: 30,
-  h: 30,
-  speed: 3
-};
-
-// --- Clavier ---
-let keys = {};
-document.addEventListener("keydown", e => keys[e.key] = true);
-document.addEventListener("keyup", e => keys[e.key] = false);
-
-// --- Démarrage ---
 btn.onclick = () => {
   btn.style.display = "none";
   canvas.style.display = "block";
-  running = true;
   loop();
 };
 
-// --- Boucle principale ---
+// ---- Ton carré (joueur) ----
+let x = 10;
+let y = 80;
+let size = 30;
+
+// ---- Obstacle ----
+let ox = 300;
+let oy = 80;
+let osize = 30;
+
+let running = true;
+
 function loop(){
   if(!running) return;
 
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
-
-// --- Mise à jour ---
-function update(){
-  // Déplacement joueur
-  if(keys["ArrowLeft"]) player.x -= player.speed;
-  if(keys["ArrowRight"]) player.x += player.speed;
-
-  // Limites écran
-  player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
-
-  // Mouvement obstacle
-  obstacle.x -= obstacle.speed;
-  if(obstacle.x + obstacle.w < 0){
-    obstacle.x = canvas.width;
-  }
-
-  // Collision
-  if(checkCollision(player, obstacle)){
-    running = false;
-    askQuestion();
-  }
-}
-
-// --- Dessin ---
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // Consigne
-  ctx.fillStyle = "black";
-  ctx.font = "12px Arial";
-  ctx.fillText("Consigne : évite les obstacles", 10, 15);
+  ctx.clearRect(0,0,400,200);
 
   // Joueur
   ctx.fillStyle = "blue";
-  ctx.fillRect(player.x, player.y, player.w, player.h);
+  ctx.fillRect(x,y,size,size);
+  x += 2;
 
   // Obstacle
   ctx.fillStyle = "red";
-  ctx.fillRect(obstacle.x, obstacle.y, obstacle.w, obstacle.h);
+  ctx.fillRect(ox,oy,osize,osize);
+
+  // Collision (AJOUT IMPORTANT)
+  if(
+    x < ox + osize &&
+    x + size > ox &&
+    y < oy + osize &&
+    y + size > oy
+  ){
+    running = false;
+    questionMissionLocale();
+    return;
+  }
+
+  requestAnimationFrame(loop);
 }
 
-// --- Collision ---
-function checkCollision(a, b){
-  return (
-    a.x < b.x + b.w &&
-    a.x + a.w > b.x &&
-    a.y < b.y + b.h &&
-    a.y + a.h > b.y
-  );
-}
-
-// --- Question Mission Locale ---
-function askQuestion(){
-  let answer = prompt(
-    "❌ Tu as perdu !\n\nQuestion Mission Locale :\n" +
-    "À quoi sert la Mission Locale ?\n\n" +
-    "A) Jouer à des jeux\n" +
-    "B) Aider les jeunes à s’insérer (emploi, formation)\n" +
-    "C) Faire du sport"
+// ---- Question Mission Locale ----
+function questionMissionLocale(){
+  let rep = prompt(
+    "❌ Tu as perdu !\n\n" +
+    "Question Mission Locale :\n" +
+    "Quel est le rôle de la Mission Locale ?\n\n" +
+    "A - Aider les jeunes vers l’emploi et la formation\n" +
+    "B - Organiser des compétitions sportives\n" +
+    "C - Vendre des produits"
   );
 
-  if(answer && answer.toUpperCase() === "B"){
-    alert("✅ Bonne réponse ! Tu peux rejouer.");
+  if(rep && rep.toUpperCase() === "A"){
+    alert("✅ Bonne réponse !");
   } else {
-    alert("❌ Mauvaise réponse.\nLa Mission Locale aide les jeunes dans leur insertion.");
+    alert("❌ Mauvaise réponse.\nLa Mission Locale accompagne les jeunes vers l’emploi.");
   }
 
   location.reload();
@@ -159,7 +114,4 @@ function askQuestion(){
 </body>
 </html>
 
-</script>
-
-</body>
 </html>
