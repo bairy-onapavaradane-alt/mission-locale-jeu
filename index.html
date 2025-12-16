@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test démarrage jeu</title>
+<title>Mini Jeu Amélioré</title>
+
 <style>
 body{
   margin:0;
@@ -14,6 +14,7 @@ body{
   align-items:center;
   height:100vh;
 }
+
 #start{
   padding:20px 30px;
   font-size:20px;
@@ -21,7 +22,9 @@ body{
   border-radius:10px;
   background:#0f7780;
   color:white;
+  cursor:pointer;
 }
+
 canvas{
   display:none;
   background:white;
@@ -40,23 +43,66 @@ const btn = document.getElementById("start");
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// --- État du jeu ---
+let running = false;
+let score = 0;
+
+// --- Joueur ---
+let player = {
+  x: 180,
+  y: 80,
+  w: 30,
+  h: 30,
+  speed: 4
+};
+
+// --- Clavier ---
+let keys = {};
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+// --- Démarrage ---
 btn.onclick = () => {
   btn.style.display = "none";
   canvas.style.display = "block";
+  running = true;
   loop();
 };
 
-let x = 10;
-
+// --- Boucle principale ---
 function loop(){
-  ctx.clearRect(0,0,400,200);
-  ctx.fillStyle = "red";
-  ctx.fillRect(x,80,30,30);
-  x += 2;
+  if(!running) return;
+
+  update();
+  draw();
   requestAnimationFrame(loop);
+}
+
+// --- Mise à jour ---
+function update(){
+  if(keys["ArrowLeft"]) player.x -= player.speed;
+  if(keys["ArrowRight"]) player.x += player.speed;
+
+  // Limites écran
+  player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
+
+  score++;
+}
+
+// --- Dessin ---
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Joueur
+  ctx.fillStyle = "red";
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  // Score
+  ctx.fillStyle = "black";
+  ctx.font = "16px Arial";
+  ctx.fillText("Score : " + score, 10, 20);
 }
 </script>
 
 </body>
 </html>
-
