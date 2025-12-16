@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MLE Runner – Jeu simple</title>
+<title>MLE Runner</title>
 <style>
 body{
   margin:0;
@@ -61,53 +61,49 @@ button:hover{background:#ffc107;}
 </div>
 
 <script>
-// ================== VARIABLES GLOBALES ==================
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-let state = 'menu'; // menu | play | question
+let state = 'menu';
 let score = 0;
+let level = 1;
 let speed = 4;
-let immunity = 0; // frames
+let immunity = 0;
 
 const groundY = 300;
 
-const player = {
-  x: 120,
-  y: groundY,
-  r: 22,
-  vy: 0
-};
-
+const player = { x:120, y:groundY, r:22, vy:0 };
 let obstacles = [];
 
 const words = ['Mission Locale','Emploi','Formation','Insertion','CV','Entretien','Projet pro'];
 
 const questions = [
-  {q:'À quoi sert un CV ?',c:['Dormir','Présenter ses compétences','Jouer'],a:1},
-  {q:'Un entretien sert à ?',c:['Évaluer un candidat','Regarder un film','Dormir'],a:0},
-  {q:'La Mission Locale accompagne surtout les ?',c:['Jeunes','Animaux','Objets'],a:0}
+ {q:'À quoi sert un CV ?',c:['Présenter ses compétences','Dormir','Jouer'],a:0},
+ {q:'Un entretien sert principalement à ?',c:['Évaluer un candidat','Se reposer','Regarder un film'],a:0},
+ {q:'La Mission Locale accompagne surtout les ?',c:['Jeunes','Entreprises','Enfants'],a:0},
+ {q:'Qu’est-ce qu’une formation ?',c:['Un apprentissage','Un loisir','Un jeu'],a:0},
+ {q:'Pourquoi préparer un entretien ?',c:['Pour réussir','Pour s’amuser','Pour dormir'],a:0},
+ {q:'Le CV doit être ?',c:['Clair et structuré','Très long','Illisible'],a:0},
+ {q:'L’objectif d’un projet professionnel est de ?',c:['Définir son avenir','Perdre du temps','Éviter le travail'],a:0},
+ {q:'La ponctualité est ?',c:['Importante','Inutile','Interdite'],a:0}
 ];
 
-// ================== DÉMARRAGE ==================
-document.getElementById('startBtn').onclick = () => startGame();
-
-function startGame(){
+document.getElementById('startBtn').onclick = () => {
   document.getElementById('start').style.display='none';
   resetGame();
   state = 'play';
-}
+};
 
 function resetGame(){
   score = 0;
+  level = 1;
   speed = 4;
   obstacles = [];
   player.y = groundY;
   player.vy = 0;
-  immunity = 120; // 2 secondes
+  immunity = 120;
 }
 
-// ================== CONTRÔLES ==================
 function jump(){
   if(state==='play' && player.y>=groundY){
     player.vy = -12;
@@ -117,7 +113,6 @@ window.addEventListener('keydown',e=>{if(e.code==='Space') jump();});
 canvas.addEventListener('click',jump);
 canvas.addEventListener('touchstart',jump);
 
-// ================== QUESTIONS ==================
 function showQuestion(){
   state = 'question';
   const q = questions[Math.floor(Math.random()*questions.length)];
@@ -131,11 +126,11 @@ function showQuestion(){
     b.onclick=()=>{
       box.style.display='none';
       if(i===q.a){
-        obstacles = [];
-        immunity = 120;
-        state = 'play';
+        obstacles=[];
+        immunity=120;
+        state='play';
       } else {
-        state = 'menu';
+        state='menu';
         document.getElementById('start').style.display='flex';
       }
     };
@@ -143,84 +138,84 @@ function showQuestion(){
   });
 }
 
-// ================== OBSTACLES ==================
 function spawnObstacle(){
+  const air = level>=3 && Math.random()<0.4;
   obstacles.push({
-    x: canvas.width + 30,
-    y: groundY + player.r - 10,
-    w: 26,
-    h: 40
+    x: canvas.width+30,
+    y: air ? groundY-70-Math.random()*40 : groundY+player.r-10,
+    w:26,
+    h:40,
+    air
   });
 }
 
-// ================== DESSINS ==================
 function drawBackground(){
-  ctx.globalAlpha = 0.15;
-  ctx.fillStyle = '#90caf9';
-  ctx.font = '20px Arial';
+  ctx.globalAlpha=0.15;
+  ctx.fillStyle='#90caf9';
+  ctx.font='20px Arial';
   words.forEach((w,i)=>{
     ctx.fillText(w,(i*160+score)%canvas.width,70+(i%3)*120);
   });
-  ctx.globalAlpha = 1;
+  ctx.globalAlpha=1;
 }
 
 function drawPlayer(){
   ctx.beginPath();
   ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-  ctx.fillStyle = '#ffb300';
+  ctx.fillStyle='#ffb300';
   ctx.fill();
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = '#1565c0';
+  ctx.lineWidth=4;
+  ctx.strokeStyle='#1565c0';
   ctx.stroke();
-  ctx.fillStyle = '#0d47a1';
-  ctx.font = '12px Arial';
-  ctx.textAlign = 'center';
+  ctx.fillStyle='#0d47a1';
+  ctx.font='12px Arial';
+  ctx.textAlign='center';
   ctx.fillText('MLE',player.x,player.y+4);
 }
 
-// ================== BOUCLE PRINCIPALE ==================
 function loop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   drawBackground();
 
   if(state==='play'){
-    // physique
-    player.vy += 0.6;
-    player.y += player.vy;
-    if(player.y > groundY){ player.y = groundY; player.vy = 0; }
+    player.vy+=0.6;
+    player.y+=player.vy;
+    if(player.y>groundY){player.y=groundY;player.vy=0;}
 
-    // obstacles
-    if(Math.random() < 0.02) spawnObstacle();
+    if(Math.random()<0.02) spawnObstacle();
 
     obstacles.forEach(o=>{
-      o.x -= speed;
-      ctx.fillStyle = immunity>0 ? '#81c784' : '#e53935';
+      o.x-=speed;
+      ctx.fillStyle=immunity>0?'#81c784':'#e53935';
       ctx.fillRect(o.x,o.y,o.w,o.h);
 
-      const cx = Math.max(o.x, Math.min(player.x, o.x+o.w));
-      const cy = Math.max(o.y, Math.min(player.y, o.y+o.h));
-      const dx = player.x - cx;
-      const dy = player.y - cy;
-
-      if(immunity<=0 && dx*dx + dy*dy < player.r*player.r){
+      const cx=Math.max(o.x,Math.min(player.x,o.x+o.w));
+      const cy=Math.max(o.y,Math.min(player.y,o.y+o.h));
+      const dx=player.x-cx;
+      const dy=player.y-cy;
+      if(immunity<=0 && dx*dx+dy*dy<player.r*player.r){
         showQuestion();
       }
     });
 
-    obstacles = obstacles.filter(o=>o.x+o.w>0);
-
+    obstacles=obstacles.filter(o=>o.x+o.w>0);
     score++;
-    if(score % 600 === 0) speed += 0.5;
+
+    if(score%400===0){
+      level++;
+      speed+=0.4;
+    }
+
     if(immunity>0) immunity--;
   }
 
   drawPlayer();
-
-  ctx.fillStyle = '#0d47a1';
-  ctx.font = '14px Arial';
-  ctx.textAlign = 'left';
+  ctx.fillStyle='#0d47a1';
+  ctx.font='14px Arial';
+  ctx.textAlign='left';
   ctx.fillText('Score : '+score,10,20);
-  if(immunity>0) ctx.fillText('Immunité',10,40);
+  ctx.fillText('Niveau : '+level,10,40);
+  if(immunity>0) ctx.fillText('Immunité',10,60);
 
   requestAnimationFrame(loop);
 }
