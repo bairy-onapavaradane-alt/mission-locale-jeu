@@ -7,118 +7,176 @@
 
 <style>
 :root{
-  --primary:#0f7780;
-  --bg:#eef7f8;
+  --blue:#0f7780;
+  --orange:#f59e0b;
 }
-
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 
 body{
   margin:0;
-  background:var(--bg);
-  text-align:center;
-} <img src="images/logo-mle.png" alt="Logo Mission Locale">
-  
-
-/* ===== MENU ===== */
-#menu{
-  position:fixed;
-  inset:0;
-  background:var(--bg);
+  font-family:Arial, sans-serif;
+  background:#f7fcfd;
   display:flex;
   justify-content:center;
   align-items:center;
+  min-height:100vh;
+}
+
+.logo{
+  position:fixed;
+  top:10px;
+  right:10px;
+  width:180px;
+  max-width:40vw;
   z-index:10;
 }
 
-.menu-card{
-  background:white;
-  padding:24px;
-  border-radius:14px;
-  max-width:420px;
-  box-shadow:0 10px 30px rgba(0,0,0,.2);
+/* ===== ÉCRAN DE DÉMARRAGE ===== */
+#startScreen{
+  position:fixed;
+  inset:0;
+  background:#f7fcfd;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:100;
 }
 
-.menu-card h1{color:var(--primary)}
+.startCard{
+  background:white;
+  padding:24px;
+  max-width:420px;
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  text-align:center;
+}
 
-.menu-card button{
+.startCard h1{
+  color:var(--blue);
+}
+
+.startCard button{
   margin-top:16px;
-  padding:14px 24px;
-  font-size:16px;
+  padding:12px 20px;
   border:none;
   border-radius:10px;
-  background:var(--primary);
+  background:var(--blue);
   color:white;
+  font-size:16px;
   font-weight:bold;
   cursor:pointer;
 }
 
 /* ===== JEU ===== */
-canvas{
+#gameBox{
   background:white;
+  padding:12px;
   border-radius:12px;
-  display:block;
-  margin:20px auto;
+  box-shadow:0 6px 20px rgba(0,0,0,.1);
+  width:100%;
+  max-width:900px;
 }
 
-#hud{
-  font-weight:bold;
-  margin-bottom:20px;
+canvas{
+  width:100%;
+  background:linear-gradient(#eaf7f8,#fff);
+  border-radius:10px;
+}
+
+/* ===== QUIZ ===== */
+#quiz{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:200;
+}
+
+.quizBox{
+  background:white;
+  padding:24px;
+  border-radius:16px;
+  max-width:420px;
+  width:90%;
+  text-align:center;
+}
+
+.quizBox h2{
+  color:var(--blue);
+}
+
+.quizBox button{
+  display:block;
+  width:100%;
+  margin-top:10px;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  background:#f9fafb;
+  cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
-<!-- MENU -->
-<div id="menu">
-  <div class="menu-card">
-    <h1>🎯 Parcours Pro – Mission Locale</h1>
+<img src="images/20251016_Logotype_MLE_Label_Landscape_Blanc_CMJN_Transparent.png"
+     alt="Logo Mission Locale" class="logo">
+
+<!-- Écran de démarrage -->
+<div id="startScreen">
+  <div class="startCard">
+    <h1>🎯 Jeu Mission Locale</h1>
     <p>
-      Aide la mascotte MLE à avancer dans son parcours professionnel.<br><br>
-      👉 Clique, touche l’écran ou appuie sur ESPACE pour sauter.<br>
-      👉 Évite les obstacles.<br>
-      👉 Si tu touches un obstacle, répond à une question.<br>
-      👉 Mauvaise réponse : score remis à zéro.
+      Évite les obstacles et avance le plus loin possible.<br><br>
+      🟢 Bonne réponse → tu continues<br>
+      🔴 Mauvaise réponse → score remis à zéro
+    </p>
+    <p>
+      👉 Sauter : toucher l’écran ou barre espace<br>
+      👉 Obstacles aériens à partir du niveau 5
     </p>
     <button id="startBtn">Démarrer le jeu</button>
   </div>
 </div>
 
-<!-- JEU -->
-<canvas id="game" width="900" height="300"></canvas>
+<div id="gameBox">
+  <canvas id="game" width="900" height="260"></canvas>
+</div>
 
-<div id="hud">
-  Score : <span id="score">0</span> |
-  Niveau : <span id="level">1</span>
+<!-- Quiz -->
+<div id="quiz">
+  <div class="quizBox">
+    <h2 id="question"></h2>
+    <div id="answers"></div>
+  </div>
 </div>
 
 <script>
-/* ===== INITIALISATION ===== */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let playing=false;
+let running=false;
+let speed=4;
 let score=0;
 let level=1;
-let speed=4;
-let frame=0;
+let obstacles=[];
+let airObstacles=[];
+let showQuiz=false;
 
-/* ===== PERSONNAGE (ROND MLE) ===== */
 const player={
-  x:90,
-  y:210,
+  x:60,
+  y:180,
   r:22,
   vy:0,
-  jumping:false
+  jump:false
 };
 
-/* ===== OBSTACLES ===== */
-let obstacles=[];
+const words=["CV","Entretien","Compétences","Mission Locale","Stage","Emploi","Projet"];
 
-/* ===== QUESTIONS ===== */
 const questions=[
-[
+  [
   { q:"Que faut-il absolument mettre en haut d'un CV ?", a:["Nom et contact","Recette de cuisine","Photo uniquement"], correct:0, points:50 },
   { q:"Quelle durée idéale pour un CV ciblé ?", a:["1 page","5 pages","10 pages"], correct:0, points:40 },
   { q:"Que signifie \"soft skill\" ?", a:["Compétence comportementale","Logiciel","Diplôme"], correct:0, points:30 },
@@ -165,124 +223,135 @@ const questions=[
 ]
 
 
-/* ===== FOND AVEC MOTS ===== */
-const words=["CV","Emploi","Stage","Formation","Projet","Mission Locale","Entretien"];
-
-/* ===== FONCTIONS ===== */
-function jump(){
-  if(!player.jumping){
-    player.vy=-15;
-    player.jumping=true;
-  }
-}
-
-function spawnObstacle(){
-  obstacles.push({x:canvas.width,y:230,w:30,h:30});
-}
-
-function showQuiz(){
-  playing=false;
-  const q=questions[Math.floor(Math.random()*questions.length)];
-  const ok=confirm(
-    q.q+"\n\nOK : "+q.a[0]+"\nAnnuler : "+q.a[1]
-  );
-  if(!ok) score=0;
-  playing=true;
-}
-
 function drawBackground(){
   ctx.globalAlpha=0.08;
   ctx.fillStyle="#0f7780";
   ctx.font="20px Arial";
   words.forEach((w,i)=>{
-    ctx.fillText(w,(frame*0.3+i*140)%canvas.width,50+(i%4)*40);
+    ctx.fillText(w,(i*150+Date.now()/20)%1000-100,40+(i*30)%120);
   });
   ctx.globalAlpha=1;
 }
 
-/* ===== BOUCLE DU JEU ===== */
-function gameLoop(){
-  if(!playing) return;
-
-  frame++;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  drawBackground();
-
-  /* sol */
-  ctx.fillStyle="#ddd";
-  ctx.fillRect(0,250,canvas.width,4);
-
-  /* joueur */
-  player.vy+=0.9;
-  player.y+=player.vy;
-  if(player.y>210){
-    player.y=210;
-    player.vy=0;
-    player.jumping=false;
-  }
-
+function drawPlayer(){
+  const grad=ctx.createLinearGradient(player.x,player.y,player.x,player.y+player.r*2);
+  grad.addColorStop(0,"#f59e0b");
+  grad.addColorStop(1,"#fff");
+  ctx.fillStyle=grad;
   ctx.beginPath();
   ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-  ctx.fillStyle="#0f7780";
   ctx.fill();
-
-  ctx.fillStyle="white";
+  ctx.strokeStyle="#0f7780";
+  ctx.lineWidth=4;
+  ctx.stroke();
+  ctx.fillStyle="#0f7780";
   ctx.font="bold 14px Arial";
   ctx.textAlign="center";
-  ctx.fillText("MLE",player.x,player.y+5);
+  ctx.textBaseline="middle";
+  ctx.fillText("MLE",player.x,player.y);
+}
 
-  /* obstacles */
-  if(Math.random()<0.02) spawnObstacle();
+function spawnObstacle(){
+  obstacles.push({x:canvas.width,y:190,w:30,h:30});
+}
+
+function spawnAirObstacle(){
+  airObstacles.push({x:canvas.width,y:120,w:30,h:30});
+}
+
+function loop(){
+  if(!running)return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawBackground();
+
+  ctx.fillStyle="#e6f7f7";
+  ctx.fillRect(0,200,canvas.width,60);
+
+  if(player.jump){
+    player.vy+=0.9;
+    player.y+=player.vy;
+    if(player.y>=180){
+      player.y=180;
+      player.jump=false;
+      player.vy=0;
+    }
+  }
+
+  drawPlayer();
+
+  if(Math.random()<0.02)spawnObstacle();
+  if(level>=5 && Math.random()<0.01)spawnAirObstacle();
 
   obstacles.forEach(o=>{
     o.x-=speed;
-    ctx.fillStyle="#333";
+    ctx.fillStyle="#8b3eff";
     ctx.fillRect(o.x,o.y,o.w,o.h);
-
-    if(
-      o.x < player.x+player.r &&
-      o.x+o.w > player.x-player.r &&
-      player.y+player.r > o.y
-    ){
-      obstacles=[];
-      showQuiz();
+    if(o.x<player.x+player.r && o.x+o.w>player.x &&
+       o.y<player.y+player.r && o.y+o.h>player.y){
+      openQuiz();
     }
   });
 
-  obstacles=obstacles.filter(o=>o.x>-50);
+  airObstacles.forEach(o=>{
+    o.x-=speed;
+    ctx.fillStyle="#b45309";
+    ctx.fillRect(o.x,o.y,o.w,o.h);
+    if(player.jump &&
+       o.x<player.x+player.r && o.x+o.w>player.x){
+      openQuiz();
+    }
+  });
 
-  /* score / niveau */
   score++;
   if(score%500===0){
     level++;
-    speed+=0.6;
+    speed+=0.8;
   }
 
-  document.getElementById("score").textContent=score;
-  document.getElementById("level").textContent=level;
-
-  requestAnimationFrame(gameLoop);
+  requestAnimationFrame(loop);
 }
 
-/* ===== CONTROLES ===== */
-document.getElementById("startBtn").onclick=()=>{
-  document.getElementById("menu").style.display="none";
-  playing=true;
-  gameLoop();
-};
+function jump(){
+  if(!player.jump){
+    player.jump=true;
+    player.vy=-16;
+  }
+}
 
 document.addEventListener("keydown",e=>{
-  if(e.code==="Space") jump();
+  if(e.code==="Space")jump();
 });
-
 canvas.addEventListener("click",jump);
-canvas.addEventListener("touchstart",e=>{
-  e.preventDefault();
-  jump();
-},{passive:false});
+canvas.addEventListener("touchstart",jump);
+
+function openQuiz(){
+  running=false;
+  document.getElementById("quiz").style.display="flex";
+  const q=questions[Math.floor(Math.random()*questions.length)];
+  document.getElementById("question").textContent=q.q;
+  const aBox=document.getElementById("answers");
+  aBox.innerHTML="";
+  q.a.forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.textContent=t;
+    b.onclick=()=>{
+      document.getElementById("quiz").style.display="none";
+      if(i!==q.c)score=0;
+      running=true;
+      loop();
+    };
+    aBox.appendChild(b);
+  });
+}
+
+document.getElementById("startBtn").onclick=()=>{
+  document.getElementById("startScreen").style.display="none";
+  running=true;
+  loop();
+};
 </script>
 
 </body>
 </html>
+
 
