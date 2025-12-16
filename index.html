@@ -63,6 +63,8 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
 let gameRunning = false;
+let immunity = false;
+let immunityTimer = 0;
 let score = 0;
 let level = 1;
 let speed = 4;
@@ -167,40 +169,18 @@ function loop() {
 
   drawPlayer();
 
+  // Immunité après question
+  if (immunity) {
+    immunityTimer--;
+    if (immunityTimer <= 0) immunity = false;
+  }
+
   // Obstacles
   if (Math.random() < 0.02) spawnObstacle();
 
   obstacles.forEach(o => {
     o.x -= speed;
-    ctx.fillStyle = '#e53935';
-    ctx.fillRect(o.x, o.y, o.w, o.h);
-
-    // Collision
-    // Collision cercle-rectangle fiable
-    const closestX = Math.max(o.x, Math.min(player.x, o.x + o.w));
-    const closestY = Math.max(o.y, Math.min(player.y, o.y + o.h));
-    const dx = player.x - closestX;
-    const dy = player.y - closestY;
-    if (dx * dx + dy * dy < player.r * player.r) {
-      gameRunning = false;
-      showQuestion();
-    }
-  });
-
-  obstacles = obstacles.filter(o => o.x + o.w > 0);
-
-  score++;
-  if (score % 500 === 0) { level++; speed += 0.5; }
-
-  ctx.fillStyle = '#0d47a1';
-  ctx.font = '14px Arial';
-  ctx.textAlign = 'left';
-  ctx.fillText('Score : ' + score, 10, 20);
-  ctx.fillText('Niveau : ' + level, 10, 40);
-  ctx.font = '12px Arial';
-  ctx.fillText('Consigne : sauter pour éviter les obstacles', 10, 60);
-
-  requestAnimationFrame(loop);
+    ctx.fillStyle = immunitynFrame(loop);
 }
 
 function showQuestion() {
@@ -253,6 +233,17 @@ function countdown() {
   box.style.display = 'block';
   const interval = setInterval(() => {
     box.innerHTML = `<h2>${c}</h2>`;
+    c--;
+    if (c < 0) {
+      clearInterval(interval);
+      box.style.display = 'none';
+      immunity = true;
+      immunityTimer = 240; // 4 secondes à 60 FPS
+      gameRunning = true;
+      requestAnimationFrame(loop);
+    }
+  }, 1000);
+}</h2>`;
     c--;
     if (c < 0) {
       clearInterval(interval);
