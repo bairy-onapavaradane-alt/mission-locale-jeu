@@ -98,28 +98,34 @@ La Mission Locale vous souhaite un super jeu !
 </div>
 
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const rotateMsg = document.getElementById("rotateMsg");
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const rotateMsg=document.getElementById("rotateMsg");
 
 let state="menu", pausedByOrientation=false;
-let score=0, level=1, speed=2.5, immunity=0;
+let score=0, level=1, speed=2.8, immunity=0;
 const groundY=340;
 const player={x:120,y:groundY,r:22,vy:0};
+
 let obstacles=[];
-let lastSpawnX=0;
+let lastObstacleX=0;
 
 /* ================= BACKGROUND WORDS ================= */
 const words=["CV","ENTRETIEN","COMPÉTENCES","STAGE","ALTERNANCE","FORMATION","PROJET","MOTIVATION"];
+let wordIndex=0;
 let bgWords=[];
 
-function spawnWord(){
-  bgWords.push({
-    x:canvas.width+50,
-    y:80+Math.random()*200,
-    txt:words[Math.floor(Math.random()*words.length)],
-    size:16+Math.random()*10
-  });
+function spawnWordsRow(){
+  const startX=canvas.width+50;
+  const y=90+Math.random()*180;
+  for(let i=0;i<3;i++){
+    bgWords.push({
+      x:startX+i*160,
+      y:y,
+      txt:words[(wordIndex+i)%words.length]
+    });
+  }
+  wordIndex=(wordIndex+3)%words.length;
 }
 
 /* ================= START ================= */
@@ -130,8 +136,9 @@ document.getElementById("startBtn").onclick=()=>{
 };
 
 function resetGame(){
-  score=0; level=1; speed=2.5; immunity=120;
+  score=0; level=1; speed=2.8; immunity=120;
   obstacles=[]; bgWords=[];
+  lastObstacleX=0;
   player.y=groundY; player.vy=0;
 }
 
@@ -147,33 +154,32 @@ canvas.addEventListener("touchstart",jump);
 
 /* ================= OBSTACLES ================= */
 function spawnObstacle(){
-  let airborne = level>=2 && Math.random()<0.35;
+  const airborne = level>=2 && Math.random()<0.3;
   obstacles.push({
-    x:canvas.width+50,
-    y: airborne ? groundY-80 : groundY+player.r-10,
+    x:canvas.width+40,
+    y:airborne ? groundY-80 : groundY+player.r-10,
     w:26,
-    h: airborne ? 26 : 40,
-    air: airborne
+    h:airborne ? 26 : 40,
+    air:airborne
   });
-  lastSpawnX=canvas.width+50;
+  lastObstacleX=canvas.width+40;
 }
 
 /* ================= QUESTIONS ================= */
 const questions=[
-{q:"Que faut-il absolument mettre en haut d’un CV ?",c:["Nom, prénom et coordonnées","Une citation","Ses loisirs"],a:0},
-{q:"Que signifie soft skill ?",c:["Compétence comportementale","Outil","Diplôme"],a:0}
+{q:"Que faut-il mettre en haut d’un CV ?",c:["Nom et coordonnées","Citation","Loisirs"],a:0},
+{q:"Soft skill signifie ?",c:["Compétence comportementale","Logiciel","Diplôme"],a:0}
 ];
-let usedQuestions=[];
 
 function showQuestion(){
   state="question";
-  let q=questions[Math.floor(Math.random()*questions.length)];
+  const q=questions[Math.floor(Math.random()*questions.length)];
   const answers=q.c.map((t,i)=>({t,ok:i===q.a})).sort(()=>Math.random()-0.5);
   const box=document.getElementById("question");
   box.innerHTML=`<h3>${q.q}</h3><div class="qcm"></div>`;
   box.style.display="flex";
   answers.forEach(a=>{
-    let b=document.createElement("button");
+    const b=document.createElement("button");
     b.textContent=a.t;
     b.onclick=()=>{
       box.style.display="none";
@@ -200,23 +206,27 @@ function loop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   /* BACKGROUND WORDS */
-  if(state==="play" && Math.random()<0.01) spawnWord();
+  if(state==="play" && bgWords.length===0) spawnWordsRow();
   bgWords.forEach(w=>{
-    w.x-=0.5;
+    w.x-=0.4;
     ctx.globalAlpha=0.25;
-    ctx.font=w.size+"px Arial";
+    ctx.font="18px Arial";
     ctx.fillStyle="#1565c0";
     ctx.fillText(w.txt,w.x,w.y);
     ctx.globalAlpha=1;
   });
-  bgWords=bgWords.filter(w=>w.x>-100);
+  if(bgWords.length && bgWords[0].x<-160){
+    bgWords=[];
+  }
 
   if(state==="play" && !pausedByOrientation){
     player.vy+=0.6; player.y+=player.vy;
     if(player.y>groundY){player.y=groundY;player.vy=0;}
 
-    let spawnRate=0.006+level*0.002;
-    if(obstacles.length<4 && canvas.width-lastSpawnX>180 && Math.random()<spawnRate){
+    const minGap = 220 - level*10;
+    const spawnChance = 0.015 + level*0.003;
+
+    if(canvas.width-lastObstacleX>minGap && Math.random()<spawnChance){
       spawnObstacle();
     }
 
@@ -234,7 +244,7 @@ function loop(){
 
     obstacles=obstacles.filter(o=>o.x+o.w>0);
     score++;
-    if(score%400===0){level++;speed+=0.4;}
+    if(score%400===0){level++;speed+=0.35;}
     if(immunity>0) immunity--;
   }
 
@@ -243,7 +253,8 @@ function loop(){
   ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
   ctx.fillStyle="#ffb300"; ctx.fill();
   ctx.strokeStyle="#1565c0"; ctx.lineWidth=4; ctx.stroke();
-  ctx.fillStyle="#0d47a1"; ctx.font="12px Arial";
+  ctx.fillStyle="#0d47a1";
+  ctx.font="12px Arial";
   ctx.textAlign="center"; ctx.textBaseline="middle";
   ctx.fillText("MLE",player.x,player.y);
 
