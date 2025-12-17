@@ -6,7 +6,6 @@
 <title>MLE Runner</title>
 
 <style>
-/* ================= BASE ================= */
 body{
   margin:0;
   background:#0d47a1;
@@ -17,9 +16,7 @@ body{
   justify-content:center;
   min-height:100vh;
 }
-
 #container{position:relative;}
-
 canvas{
   width:800px;
   height:450px;
@@ -27,8 +24,6 @@ canvas{
   border-radius:14px;
   box-shadow:0 10px 30px rgba(0,0,0,.35);
 }
-
-/* ================= OVERLAYS ================= */
 .overlay{
   position:absolute;
   inset:0;
@@ -42,7 +37,6 @@ canvas{
   border-radius:14px;
   z-index:5;
 }
-
 button{
   margin-top:15px;
   padding:12px 24px;
@@ -54,21 +48,15 @@ button{
 }
 button:hover{background:#ffc107;}
 .qcm button{width:100%;margin:6px 0;}
-
-/* ================= FOOTER ================= */
 #footer{
   margin-top:12px;
   color:white;
   font-size:14px;
   font-weight:bold;
 }
-
-/* ================= MOBILE ================= */
 @media (max-width:900px){
   canvas{width:95vw;height:auto;}
 }
-
-/* ================= ORIENTATION ================= */
 #rotateMsg{
   position:fixed;
   inset:0;
@@ -88,128 +76,109 @@ button:hover{background:#ffc107;}
 <body>
 
 <div id="rotateMsg">
-  📱🔄<br><br>
-  Ce jeu se joue uniquement en <b>mode paysage</b>.<br>
-  Tourne ton téléphone pour jouer 🙂
+📱🔄<br><br>
+Jeu en <b>mode paysage uniquement</b><br>
+Tourne ton téléphone 🙂
 </div>
 
 <div id="container">
-  <canvas id="game" width="800" height="450"></canvas>
+<canvas id="game" width="800" height="450"></canvas>
 
-  <div id="start" class="overlay">
-    <h2>Runner Mission Locale</h2>
-    <p>Sauter pour éviter les obstacles</p>
-    <button id="startBtn">Démarrer</button>
-  </div>
+<div id="start" class="overlay">
+<h2>Runner Mission Locale</h2>
+<p>Sauter pour éviter les obstacles</p>
+<button id="startBtn">Démarrer</button>
+</div>
 
-  <div id="question" class="overlay" style="display:none"></div>
+<div id="question" class="overlay" style="display:none"></div>
 </div>
 
 <div id="footer">
-  La Mission Locale vous souhaite un super jeu !
+La Mission Locale vous souhaite un super jeu !
 </div>
 
 <script>
-/* ================= CANVAS ================= */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const rotateMsg = document.getElementById("rotateMsg");
 
-/* ================= GAME STATE ================= */
-let state = "menu";
-let pausedByOrientation = false;
+let state="menu", pausedByOrientation=false;
+let score=0, level=1, speed=2.5, immunity=0;
+const groundY=340;
+const player={x:120,y:groundY,r:22,vy:0};
+let obstacles=[];
+let lastSpawnX=0;
 
-let score = 0, level = 1, speed = 2.5, immunity = 0;
-const groundY = 340;
-const player = { x:120, y:groundY, r:22, vy:0 };
+/* ================= BACKGROUND WORDS ================= */
+const words=["CV","ENTRETIEN","COMPÉTENCES","STAGE","ALTERNANCE","FORMATION","PROJET","MOTIVATION"];
+let bgWords=[];
 
-let obstacles = [];
-const MAX_OBSTACLES = 4;
-
-/* ================= QUESTIONS ================= */
-const questions = [
-  { q:"Que faut-il absolument mettre en haut d’un CV ?", c:["Nom, prénom et coordonnées","Une citation personnelle","Ses loisirs détaillés"], a:0 },
-  { q:"Quelle est la durée idéale pour un CV ciblé ?", c:["Une page claire et synthétique","Plusieurs pages détaillées","Autant de pages que d’expériences"], a:0 },
-  { q:"Que signifie le terme soft skill ?", c:["Compétence liée au comportement","Outil informatique","Certification officielle"], a:0 },
-  { q:"Que faire après avoir envoyé une candidature ?", c:["Relancer poliment","Supprimer le contact","Envoyer des messages tous les jours"], a:0 },
-  { q:"Comment adapter son CV à une offre ?", c:["Mettre en avant les compétences demandées","Utiliser un CV générique","Changer les couleurs"], a:0 },
-  { q:"Qu’est-ce qu’une lettre de motivation ?", c:["Un texte personnalisé","Un résumé du CV","Une lettre inutile"], a:0 },
-  { q:"Quel comportement éviter en entretien ?", c:["Consulter son téléphone","Écouter","Poser des questions"], a:0 },
-  { q:"Qu’est-ce qu’un stage ?", c:["Une expérience encadrée","Un emploi à vie","Un loisir"], a:0 }
-];
-
-let usedQuestions = [];
+function spawnWord(){
+  bgWords.push({
+    x:canvas.width+50,
+    y:80+Math.random()*200,
+    txt:words[Math.floor(Math.random()*words.length)],
+    size:16+Math.random()*10
+  });
+}
 
 /* ================= START ================= */
-document.getElementById("startBtn").onclick = () => {
-  document.getElementById("start").style.display = "none";
+document.getElementById("startBtn").onclick=()=>{
+  document.getElementById("start").style.display="none";
   resetGame();
-  state = "play";
+  state="play";
 };
 
 function resetGame(){
-  score = 0;
-  level = 1;
-  speed = 2.5;
-  immunity = 120;
-  obstacles = [];
-  usedQuestions = [];
-  player.y = groundY;
-  player.vy = 0;
+  score=0; level=1; speed=2.5; immunity=120;
+  obstacles=[]; bgWords=[];
+  player.y=groundY; player.vy=0;
 }
 
 /* ================= CONTROLS ================= */
 function jump(){
   if(state==="play" && !pausedByOrientation && player.y>=groundY){
-    player.vy = -12;
+    player.vy=-12;
   }
 }
-window.addEventListener("keydown",e=>{ if(e.code==="Space") jump(); });
+window.addEventListener("keydown",e=>{if(e.code==="Space") jump();});
 canvas.addEventListener("click",jump);
 canvas.addEventListener("touchstart",jump);
 
 /* ================= OBSTACLES ================= */
 function spawnObstacle(){
+  let airborne = level>=2 && Math.random()<0.35;
   obstacles.push({
-    x:canvas.width+30,
-    y:groundY+player.r-10,
+    x:canvas.width+50,
+    y: airborne ? groundY-80 : groundY+player.r-10,
     w:26,
-    h:40
+    h: airborne ? 26 : 40,
+    air: airborne
   });
+  lastSpawnX=canvas.width+50;
 }
 
-/* ================= QUESTIONS (RÉPONSES MÉLANGÉES) ================= */
+/* ================= QUESTIONS ================= */
+const questions=[
+{q:"Que faut-il absolument mettre en haut d’un CV ?",c:["Nom, prénom et coordonnées","Une citation","Ses loisirs"],a:0},
+{q:"Que signifie soft skill ?",c:["Compétence comportementale","Outil","Diplôme"],a:0}
+];
+let usedQuestions=[];
+
 function showQuestion(){
-  if(state!=="play") return;
-  state = "question";
-
-  let available = questions.filter(q=>!usedQuestions.includes(q.q));
-  if(!available.length){ usedQuestions=[]; available=[...questions]; }
-
-  const q = available[Math.floor(Math.random()*available.length)];
-  usedQuestions.push(q.q);
-
-  // Mélange des réponses
-  const answers = q.c.map((txt,i)=>({txt, correct:i===q.a}));
-  answers.sort(()=>Math.random()-0.5);
-
-  const box = document.getElementById("question");
-  box.innerHTML = `<h3>${q.q}</h3><div class="qcm"></div>`;
-  box.style.display = "flex";
-
-  answers.forEach(ans=>{
-    const b = document.createElement("button");
-    b.textContent = ans.txt;
-    b.onclick = ()=>{
-      box.style.display = "none";
-      if(ans.correct){
-        immunity = 120;
-        obstacles = [];
-        state = "play";
-      }else{
-        state = "menu";
-        document.getElementById("start").style.display="flex";
-      }
+  state="question";
+  let q=questions[Math.floor(Math.random()*questions.length)];
+  const answers=q.c.map((t,i)=>({t,ok:i===q.a})).sort(()=>Math.random()-0.5);
+  const box=document.getElementById("question");
+  box.innerHTML=`<h3>${q.q}</h3><div class="qcm"></div>`;
+  box.style.display="flex";
+  answers.forEach(a=>{
+    let b=document.createElement("button");
+    b.textContent=a.t;
+    b.onclick=()=>{
+      box.style.display="none";
+      if(a.ok){immunity=120;obstacles=[];state="play";}
+      else{state="menu";document.getElementById("start").style.display="flex";}
     };
     box.querySelector(".qcm").appendChild(b);
   });
@@ -217,72 +186,69 @@ function showQuestion(){
 
 /* ================= ORIENTATION ================= */
 function checkOrientation(){
-  if(window.innerWidth<900 && window.innerHeight>window.innerWidth){
-    rotateMsg.style.display="flex";
-    pausedByOrientation = true;
+  if(innerWidth<900 && innerHeight>innerWidth){
+    rotateMsg.style.display="flex"; pausedByOrientation=true;
   }else{
-    rotateMsg.style.display="none";
-    pausedByOrientation = false;
+    rotateMsg.style.display="none"; pausedByOrientation=false;
   }
 }
-window.addEventListener("resize",checkOrientation);
+addEventListener("resize",checkOrientation);
 checkOrientation();
 
 /* ================= LOOP ================= */
 function loop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  if(state==="play" && !pausedByOrientation){
-    player.vy += 0.6;
-    player.y += player.vy;
-    if(player.y>groundY){ player.y=groundY; player.vy=0; }
+  /* BACKGROUND WORDS */
+  if(state==="play" && Math.random()<0.01) spawnWord();
+  bgWords.forEach(w=>{
+    w.x-=0.5;
+    ctx.globalAlpha=0.25;
+    ctx.font=w.size+"px Arial";
+    ctx.fillStyle="#1565c0";
+    ctx.fillText(w.txt,w.x,w.y);
+    ctx.globalAlpha=1;
+  });
+  bgWords=bgWords.filter(w=>w.x>-100);
 
-    // Difficulté progressive
-    let spawnRate = 0.008 + level * 0.003;
-    if(obstacles.length<MAX_OBSTACLES && Math.random()<spawnRate){
+  if(state==="play" && !pausedByOrientation){
+    player.vy+=0.6; player.y+=player.vy;
+    if(player.y>groundY){player.y=groundY;player.vy=0;}
+
+    let spawnRate=0.006+level*0.002;
+    if(obstacles.length<4 && canvas.width-lastSpawnX>180 && Math.random()<spawnRate){
       spawnObstacle();
     }
 
     obstacles.forEach(o=>{
-      o.x -= speed;
-      ctx.fillStyle = immunity>0 ? "#81c784" : "#e53935";
+      o.x-=speed;
+      ctx.fillStyle=o.air?"#8e24aa":"#e53935";
       ctx.fillRect(o.x,o.y,o.w,o.h);
 
-      const dx = Math.max(o.x, Math.min(player.x, o.x+o.w)) - player.x;
-      const dy = Math.max(o.y, Math.min(player.y, o.y+o.h)) - player.y;
-      if(immunity<=0 && dx*dx+dy*dy < player.r*player.r){
+      const dx=Math.max(o.x,Math.min(player.x,o.x+o.w))-player.x;
+      const dy=Math.max(o.y,Math.min(player.y,o.y+o.h))-player.y;
+      if(immunity<=0 && dx*dx+dy*dy<player.r*player.r){
         showQuestion();
       }
     });
 
-    obstacles = obstacles.filter(o=>o.x+o.w>0);
+    obstacles=obstacles.filter(o=>o.x+o.w>0);
     score++;
-
-    if(score%400===0){
-      level++;
-      speed+=0.4;
-    }
-
+    if(score%400===0){level++;speed+=0.4;}
     if(immunity>0) immunity--;
   }
 
   /* PLAYER */
   ctx.beginPath();
   ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-  ctx.fillStyle="#ffb300";
-  ctx.fill();
-  ctx.strokeStyle="#1565c0";
-  ctx.lineWidth=4;
-  ctx.stroke();
-  ctx.fillStyle="#0d47a1";
-  ctx.font="12px Arial";
-  ctx.textAlign="center";
-  ctx.textBaseline="middle";
+  ctx.fillStyle="#ffb300"; ctx.fill();
+  ctx.strokeStyle="#1565c0"; ctx.lineWidth=4; ctx.stroke();
+  ctx.fillStyle="#0d47a1"; ctx.font="12px Arial";
+  ctx.textAlign="center"; ctx.textBaseline="middle";
   ctx.fillText("MLE",player.x,player.y);
 
   /* HUD */
-  ctx.textAlign="left";
-  ctx.font="14px Arial";
+  ctx.textAlign="left"; ctx.font="14px Arial";
   ctx.fillText("Score : "+score,10,25);
   ctx.fillText("Niveau : "+level,10,45);
   if(immunity>0) ctx.fillText("Immunité",10,65);
@@ -291,6 +257,6 @@ function loop(){
 }
 loop();
 </script>
-
 </body>
 </html>
+
