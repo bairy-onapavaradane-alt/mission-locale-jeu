@@ -135,14 +135,258 @@ const MAX_OBSTACLES=4;
 const BASE_GAP=180;
 
 const questions=[
- {q:'À quoi sert un CV ?',c:['Présenter ses compétences','Dormir','Jouer'],a:0},
- {q:'Un entretien sert principalement à ?',c:['Évaluer un candidat','Se reposer','Regarder un film'],a:0},
- {q:'La Mission Locale accompagne surtout ?',c:['Les jeunes','Les entreprises','Les enfants'],a:0},
- {q:'Pourquoi préparer un entretien ?',c:['Pour réussir','Pour s’amuser','Pour dormir'],a:0},
- {q:'Le CV doit être ?',c:['Clair et structuré','Très long','Illisible'],a:0},
- {q:'La ponctualité est ?',c:['Importante','Inutile','Interdite'],a:0},
- {q:'Comment adapter son CV à une offre ?',c:['Mettre en avant les compétences','Envoyer le même CV','Changer la police'],a:0}
-];
+  {
+    q: "Que faut-il absolument mettre en haut d’un CV ?",
+    a: [
+      "Nom, prénom et coordonnées",
+      "Une citation personnelle",
+      "Ses loisirs détaillés"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Quelle est la durée idéale pour un CV ciblé ?",
+    a: [
+      "Une page claire et synthétique",
+      "Plusieurs pages détaillées",
+      "Autant de pages que d’expériences"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Que signifie le terme « soft skill » ?",
+    a: [
+      "Compétence liée au comportement et au savoir-être",
+      "Outil informatique",
+      "Certification officielle"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Que faire après avoir envoyé une candidature ?",
+    a: [
+      "Relancer de manière polie après quelques jours",
+      "Supprimer le contact",
+      "Envoyer des messages tous les jours"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Comment adapter son CV à une offre d’emploi ?",
+    a: [
+      "Mettre en avant les compétences demandées",
+      "Utiliser un CV générique",
+      "Changer uniquement les couleurs"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Qu’est-ce qu’une lettre de motivation ?",
+    a: [
+      "Un texte personnalisé expliquant son intérêt pour le poste",
+      "Un résumé du CV",
+      "Une lettre pour se présenter sans lien avec l’offre"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Quel comportement faut-il éviter en entretien ?",
+    a: [
+      "Consulter son téléphone",
+      "Écouter attentivement",
+      "Poser des questions pertinentes"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Qu’est-ce qu’un stage ?",
+    a: [
+      "Une expérience professionnelle encadrée pour apprendre",
+      "Un emploi à vie",
+      "Un loisir"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Pourquoi relancer une candidature ?",
+    a: [
+      "Montrer sa motivation et son sérieux",
+      "Mettre la pression au recruteur",
+      "Exprimer son mécontentement"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Qu’est-ce qu’un bon CV ?",
+    a: [
+      "Un document clair, lisible et bien structuré",
+      "Un texte long sans organisation",
+      "Un document sans coordonnées"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Quelle information ne doit pas figurer sur un CV ?",
+    a: [
+      "Des informations médicales sensibles",
+      "Les compétences",
+      "Les expériences"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Que faire si l’on ne sait pas répondre à une question en entretien ?",
+    a: [
+      "L’admettre et expliquer comment chercher la réponse",
+      "Inventer une réponse",
+      "Changer de sujet"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Quel ton adopter lors d’un entretien ?",
+    a: [
+      "Professionnel et respectueux",
+      "Froid et distant",
+      "Trop familier"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Comment prouver sa motivation ?",
+    a: [
+      "Donner des exemples concrets",
+      "Répéter qu’on est motivé",
+      "Ne rien expliquer"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Qu’est-ce qu’une lettre d’accompagnement ?",
+    a: [
+      "Un texte expliquant et complétant le CV",
+      "Un CV modifié",
+      "Un document inutile"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Pourquoi soigner son profil en ligne ?",
+    a: [
+      "Parce que les recruteurs le consultent souvent",
+      "Parce que c’est obligatoire",
+      "Parce que personne ne le voit"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Quelle soft skill est importante ?",
+    a: [
+      "La capacité d’écoute",
+      "La prétention",
+      "Le refus de coopérer"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Que faire en cas de retard à un entretien ?",
+    a: [
+      "Prévenir rapidement et s’excuser",
+      "Ne rien dire",
+      "Annuler sans explication"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Quelle information est utile pour un recruteur ?",
+    a: [
+      "Les expériences récentes et pertinentes",
+      "Les informations bancaires",
+      "Les opinions personnelles"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Qu’est-ce que la ponctualité ?",
+    a: [
+      "Respecter les horaires",
+      "Arriver quand on veut",
+      "Partir avant l’heure"
+    ],
+    correct: 0,
+    points: 15
+  },
+  {
+    q: "Pourquoi relire son CV avant de l’envoyer ?",
+    a: [
+      "Éviter les fautes et les erreurs",
+      "Changer le contenu au hasard",
+      "Ne rien corriger"
+    ],
+    correct: 0,
+    points: 15
+  },
+  {
+    q: "Comment bien préparer un entretien ?",
+    a: [
+      "Se renseigner sur l’entreprise",
+      "Improviser totalement",
+      "Ignorer le poste"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Qu’est-ce qu’une alternance ?",
+    a: [
+      "Une formation combinant école et entreprise",
+      "Une pause professionnelle",
+      "Un emploi sans formation"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Quel est un bon comportement en équipe ?",
+    a: [
+      "Partager l’information et coopérer",
+      "Travailler seul systématiquement",
+      "Créer des conflits"
+    ],
+    correct: 0,
+    points: 20
+  },
+  {
+    q: "Que faut-il analyser dans une offre d’emploi ?",
+    a: [
+      "Les missions et les compétences demandées",
+      "Uniquement le salaire",
+      "Rien de précis"
+    ],
+    correct: 0,
+    points: 20
+  }
+]
+
 let lastQuestions=[];
 
 document.getElementById('startBtn').onclick=()=>{
