@@ -103,7 +103,7 @@ const ctx=canvas.getContext("2d");
 const rotateMsg=document.getElementById("rotateMsg");
 
 let state="menu", pausedByOrientation=false;
-let score=0, level=1, speed=2.8, immunity=0;
+let score=0, level=1, speed=3, immunity=0;
 const groundY=340;
 const player={x:120,y:groundY,r:22,vy:0};
 
@@ -111,21 +111,28 @@ let obstacles=[];
 let lastObstacleX=0;
 
 /* ================= BACKGROUND WORDS ================= */
-const words=["CV","ENTRETIEN","COMPÉTENCES","STAGE","ALTERNANCE","FORMATION","PROJET","MOTIVATION"];
-let wordIndex=0;
+const words=[
+  "CV","ENTRETIEN","COMPÉTENCES","STAGE","ALTERNANCE",
+  "FORMATION","PROJET","MOTIVATION","EMPLOI","AVENIR"
+];
 let bgWords=[];
 
-function spawnWordsRow(){
-  const startX=canvas.width+50;
-  const y=90+Math.random()*180;
-  for(let i=0;i<3;i++){
+function spawnWords(){
+  const used=[];
+  const count=5; // plus de mots
+  for(let i=0;i<count;i++){
+    let w;
+    do{
+      w=words[Math.floor(Math.random()*words.length)];
+    }while(used.includes(w));
+    used.push(w);
+
     bgWords.push({
-      x:startX+i*160,
-      y:y,
-      txt:words[(wordIndex+i)%words.length]
+      x:canvas.width+80+i*140,
+      y:60+Math.random()*260,
+      txt:w
     });
   }
-  wordIndex=(wordIndex+3)%words.length;
 }
 
 /* ================= START ================= */
@@ -136,7 +143,7 @@ document.getElementById("startBtn").onclick=()=>{
 };
 
 function resetGame(){
-  score=0; level=1; speed=2.8; immunity=120;
+  score=0; level=1; speed=3; immunity=120;
   obstacles=[]; bgWords=[];
   lastObstacleX=0;
   player.y=groundY; player.vy=0;
@@ -148,19 +155,19 @@ function jump(){
     player.vy=-12;
   }
 }
-window.addEventListener("keydown",e=>{if(e.code==="Space") jump();});
+addEventListener("keydown",e=>{if(e.code==="Space") jump();});
 canvas.addEventListener("click",jump);
 canvas.addEventListener("touchstart",jump);
 
 /* ================= OBSTACLES ================= */
 function spawnObstacle(){
-  const airborne = level>=2 && Math.random()<0.3;
+  const air = level>=2 && Math.random()<0.35;
   obstacles.push({
     x:canvas.width+40,
-    y:airborne ? groundY-80 : groundY+player.r-10,
+    y:air ? groundY-90 : groundY+player.r-10,
     w:26,
-    h:airborne ? 26 : 40,
-    air:airborne
+    h:air ? 26 : 40,
+    air:air
   });
   lastObstacleX=canvas.width+40;
 }
@@ -206,27 +213,25 @@ function loop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   /* BACKGROUND WORDS */
-  if(state==="play" && bgWords.length===0) spawnWordsRow();
+  if(state==="play" && bgWords.length===0) spawnWords();
   bgWords.forEach(w=>{
-    w.x-=0.4;
+    w.x-=0.5;
     ctx.globalAlpha=0.25;
     ctx.font="18px Arial";
     ctx.fillStyle="#1565c0";
     ctx.fillText(w.txt,w.x,w.y);
     ctx.globalAlpha=1;
   });
-  if(bgWords.length && bgWords[0].x<-160){
-    bgWords=[];
-  }
+  if(bgWords.length && bgWords[0].x<-160) bgWords=[];
 
   if(state==="play" && !pausedByOrientation){
     player.vy+=0.6; player.y+=player.vy;
     if(player.y>groundY){player.y=groundY;player.vy=0;}
 
-    const minGap = 220 - level*10;
-    const spawnChance = 0.015 + level*0.003;
+    const minGap=190 - level*6;
+    const spawnChance=0.025 + level*0.004;
 
-    if(canvas.width-lastObstacleX>minGap && Math.random()<spawnChance){
+    if(obstacles.length<3 && canvas.width-lastObstacleX>minGap && Math.random()<spawnChance){
       spawnObstacle();
     }
 
@@ -244,7 +249,7 @@ function loop(){
 
     obstacles=obstacles.filter(o=>o.x+o.w>0);
     score++;
-    if(score%400===0){level++;speed+=0.35;}
+    if(score%350===0){level++;speed+=0.3;}
     if(immunity>0) immunity--;
   }
 
