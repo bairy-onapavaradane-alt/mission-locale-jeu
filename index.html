@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MLE Runner</title>
+
 <style>
 body{
   margin:0;
@@ -45,15 +46,14 @@ button:hover{background:#ffc107;}
 .qcm button{width:100%;margin:6px 0;}
 </style>
 </head>
-<body>
 
+<body>
 <div id="container">
   <canvas id="game" width="800" height="400"></canvas>
 
   <div id="start" class="overlay">
     <h2>Runner Mission Locale</h2>
     <p>Sauter pour éviter les obstacles</p>
-    <p>Objectif : battre ton score</p>
     <button id="startBtn">Démarrer</button>
   </div>
 
@@ -64,60 +64,75 @@ button:hover{background:#ffc107;}
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-let state = 'menu';
-let score = 0;
-let level = 1;
-let speed = 4;
-let immunity = 0;
+let state='menu';
+let score=0, level=1, speed=4, immunity=0;
 
-const groundY = 300;
+const groundY=300;
+const player={x:120,y:groundY,r:22,vy:0};
+let obstacles=[];
+let lastObstacleX=0;
 
-const player = { x:120, y:groundY, r:22, vy:0 };
-let obstacles = [];
+const MAX_OBSTACLES=4;
+const BASE_GAP=170;
 
-const words = ['Mission Locale','Emploi','Formation','Insertion','CV','Entretien','Projet pro'];
-
-const questions = [
+const questions=[
  {q:'À quoi sert un CV ?',c:['Présenter ses compétences','Dormir','Jouer'],a:0},
  {q:'Un entretien sert principalement à ?',c:['Évaluer un candidat','Se reposer','Regarder un film'],a:0},
  {q:'La Mission Locale accompagne surtout les ?',c:['Jeunes','Entreprises','Enfants'],a:0},
  {q:'Qu’est-ce qu’une formation ?',c:['Un apprentissage','Un loisir','Un jeu'],a:0},
  {q:'Pourquoi préparer un entretien ?',c:['Pour réussir','Pour s’amuser','Pour dormir'],a:0},
  {q:'Le CV doit être ?',c:['Clair et structuré','Très long','Illisible'],a:0},
- {q:'L’objectif d’un projet professionnel est de ?',c:['Définir son avenir','Perdre du temps','Éviter le travail'],a:0},
  {q:'La ponctualité est ?',c:['Importante','Inutile','Interdite'],a:0}
 ];
 
-document.getElementById('startBtn').onclick = () => {
+let lastQuestions=[];
+
+document.getElementById('startBtn').onclick=()=>{
   document.getElementById('start').style.display='none';
   resetGame();
-  state = 'play';
+  state='play';
 };
 
 function resetGame(){
-  score = 0;
-  level = 1;
-  speed = 4;
-  obstacles = [];
-  player.y = groundY;
-  player.vy = 0;
-  immunity = 120;
+  score=0; level=1; speed=4;
+  obstacles=[];
+  immunity=120;
+  lastQuestions=[];
+  player.y=groundY; player.vy=0;
 }
 
 function jump(){
   if(state==='play' && player.y>=groundY){
-    player.vy = -12;
+    player.vy=-12;
   }
 }
 window.addEventListener('keydown',e=>{if(e.code==='Space') jump();});
 canvas.addEventListener('click',jump);
-canvas.addEventListener('touchstart',jump);
+
+function spawnObstacle(){
+  const air=level>=3 && Math.random()<0.3;
+  obstacles.push({
+    x:canvas.width+30,
+    y:air ? groundY-80-Math.random()*40 : groundY+player.r-10,
+    w:26,h:40
+  });
+  lastObstacleX=canvas.width+30;
+}
 
 function showQuestion(){
-  state = 'question';
-  const q = questions[Math.floor(Math.random()*questions.length)];
-  const box = document.getElementById('question');
-  box.innerHTML = `<h3>${q.q}</h3><div class="qcm"></div>`;
+  state='question';
+
+  let available=questions.filter(q=>!lastQuestions.includes(q.q));
+  if(!available.length){
+    lastQuestions=[];
+    available=[...questions];
+  }
+  const q=available[Math.floor(Math.random()*available.length)];
+  lastQuestions.push(q.q);
+  if(lastQuestions.length>3) lastQuestions.shift();
+
+  const box=document.getElementById('question');
+  box.innerHTML=`<h3>${q.q}</h3><div class="qcm"></div>`;
   box.style.display='flex';
 
   q.c.forEach((txt,i)=>{
@@ -129,7 +144,7 @@ function showQuestion(){
         obstacles=[];
         immunity=120;
         state='play';
-      } else {
+      }else{
         state='menu';
         document.getElementById('start').style.display='flex';
       }
@@ -138,51 +153,22 @@ function showQuestion(){
   });
 }
 
-function spawnObstacle(){
-  const air = level>=3 && Math.random()<0.4;
-  obstacles.push({
-    x: canvas.width+30,
-    y: air ? groundY-70-Math.random()*40 : groundY+player.r-10,
-    w:26,
-    h:40,
-    air
-  });
-}
-
-function drawBackground(){
-  ctx.globalAlpha=0.15;
-  ctx.fillStyle='#90caf9';
-  ctx.font='20px Arial';
-  words.forEach((w,i)=>{
-    ctx.fillText(w,(i*160+score)%canvas.width,70+(i%3)*120);
-  });
-  ctx.globalAlpha=1;
-}
-
-function drawPlayer(){
-  ctx.beginPath();
-  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-  ctx.fillStyle='#ffb300';
-  ctx.fill();
-  ctx.lineWidth=4;
-  ctx.strokeStyle='#1565c0';
-  ctx.stroke();
-  ctx.fillStyle='#0d47a1';
-  ctx.font='12px Arial';
-  ctx.textAlign='center';
-  ctx.fillText('MLE',player.x,player.y+4);
-}
-
 function loop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawBackground();
 
   if(state==='play'){
     player.vy+=0.6;
     player.y+=player.vy;
     if(player.y>groundY){player.y=groundY;player.vy=0;}
 
-    if(Math.random()<0.02) spawnObstacle();
+    const gap=BASE_GAP+level*10;
+    if(
+      obstacles.length<MAX_OBSTACLES &&
+      (obstacles.length===0 || canvas.width-lastObstacleX>gap) &&
+      Math.random()<0.015+level*0.001
+    ){
+      spawnObstacle();
+    }
 
     obstacles.forEach(o=>{
       o.x-=speed;
@@ -191,8 +177,7 @@ function loop(){
 
       const cx=Math.max(o.x,Math.min(player.x,o.x+o.w));
       const cy=Math.max(o.y,Math.min(player.y,o.y+o.h));
-      const dx=player.x-cx;
-      const dy=player.y-cy;
+      const dx=player.x-cx, dy=player.y-cy;
       if(immunity<=0 && dx*dx+dy*dy<player.r*player.r){
         showQuestion();
       }
@@ -205,14 +190,19 @@ function loop(){
       level++;
       speed+=0.4;
     }
-
     if(immunity>0) immunity--;
   }
 
-  drawPlayer();
+  ctx.beginPath();
+  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
+  ctx.fillStyle='#ffb300';
+  ctx.fill();
+  ctx.strokeStyle='#1565c0';
+  ctx.lineWidth=4;
+  ctx.stroke();
+
   ctx.fillStyle='#0d47a1';
   ctx.font='14px Arial';
-  ctx.textAlign='left';
   ctx.fillText('Score : '+score,10,20);
   ctx.fillText('Niveau : '+level,10,40);
   if(immunity>0) ctx.fillText('Immunité',10,60);
@@ -224,3 +214,4 @@ requestAnimationFrame(loop);
 </script>
 </body>
 </html>
+
