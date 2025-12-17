@@ -6,6 +6,7 @@
 <title>MLE Runner</title>
 
 <style>
+/* ================== DESKTOP (COMME AVANT) ================== */
 body{
   margin:0;
   background:#0d47a1;
@@ -14,16 +15,16 @@ body{
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  min-height:100vh;
-  overflow:hidden;
+  height:100vh;
 }
 
 #container{
   position:relative;
-  transform-origin: top center;
 }
 
 canvas{
+  width:800px;
+  height:450px;
   background:linear-gradient(#ffffff,#e3f2fd);
   border-radius:14px;
   box-shadow:0 10px 30px rgba(0,0,0,.35);
@@ -56,14 +57,27 @@ button:hover{background:#ffc107;}
 .qcm button{width:100%;margin:6px 0;}
 
 #footer{
-  margin-top:10px;
+  margin-top:12px;
   color:white;
   font-size:14px;
   font-weight:bold;
   opacity:0.9;
 }
 
-/* Message paysage */
+/* ================== MOBILE UNIQUEMENT ================== */
+@media (max-width: 900px){
+  body{
+    height:auto;
+    padding:10px 0;
+  }
+
+  canvas{
+    width:95vw;
+    height:auto;
+  }
+}
+
+/* MESSAGE ORIENTATION */
 #rotateMsg{
   position:fixed;
   inset:0;
@@ -74,7 +88,7 @@ button:hover{background:#ffc107;}
   justify-content:center;
   text-align:center;
   padding:30px;
-  z-index:10;
+  z-index:20;
   font-size:18px;
 }
 </style>
@@ -107,18 +121,16 @@ button:hover{background:#ffc107;}
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-const container = document.getElementById('container');
 const rotateMsg = document.getElementById('rotateMsg');
 
-let state = 'menu';
-let pausedByOrientation = false;
+let state='menu';
+let pausedByOrientation=false;
 
 let score=0, level=1, speed=4, immunity=0;
+const groundY=340;
+const player={x:120,y:groundY,r:22,vy:0};
 
-const groundY = 340;
-const player = { x:120, y:groundY, r:22, vy:0 };
 let obstacles=[], lastObstacleX=0;
-
 const MAX_OBSTACLES=4;
 const BASE_GAP=180;
 
@@ -129,8 +141,7 @@ const questions=[
  {q:'Pourquoi préparer un entretien ?',c:['Pour réussir','Pour s’amuser','Pour dormir'],a:0},
  {q:'Le CV doit être ?',c:['Clair et structuré','Très long','Illisible'],a:0},
  {q:'La ponctualité est ?',c:['Importante','Inutile','Interdite'],a:0},
- {q:'Comment adapter son CV à une offre ?',c:['Mettre en avant les compétences','Envoyer le même CV','Changer la police'],a:0},
- {q:'Avant un entretien, il faut ?',c:['Se préparer','Improviser','Ne rien faire'],a:0}
+ {q:'Comment adapter son CV à une offre ?',c:['Mettre en avant les compétences','Envoyer le même CV','Changer la police'],a:0}
 ];
 let lastQuestions=[];
 
@@ -153,6 +164,7 @@ function jump(){
 }
 window.addEventListener('keydown',e=>{if(e.code==='Space') jump();});
 canvas.addEventListener('click',jump);
+canvas.addEventListener('touchstart',jump);
 
 function spawnObstacle(){
   const air=level>=3 && Math.random()<0.3;
@@ -187,13 +199,9 @@ function showQuestion(){
   });
 }
 
-function resizeGame(){
-  const scale=Math.min(window.innerWidth/800,window.innerHeight/450);
-  container.style.transform=`scale(${scale})`;
-}
-
+/* ORIENTATION MOBILE UNIQUEMENT */
 function checkOrientation(){
-  if(window.innerHeight>window.innerWidth){
+  if(window.innerWidth<900 && window.innerHeight>window.innerWidth){
     rotateMsg.style.display='flex';
     pausedByOrientation=true;
   }else{
@@ -201,9 +209,8 @@ function checkOrientation(){
     pausedByOrientation=false;
   }
 }
-
-window.addEventListener('resize',()=>{resizeGame();checkOrientation();});
-resizeGame(); checkOrientation();
+window.addEventListener('resize',checkOrientation);
+checkOrientation();
 
 function loop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -258,3 +265,4 @@ loop();
 
 </body>
 </html>
+
