@@ -42,7 +42,7 @@ canvas{
 }
 
 button{
-  margin-top:12px;
+  margin:8px 0;
   padding:12px 24px;
   font-size:16px;
   border:none;
@@ -51,94 +51,107 @@ button{
   cursor:pointer;
 }
 button:hover{background:#ffc107}
+
+.qcm{
+  width:80%;
+  margin-top:15px;
+}
 .qcm button{width:100%}
 
-#footer{margin-top:10px;color:white;font-weight:bold}
-
-#rotateMsg{
-  position:fixed;
-  inset:0;
-  background:#0d47a1;
+#footer{
+  margin-top:10px;
   color:white;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  padding:30px;
-  z-index:20;
+  font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
-<div id="rotateMsg">📱🔄<br><br>Tourne ton téléphone en mode paysage</div>
-
 <div id="container">
-<canvas id="game" width="800" height="450"></canvas>
+  <canvas id="game" width="800" height="450"></canvas>
 
-<div id="start" class="overlay">
-  <h2>Runner Mission Locale</h2>
-  <p>Sauter pour éviter les obstacles</p>
-  <button id="startBtn">Démarrer</button>
-</div>
+  <div id="start" class="overlay">
+    <h2>Runner Mission Locale</h2>
+    <p>Saute pour éviter les obstacles</p>
+    <button id="startBtn">Démarrer</button>
+  </div>
 
-<div id="question" class="overlay" style="display:none"></div>
+  <div id="question" class="overlay" style="display:none"></div>
 </div>
 
 <div id="footer">La Mission Locale vous souhaite un super jeu !</div>
 
 <script>
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
+/* ================== CANVAS ================== */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-let state='menu';
-let score=0, level=1, speed=4, immunity=0;
-const groundY=340;
+/* ================== JEU ================== */
+let state = "menu";
+let score = 0;
+let level = 1;
+let speed = 4;
+let immunity = 0;
 
-const player={x:120,y:groundY,r:22,vy:0};
-let obstacles=[];
-let askedQuestions = new Set(); // 🔑 empêche les répétitions
+const groundY = 340;
 
-const questions=[ /* TES QUESTIONS INCHANGÉES */ 
-  {q:"Que faut-il absolument mettre en haut d’un CV ?",a:["Nom, prénom et coordonnées","Une citation","Ses loisirs"],correct:0},
-  {q:"Quelle est la durée idéale pour un CV ?",a:["Une page","Plusieurs pages","Autant que voulu"],correct:0},
-  {q:"Que signifie soft skill ?",a:["Savoir-être","Logiciel","Diplôme"],correct:0},
-  {q:"Que faire après une candidature ?",a:["Relancer poliment","Supprimer","Harceler"],correct:0},
-  {q:"Quel comportement éviter en entretien ?",a:["Téléphone","Écouter","Questions"],correct:0},
-  {q:"Pourquoi relire son CV ?",a:["Éviter les fautes","Changer au hasard","Ne rien faire"],correct:0},
-];
-
-document.getElementById('startBtn').onclick=()=>{
-  document.getElementById('start').style.display='none';
-  resetGame();
-  state='play';
+const player = {
+  x:120,
+  y:groundY,
+  r:22,
+  vy:0
 };
 
-function resetGame(){
-  score=0;level=1;speed=4;
-  obstacles=[];
-  immunity=120;
-  player.y=groundY;player.vy=0;
-}
+let obstacles = [];
 
+/* ================== QUESTIONS ================== */
+const questions = [
+  { q:"Que faut-il mettre en haut d’un CV ?", a:["Nom et coordonnées","Une citation","Ses loisirs"], correct:0 },
+  { q:"Durée idéale d’un CV ?", a:["1 page","3 pages","Illimitée"], correct:0 },
+  { q:"Que signifie soft skill ?", a:["Savoir-être","Logiciel","Diplôme"], correct:0 },
+  { q:"Après une candidature ?", a:["Relancer poliment","Harceler","Supprimer"], correct:0 },
+  { q:"Que faut-il éviter en entretien ?", a:["Téléphone","Écouter","Questionner"], correct:0 },
+  { q:"Pourquoi relire son CV ?", a:["Éviter les fautes","Changer au hasard","Ne rien faire"], correct:0 }
+];
+
+let askedQuestions = new Set();
+
+/* ================== CONTROLES ================== */
 function jump(){
-  if(state==='play' && player.y>=groundY){
-    player.vy=-12;
+  if(state==="play" && player.y>=groundY){
+    player.vy = -12;
   }
 }
-window.addEventListener('keydown',e=>e.code==='Space'&&jump());
-canvas.addEventListener('click',jump);
+window.addEventListener("keydown",e=>e.code==="Space"&&jump());
+canvas.addEventListener("click",jump);
+
+/* ================== GAME ================== */
+function resetGame(){
+  score=0;
+  level=1;
+  speed=4;
+  obstacles=[];
+  immunity=120;
+  player.y=groundY;
+  player.vy=0;
+}
+
+document.getElementById("startBtn").onclick=()=>{
+  document.getElementById("start").style.display="none";
+  resetGame();
+  state="play";
+};
 
 function spawnObstacle(){
-  obstacles.push({x:canvas.width+30,y:groundY+12,w:26,h:40});
+  obstacles.push({x:canvas.width+20,y:groundY+10,w:26,h:40});
 }
 
 function getQuestion(){
   let remaining = questions.filter(q=>!askedQuestions.has(q.q));
   if(!remaining.length){
     askedQuestions.clear();
-    remaining=[...questions];
+    remaining = [...questions];
   }
   const q = remaining[Math.floor(Math.random()*remaining.length)];
   askedQuestions.add(q.q);
@@ -146,43 +159,53 @@ function getQuestion(){
 }
 
 function showQuestion(){
-  state='question';
-  const q=getQuestion();
-  const box=document.getElementById('question');
-  box.innerHTML=`<h3>${q.q}</h3><div class="qcm"></div>`;
-  box.style.display='flex';
+  state="question";
+  const q = getQuestion();
+  const box = document.getElementById("question");
+
+  box.innerHTML="";
+  box.style.display="flex";
+
+  const title=document.createElement("h3");
+  title.textContent=q.q;
+  box.appendChild(title);
+
+  const qcm=document.createElement("div");
+  qcm.className="qcm";
+  box.appendChild(qcm);
 
   q.a.forEach((txt,i)=>{
-    const b=document.createElement('button');
-    b.textContent=txt;
-    b.onclick=()=>{
-      box.style.display='none';
+    const btn=document.createElement("button");
+    btn.textContent=txt;
+    btn.onclick=()=>{
+      box.style.display="none";
       if(i===q.correct){
         obstacles=[];
         immunity=120;
-        state='play';
+        state="play";
       }else{
-        state='menu';
-        document.getElementById('start').style.display='flex';
+        state="menu";
+        document.getElementById("start").style.display="flex";
       }
     };
-    box.querySelector('.qcm').appendChild(b);
+    qcm.appendChild(btn);
   });
 }
 
+/* ================== LOOP ================== */
 function loop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  if(state==='play'){
+  if(state==="play"){
     player.vy+=0.6;
     player.y+=player.vy;
-    if(player.y>groundY){player.y=groundY;player.vy=0;}
+    if(player.y>groundY){player.y=groundY;player.vy=0}
 
     if(Math.random()<0.02) spawnObstacle();
 
     obstacles.forEach(o=>{
       o.x-=speed;
-      ctx.fillStyle=immunity?'#81c784':'#e53935';
+      ctx.fillStyle=immunity?"#81c784":"#e53935";
       ctx.fillRect(o.x,o.y,o.w,o.h);
 
       if(!immunity &&
@@ -194,15 +217,19 @@ function loop(){
 
     obstacles=obstacles.filter(o=>o.x+o.w>0);
     score++;
-    if(score%400===0){level++;speed+=0.4;}
+    if(score%400===0){level++;speed+=0.4}
     if(immunity>0) immunity--;
   }
 
+  // joueur
   ctx.beginPath();
   ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-  ctx.fillStyle='#ffb300';ctx.fill();
+  ctx.fillStyle="#ffb300";
+  ctx.fill();
 
-  ctx.fillStyle='#0d47a1';
+  // HUD
+  ctx.fillStyle="#0d47a1";
+  ctx.font="14px Arial";
   ctx.fillText("Score : "+score,10,20);
   ctx.fillText("Niveau : "+level,10,40);
 
@@ -212,4 +239,3 @@ loop();
 </script>
 </body>
 </html>
-
