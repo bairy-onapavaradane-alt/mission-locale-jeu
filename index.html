@@ -119,16 +119,14 @@ const rotateMsg = document.getElementById("rotateMsg");
 let state = "menu";
 let pausedByOrientation = false;
 
-let score = 0, level = 1, speed = 4, immunity = 0;
+let score = 0, level = 1, speed = 2.5, immunity = 0;
 const groundY = 340;
 const player = { x:120, y:groundY, r:22, vy:0 };
 
 let obstacles = [];
-let lastObstacleX = 0;
 const MAX_OBSTACLES = 4;
-const BASE_GAP = 180;
 
-/* ================= QUESTIONS (SAFE) ================= */
+/* ================= QUESTIONS ================= */
 const questions = [
   { q:"Que faut-il absolument mettre en haut d’un CV ?", c:["Nom, prénom et coordonnées","Une citation personnelle","Ses loisirs détaillés"], a:0 },
   { q:"Quelle est la durée idéale pour un CV ciblé ?", c:["Une page claire et synthétique","Plusieurs pages détaillées","Autant de pages que d’expériences"], a:0 },
@@ -152,7 +150,7 @@ document.getElementById("startBtn").onclick = () => {
 function resetGame(){
   score = 0;
   level = 1;
-  speed = 4;
+  speed = 2.5;
   immunity = 120;
   obstacles = [];
   usedQuestions = [];
@@ -178,10 +176,9 @@ function spawnObstacle(){
     w:26,
     h:40
   });
-  lastObstacleX = canvas.width+30;
 }
 
-/* ================= QUESTIONS ================= */
+/* ================= QUESTIONS (RÉPONSES MÉLANGÉES) ================= */
 function showQuestion(){
   if(state!=="play") return;
   state = "question";
@@ -192,16 +189,20 @@ function showQuestion(){
   const q = available[Math.floor(Math.random()*available.length)];
   usedQuestions.push(q.q);
 
+  // Mélange des réponses
+  const answers = q.c.map((txt,i)=>({txt, correct:i===q.a}));
+  answers.sort(()=>Math.random()-0.5);
+
   const box = document.getElementById("question");
   box.innerHTML = `<h3>${q.q}</h3><div class="qcm"></div>`;
   box.style.display = "flex";
 
-  q.c.forEach((txt,i)=>{
+  answers.forEach(ans=>{
     const b = document.createElement("button");
-    b.textContent = txt;
+    b.textContent = ans.txt;
     b.onclick = ()=>{
       box.style.display = "none";
-      if(i===q.a){
+      if(ans.correct){
         immunity = 120;
         obstacles = [];
         state = "play";
@@ -236,7 +237,9 @@ function loop(){
     player.y += player.vy;
     if(player.y>groundY){ player.y=groundY; player.vy=0; }
 
-    if(obstacles.length<MAX_OBSTACLES && Math.random()<0.02){
+    // Difficulté progressive
+    let spawnRate = 0.008 + level * 0.003;
+    if(obstacles.length<MAX_OBSTACLES && Math.random()<spawnRate){
       spawnObstacle();
     }
 
@@ -254,7 +257,12 @@ function loop(){
 
     obstacles = obstacles.filter(o=>o.x+o.w>0);
     score++;
-    if(score%400===0){ level++; speed+=0.4; }
+
+    if(score%400===0){
+      level++;
+      speed+=0.4;
+    }
+
     if(immunity>0) immunity--;
   }
 
@@ -286,4 +294,3 @@ loop();
 
 </body>
 </html>
-
