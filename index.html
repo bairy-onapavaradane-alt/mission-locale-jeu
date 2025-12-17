@@ -6,7 +6,7 @@
 <title>MLE Runner</title>
 
 <style>
-/* ================== DESKTOP (COMME AVANT) ================== */
+/* ========== BASE ========= */
 body{
   margin:0;
   background:#0d47a1;
@@ -15,12 +15,10 @@ body{
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  height:100vh;
+  min-height:100vh;
 }
 
-#container{
-  position:relative;
-}
+#container{position:relative;}
 
 canvas{
   width:800px;
@@ -30,6 +28,7 @@ canvas{
   box-shadow:0 10px 30px rgba(0,0,0,.35);
 }
 
+/* ========== OVERLAYS ========= */
 .overlay{
   position:absolute;
   inset:0;
@@ -56,6 +55,7 @@ button{
 button:hover{background:#ffc107;}
 .qcm button{width:100%;margin:6px 0;}
 
+/* ========== FOOTER ========= */
 #footer{
   margin-top:12px;
   color:white;
@@ -64,20 +64,12 @@ button:hover{background:#ffc107;}
   opacity:0.9;
 }
 
-/* ================== MOBILE UNIQUEMENT ================== */
-@media (max-width: 900px){
-  body{
-    height:auto;
-    padding:10px 0;
-  }
-
-  canvas{
-    width:95vw;
-    height:auto;
-  }
+/* ========== MOBILE ========= */
+@media (max-width:900px){
+  canvas{width:95vw;height:auto;}
 }
 
-/* MESSAGE ORIENTATION */
+/* ========== ORIENTATION MESSAGE ========= */
 #rotateMsg{
   position:fixed;
   inset:0;
@@ -119,10 +111,12 @@ button:hover{background:#ffc107;}
 </div>
 
 <script>
+/* ========== CANVAS ========= */
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const rotateMsg = document.getElementById('rotateMsg');
 
+/* ========== GAME STATE ========= */
 let state='menu';
 let pausedByOrientation=false;
 
@@ -134,135 +128,9 @@ let obstacles=[], lastObstacleX=0;
 const MAX_OBSTACLES=4;
 const BASE_GAP=180;
 
+/* ========== QUESTIONS ========= */
 const questions=[
  {q:'À quoi sert un CV ?',c:['Présenter ses compétences','Dormir','Jouer'],a:0},
- {q:'Un entretien sert principalement à ?',c:['Évaluer un candidat','Se reposer','Regarder un film'],a:0},
- {q:'La Mission Locale accompagne surtout ?',c:['Les jeunes','Les entreprises','Les enfants'],a:0},
- {q:'Pourquoi préparer un entretien ?',c:['Pour réussir','Pour s’amuser','Pour dormir'],a:0},
- {q:'Le CV doit être ?',c:['Clair et structuré','Très long','Illisible'],a:0},
- {q:'La ponctualité est ?',c:['Importante','Inutile','Interdite'],a:0},
- {q:'Comment adapter son CV à une offre ?',c:['Mettre en avant les compétences','Envoyer le même CV','Changer la police'],a:0}
-];
-let lastQuestions=[];
+ {q:'Un entretien sert principalement à ?',c:['Évaluer un c]()
 
-document.getElementById('startBtn').onclick=()=>{
-  document.getElementById('start').style.display='none';
-  resetGame();
-  state='play';
-};
-
-function resetGame(){
-  score=0; level=1; speed=4;
-  obstacles=[]; immunity=120; lastQuestions=[];
-  player.y=groundY; player.vy=0;
-}
-
-function jump(){
-  if(state==='play' && !pausedByOrientation && player.y>=groundY){
-    player.vy=-12;
-  }
-}
-window.addEventListener('keydown',e=>{if(e.code==='Space') jump();});
-canvas.addEventListener('click',jump);
-canvas.addEventListener('touchstart',jump);
-
-function spawnObstacle(){
-  const air=level>=3 && Math.random()<0.3;
-  obstacles.push({
-    x:canvas.width+30,
-    y:air?groundY-90-Math.random()*40:groundY+player.r-10,
-    w:26,h:40
-  });
-  lastObstacleX=canvas.width+30;
-}
-
-function showQuestion(){
-  state='question';
-  let available=questions.filter(q=>!lastQuestions.includes(q.q));
-  if(!available.length){lastQuestions=[];available=[...questions];}
-  const q=available[Math.floor(Math.random()*available.length)];
-  lastQuestions.push(q.q); if(lastQuestions.length>3) lastQuestions.shift();
-
-  const box=document.getElementById('question');
-  box.innerHTML=`<h3>${q.q}</h3><div class="qcm"></div>`;
-  box.style.display='flex';
-
-  q.c.forEach((txt,i)=>{
-    const b=document.createElement('button');
-    b.textContent=txt;
-    b.onclick=()=>{
-      box.style.display='none';
-      if(i===q.a){obstacles=[];immunity=120;state='play';}
-      else{state='menu';document.getElementById('start').style.display='flex';}
-    };
-    box.querySelector('.qcm').appendChild(b);
-  });
-}
-
-/* ORIENTATION MOBILE UNIQUEMENT */
-function checkOrientation(){
-  if(window.innerWidth<900 && window.innerHeight>window.innerWidth){
-    rotateMsg.style.display='flex';
-    pausedByOrientation=true;
-  }else{
-    rotateMsg.style.display='none';
-    pausedByOrientation=false;
-  }
-}
-window.addEventListener('resize',checkOrientation);
-checkOrientation();
-
-function loop(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  if(state==='play' && !pausedByOrientation){
-    player.vy+=0.6;
-    player.y+=player.vy;
-    if(player.y>groundY){player.y=groundY;player.vy=0;}
-
-    const gap=BASE_GAP+level*10;
-    if(obstacles.length<MAX_OBSTACLES &&
-       (obstacles.length===0||canvas.width-lastObstacleX>gap) &&
-       Math.random()<0.015+level*0.001){
-      spawnObstacle();
-    }
-
-    obstacles.forEach(o=>{
-      o.x-=speed;
-      ctx.fillStyle=immunity>0?'#81c784':'#e53935';
-      ctx.fillRect(o.x,o.y,o.w,o.h);
-
-      const cx=Math.max(o.x,Math.min(player.x,o.x+o.w));
-      const cy=Math.max(o.y,Math.min(player.y,o.y+o.h));
-      const dx=player.x-cx,dy=player.y-cy;
-      if(immunity<=0 && dx*dx+dy*dy<player.r*player.r){
-        showQuestion();
-      }
-    });
-
-    obstacles=obstacles.filter(o=>o.x+o.w>0);
-    score++; if(score%400===0){level++;speed+=0.4;}
-    if(immunity>0) immunity--;
-  }
-
-  ctx.beginPath();
-  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-  ctx.fillStyle='#ffb300'; ctx.fill();
-  ctx.strokeStyle='#1565c0'; ctx.lineWidth=4; ctx.stroke();
-  ctx.fillStyle='#0d47a1'; ctx.font='12px Arial';
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('MLE',player.x,player.y);
-
-  ctx.textAlign='left'; ctx.font='14px Arial';
-  ctx.fillText('Score : '+score,10,25);
-  ctx.fillText('Niveau : '+level,10,45);
-  if(immunity>0) ctx.fillText('Immunité',10,65);
-
-  requestAnimationFrame(loop);
-}
-loop();
-</script>
-
-</body>
-</html>
 
