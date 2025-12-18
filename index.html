@@ -79,59 +79,34 @@ button:hover{background:#ffc107;}
 </div>
 
 <script>
-/* ================= SETUP ================= */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 let state="menu";
-let score=0, level=1, speed=3, immunity=0;
+let score=0, level=1, speed=2.8, immunity=0;
 const groundY=340;
-const player={x:120,y:groundY,r:22,vy:0};
+
+const player={
+  x:120,
+  y:groundY,
+  r:22,
+  vy:0,
+  jumpPower:-13   // saut amélioré
+};
+
 let obstacles=[];
 let askedQuestions=[];
 
-/* ================= QUESTIONS (SAFE & UNIQUE) ================= */
-const questions = [
-  {
-    q:"Que faut-il absolument mettre en haut d’un CV ?",
-    c:["Nom, prénom et coordonnées","Une citation personnelle","Ses loisirs détaillés"],
-    a:0
-  },
-  {
-    q:"Quelle est la durée idéale pour un CV ciblé ?",
-    c:["Une page claire et synthétique","Plusieurs pages détaillées","Autant de pages que d’expériences"],
-    a:0
-  },
-  {
-    q:"Que signifie le terme soft skill ?",
-    c:["Compétence liée au comportement","Outil informatique","Certification officielle"],
-    a:0
-  },
-  {
-    q:"Que faire après avoir envoyé une candidature ?",
-    c:["Relancer poliment","Supprimer le contact","Envoyer des messages tous les jours"],
-    a:0
-  },
-  {
-    q:"Comment adapter son CV à une offre ?",
-    c:["Mettre en avant les compétences demandées","Utiliser un CV générique","Changer les couleurs"],
-    a:0
-  },
-  {
-    q:"Qu’est-ce qu’une lettre de motivation ?",
-    c:["Un texte personnalisé","Un résumé du CV","Une lettre inutile"],
-    a:0
-  },
-  {
-    q:"Quel comportement éviter en entretien ?",
-    c:["Consulter son téléphone","Écouter","Poser des questions"],
-    a:0
-  },
-  {
-    q:"Qu’est-ce qu’un stage ?",
-    c:["Une expérience encadrée","Un emploi à vie","Un loisir"],
-    a:0
-  }
+/* ================= QUESTIONS ================= */
+const questions=[
+  {q:"Que faut-il absolument mettre en haut d’un CV ?",c:["Nom, prénom et coordonnées","Une citation personnelle","Ses loisirs détaillés"],a:0},
+  {q:"Quelle est la durée idéale pour un CV ciblé ?",c:["Une page claire et synthétique","Plusieurs pages détaillées","Autant de pages que d’expériences"],a:0},
+  {q:"Que signifie le terme soft skill ?",c:["Compétence liée au comportement","Outil informatique","Certification officielle"],a:0},
+  {q:"Que faire après avoir envoyé une candidature ?",c:["Relancer poliment","Supprimer le contact","Envoyer des messages tous les jours"],a:0},
+  {q:"Comment adapter son CV à une offre ?",c:["Mettre en avant les compétences demandées","Utiliser un CV générique","Changer les couleurs"],a:0},
+  {q:"Qu’est-ce qu’une lettre de motivation ?",c:["Un texte personnalisé","Un résumé du CV","Une lettre inutile"],a:0},
+  {q:"Quel comportement éviter en entretien ?",c:["Consulter son téléphone","Écouter","Poser des questions"],a:0},
+  {q:"Qu’est-ce qu’un stage ?",c:["Une expérience encadrée","Un emploi à vie","Un loisir"],a:0}
 ];
 
 /* ================= START ================= */
@@ -144,8 +119,8 @@ document.getElementById("startBtn").onclick=()=>{
 function resetGame(){
   score=0;
   level=1;
-  speed=3;
-  immunity=120;
+  speed=2.8;
+  immunity=140;
   obstacles=[];
   askedQuestions=[];
   player.y=groundY;
@@ -155,7 +130,7 @@ function resetGame(){
 /* ================= CONTROLS ================= */
 function jump(){
   if(state==="play" && player.y>=groundY){
-    player.vy=-12;
+    player.vy=player.jumpPower;
   }
 }
 addEventListener("keydown",e=>{if(e.code==="Space") jump();});
@@ -164,30 +139,24 @@ canvas.addEventListener("touchstart",jump);
 
 /* ================= OBSTACLES ================= */
 function spawnObstacle(){
-  const air = level>=2 && Math.random()<0.35;
+  const air = level>=3 && Math.random()<0.25; // aérien plus tard
   obstacles.push({
     x:canvas.width+30,
-    y: air ? groundY-90 : groundY+player.r-10,
+    y: air ? groundY-85 : groundY+player.r-10,
     w:26,
-    h: air ? 26 : 40,
+    h: air ? 26 : 40
   });
 }
 
-/* ================= QUESTION LOGIC ================= */
+/* ================= QUESTIONS ================= */
 function showQuestion(){
   state="question";
-
-  let available = questions.filter(q=>!askedQuestions.includes(q.q));
-  if(available.length===0){
-    askedQuestions=[];
-    available=[...questions];
-  }
-
-  const q = available[Math.floor(Math.random()*available.length)];
+  let available=questions.filter(q=>!askedQuestions.includes(q.q));
+  if(!available.length){askedQuestions=[];available=[...questions];}
+  const q=available[Math.floor(Math.random()*available.length)];
   askedQuestions.push(q.q);
 
-  const answers = q.c.map((txt,i)=>({txt,ok:i===q.a}))
-                     .sort(()=>Math.random()-0.5);
+  const answers=q.c.map((t,i)=>({t,ok:i===q.a})).sort(()=>Math.random()-0.5);
 
   const box=document.getElementById("question");
   box.innerHTML=`<h3>${q.q}</h3><div class="qcm"></div>`;
@@ -195,11 +164,11 @@ function showQuestion(){
 
   answers.forEach(a=>{
     const b=document.createElement("button");
-    b.textContent=a.txt;
+    b.textContent=a.t;
     b.onclick=()=>{
       box.style.display="none";
       if(a.ok){
-        immunity=120;
+        immunity=140;
         obstacles=[];
         state="play";
       }else{
@@ -220,8 +189,10 @@ function loop(){
     player.y+=player.vy;
     if(player.y>groundY){player.y=groundY;player.vy=0;}
 
-    if(obstacles.length<4 && Math.random()<0.05+level*0.004){
-      spawnObstacle();
+    const minGap=Math.max(180,260-level*15);
+    const last=obstacles[obstacles.length-1];
+    if((!last||last.x<canvas.width-minGap)&&obstacles.length<4){
+      if(Math.random()<0.035+level*0.003) spawnObstacle();
     }
 
     obstacles.forEach(o=>{
@@ -238,7 +209,7 @@ function loop(){
 
     obstacles=obstacles.filter(o=>o.x+o.w>0);
     score++;
-    if(score%300===0){level++;speed+=0.3;}
+    if(score%350===0){level++;speed+=0.25;}
     if(immunity>0) immunity--;
   }
 
