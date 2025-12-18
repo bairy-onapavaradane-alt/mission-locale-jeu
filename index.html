@@ -79,40 +79,33 @@ button:hover{background:#ffc107;}
 </div>
 
 <script>
+/* ================= SETUP ================= */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-/* ===== GAME STATE ===== */
 let state="menu";
 let score=0, level=1, speed=3, immunity=0;
 const groundY=340;
 const player={x:120,y:groundY,r:22,vy:0};
 
 let obstacles=[];
-let lastObstacleX=0;
-
-/* ===== BACKGROUND WORDS ===== */
-const words=["CV","ENTRETIEN","COMPÉTENCES","STAGE","ALTERNANCE","FORMATION","EMPLOI","AVENIR"];
 let bgWords=[];
+
+/* ================= WORDS ================= */
+const words=["CV","ENTRETIEN","COMPÉTENCES","STAGE","ALTERNANCE","FORMATION","EMPLOI","AVENIR"];
 
 function spawnWords(){
   bgWords=[];
-  const used=[];
-  for(let i=0;i<6;i++){
-    let w;
-    do{ w=words[Math.floor(Math.random()*words.length)]; }
-    while(used.includes(w));
-    used.push(w);
-
+  for(let i=0;i<7;i++){
     bgWords.push({
-      x:canvas.width+100+i*140,
+      x:canvas.width+120*i,
       y:60+Math.random()*260,
-      txt:w
+      txt:words[i%words.length]
     });
   }
 }
 
-/* ===== START ===== */
+/* ================= START ================= */
 document.getElementById("startBtn").onclick=()=>{
   document.getElementById("start").style.display="none";
   resetGame();
@@ -123,12 +116,11 @@ function resetGame(){
   score=0; level=1; speed=3;
   immunity=120;
   obstacles=[];
-  lastObstacleX=0;
   player.y=groundY; player.vy=0;
   spawnWords();
 }
 
-/* ===== CONTROLS ===== */
+/* ================= CONTROLS ================= */
 function jump(){
   if(state==="play" && player.y>=groundY){
     player.vy=-12;
@@ -138,24 +130,23 @@ addEventListener("keydown",e=>{if(e.code==="Space") jump();});
 canvas.addEventListener("click",jump);
 canvas.addEventListener("touchstart",jump);
 
-/* ===== OBSTACLES (CORRIGÉ) ===== */
+/* ================= OBSTACLES ================= */
 function spawnObstacle(){
   const air = level>=2 && Math.random()<0.35;
 
   obstacles.push({
     x:canvas.width+30,
-    y:air ? groundY-90 : groundY+player.r-10,
+    y: air ? groundY-90 : groundY+player.r-10,
     w:26,
-    h:air ? 26 : 40,
+    h: air ? 26 : 40,
     air:air
   });
-
-  lastObstacleX = canvas.width+30;
 }
 
-/* ===== QUESTIONS ===== */
+/* ================= QUESTIONS ================= */
 const questions=[
-  {q:"Que faut-il mettre en haut d’un CV ?",c:["Nom et coordonnées","Citation","Loisirs"],a:0}
+  {q:"Que faut-il mettre en haut d’un CV ?",c:["Nom et coordonnées","Citation","Loisirs"],a:0},
+  {q:"Que signifie soft skill ?",c:["Compétence comportementale","Outil","Diplôme"],a:0}
 ];
 
 function showQuestion(){
@@ -172,20 +163,26 @@ function showQuestion(){
     b.textContent=a.t;
     b.onclick=()=>{
       box.style.display="none";
-      if(a.ok){immunity=120;obstacles=[];state="play";}
-      else{state="menu";document.getElementById("start").style.display="flex";}
+      if(a.ok){
+        immunity=120;
+        obstacles=[];
+        state="play";
+      }else{
+        state="menu";
+        document.getElementById("start").style.display="flex";
+      }
     };
     box.querySelector(".qcm").appendChild(b);
   });
 }
 
-/* ===== LOOP ===== */
+/* ================= LOOP ================= */
 function loop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   /* BACKGROUND WORDS */
   bgWords.forEach(w=>{
-    w.x-=0.4;
+    w.x-=0.5;
     ctx.globalAlpha=0.25;
     ctx.font="18px Arial";
     ctx.fillStyle="#1565c0";
@@ -195,17 +192,19 @@ function loop(){
   if(bgWords.length && bgWords[0].x<-200) spawnWords();
 
   if(state==="play"){
+    /* PLAYER */
     player.vy+=0.6;
     player.y+=player.vy;
     if(player.y>groundY){player.y=groundY;player.vy=0;}
 
-    /* SPAWN ADAPTÉ AUX NIVEAUX */
-    const minGap = Math.max(140, 220 - level*15);
-    const spawnChance = 0.03 + level*0.005;
+    /* SPAWN LOGIC (FIX) */
+    const minGap=Math.max(140,240-level*18);
+    const spawnChance=0.04+level*0.004;
+    const last=obstacles[obstacles.length-1];
 
     if(
-      obstacles.length<3 &&
-      canvas.width-lastObstacleX>minGap &&
+      obstacles.length<4 &&
+      (!last || last.x<canvas.width-minGap) &&
       Math.random()<spawnChance
     ){
       spawnObstacle();
@@ -229,7 +228,7 @@ function loop(){
     if(immunity>0) immunity--;
   }
 
-  /* PLAYER */
+  /* PLAYER DRAW */
   ctx.beginPath();
   ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
   ctx.fillStyle="#ffb300";
@@ -257,5 +256,3 @@ loop();
 
 </body>
 </html>
-
-
