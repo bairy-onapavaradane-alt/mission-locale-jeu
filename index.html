@@ -113,8 +113,8 @@ const player={x:120,y:groundY,r:22,vy:0};
 let obstacles=[];
 let lastSpawn=0;
 
-/* ===== QUESTIONS ===== */
-const questions=[
+/* ===== QUESTIONS (SOURCE UNIQUE) ===== */
+const ALL_QUESTIONS=[
  {q:"Que faut-il absolument mettre en haut d’un CV ?",c:["Nom, prénom et coordonnées","Une citation personnelle","Ses loisirs détaillés"],a:0},
  {q:"Quelle est la durée idéale pour un CV ciblé ?",c:["Une page claire et synthétique","Plusieurs pages détaillées","Autant de pages que d’expériences"],a:0},
  {q:"Que signifie le terme soft skill ?",c:["Compétence liée au comportement","Outil informatique","Certification officielle"],a:0},
@@ -125,10 +125,11 @@ const questions=[
  {q:"Qu’est-ce qu’un stage ?",c:["Une expérience encadrée","Un emploi à vie","Un loisir"],a:0}
 ];
 
-let questionDeck=[], lastQuestion=null;
+let questionDeck=[];
 
-function shuffleQuestions(){
-  questionDeck=[...questions];
+/* ===== SHUFFLE PROPRE ===== */
+function shuffleDeck(){
+  questionDeck=[...ALL_QUESTIONS];
   for(let i=questionDeck.length-1;i>0;i--){
     const j=Math.floor(Math.random()*(i+1));
     [questionDeck[i],questionDeck[j]]=[questionDeck[j],questionDeck[i]];
@@ -148,8 +149,7 @@ function resetGame(){
   obstacles=[];
   player.y=groundY; player.vy=0;
   lastSpawn=0;
-  shuffleQuestions();
-  lastQuestion=null;
+  shuffleDeck(); // 🔑 IMPORTANT
 }
 
 /* ===== CONTROLS ===== */
@@ -161,7 +161,7 @@ function jump(){
 window.addEventListener("keydown",e=>{if(e.code==="Space")jump();});
 canvas.addEventListener("click",jump);
 
-/* ===== OBSTACLES (FIXED SYSTEM) ===== */
+/* ===== OBSTACLES ===== */
 function spawnObstacle(){
   const air = level>=2 && Math.random()<0.35;
   obstacles.push({
@@ -172,15 +172,19 @@ function spawnObstacle(){
   });
 }
 
-/* ===== QUESTIONS ===== */
+/* ===== QUESTIONS (ZÉRO RÉPÉTITION) ===== */
 function showQuestion(){
   state="question";
-  if(questionDeck.length===0) shuffleQuestions();
-  let q=questionDeck.shift();
-  if(lastQuestion && q.q===lastQuestion.q){questionDeck.push(q); q=questionDeck.shift();}
-  lastQuestion=q;
 
-  const answers=q.c.map((t,i)=>({t,ok:i===q.a})).sort(()=>Math.random()-0.5);
+  if(questionDeck.length===0){
+    shuffleDeck(); // 🔁 seulement quand TOUT est passé
+  }
+
+  const q = questionDeck.shift(); // 🔑 UNE SEULE FOIS
+
+  const answers=q.c.map((t,i)=>({t,ok:i===q.a}))
+                   .sort(()=>Math.random()-0.5);
+
   const box=document.getElementById("question");
   box.innerHTML=`<h3>${q.q}</h3><div class="qcm"></div>`;
   box.style.display="flex";
@@ -215,7 +219,7 @@ window.addEventListener("resize",checkOrientation);
 checkOrientation();
 
 /* ===== LOOP ===== */
-function loop(timestamp){
+function loop(time){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   if(state==="play" && !paused){
@@ -223,11 +227,10 @@ function loop(timestamp){
     player.y+=player.vy;
     if(player.y>groundY){player.y=groundY;player.vy=0;}
 
-    /* SPAWN REGULIER */
-    const spawnDelay = Math.max(900 - level*80, 420);
-    if(timestamp-lastSpawn > spawnDelay){
+    const delay=Math.max(900-level*80,420);
+    if(time-lastSpawn>delay){
       spawnObstacle();
-      lastSpawn = timestamp;
+      lastSpawn=time;
     }
 
     obstacles.forEach(o=>{
@@ -238,15 +241,15 @@ function loop(timestamp){
       const cx=Math.max(o.x,Math.min(player.x,o.x+o.w));
       const cy=Math.max(o.y,Math.min(player.y,o.y+o.h));
       const dx=player.x-cx, dy=player.y-cy;
-      if(immunity<=0 && dx*dx+dy*dy < player.r*player.r){
+      if(immunity<=0 && dx*dx+dy*dy<player.r*player.r){
         showQuestion();
       }
     });
 
     obstacles=obstacles.filter(o=>o.x+o.w>0);
     score++;
-    if(score%300===0){level++; speed+=0.25;}
-    if(immunity>0) immunity--;
+    if(score%300===0){level++;speed+=0.25;}
+    if(immunity>0)immunity--;
   }
 
   /* PLAYER */
@@ -265,7 +268,7 @@ function loop(timestamp){
   ctx.font="14px Arial";
   ctx.fillText("Score : "+score,10,25);
   ctx.fillText("Niveau : "+level,10,45);
-  if(immunity>0) ctx.fillText("Immunité",10,65);
+  if(immunity>0)ctx.fillText("Immunité",10,65);
 
   requestAnimationFrame(loop);
 }
@@ -274,4 +277,5 @@ requestAnimationFrame(loop);
 
 </body>
 </html>
+
 
