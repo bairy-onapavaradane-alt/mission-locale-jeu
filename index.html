@@ -16,10 +16,15 @@ body{
   justify-content:center;
   min-height:100vh;
 }
-#container{position:relative;width:100%;max-width:900px;}
+#container{
+  position:relative;
+  width:100%;
+  max-width:900px;
+}
 canvas{
   width:100%;
   height:auto;
+  max-height:90vh;
   aspect-ratio:16/9;
   background:linear-gradient(#ffffff,#e3f2fd);
   border-radius:14px;
@@ -81,11 +86,9 @@ Tourne ton téléphone 🙂
   <div id="start" class="overlay">
     <h2>Runner Mission Locale</h2>
     <p>
-      🎯 <b>Objectif</b><br><br>
-      Saute pour éviter les obstacles.<br>
-      Clic / toucher / <b>Espace</b>.<br><br>
-      🧠 En cas de collision, répond correctement
-      à une question professionnelle.
+      🎯 Saute pour éviter les obstacles<br>
+      Clic / toucher / <b>Espace</b><br><br>
+      🧠 En cas de collision, répond à une question
     </p>
     <button id="startBtn">Démarrer</button>
   </div>
@@ -104,53 +107,51 @@ const rotateMsg=document.getElementById("rotateMsg");
 let state="menu";
 let paused=false;
 let score=0, level=1;
-let speed=3.5;
-let spawnDelay=900;
+let speed=2;
+let spawnDelay=1400;
 let immunity=0;
+let countdown=0;
 
 const groundY=340;
 const player={x:120,y:groundY,r:22,vy:0};
 let obstacles=[];
 let lastSpawn=0;
 
-/* ===== BACKGROUND WORDS ===== */
-const bgWords=["CV","EMPLOI","COMPÉTENCES","FORMATION","ENTRETIEN","PROJET","EXPÉRIENCE","AVENIR"];
-const bgPositions=[];
-bgWords.forEach((w,i)=>{
-  bgPositions.push({text:w,x:80+(i%4)*180,y:90+Math.floor(i/4)*120});
-});
-
-/* ===== QUESTIONS (UNE SEULE FOIS) ===== */
+/* ===== QUESTIONS ===== */
 const QUESTIONS=[
- {q:"Que faut-il mettre en haut d’un CV ?",c:["Nom et coordonnées","Une citation","Ses loisirs"],a:0},
- {q:"Durée idéale d’un CV ?",c:["Une page","Trois pages","Autant que nécessaire"],a:0},
- {q:"Soft skill signifie ?",c:["Compétence comportementale","Logiciel","Diplôme"],a:0},
- {q:"Après une candidature ?",c:["Relancer poliment","Supprimer","Insister chaque jour"],a:0},
- {q:"Adapter un CV ?",c:["Selon l’offre","Toujours le même","Changer les couleurs"],a:0},
- {q:"Lettre de motivation ?",c:["Personnalisée","Copie du CV","Inutile"],a:0}
+{q:"Objectif d’un CV ?",c:["Décrocher un entretien","Raconter sa vie","Se préparer"],a:0},
+{q:"Photo sur le CV ?",c:["Professionnelle","Obligatoire","En soirée"],a:0},
+{q:"Ordre des expériences ?",c:["De la plus récente à l’ancienne","Chronologique","Aléatoire"],a:0},
+{q:"CV lisible ?",c:["Clair et structuré","Beaucoup de couleurs","Texte serré"],a:0},
+{q:"Fautes d’orthographe ?",c:["À éviter","Acceptables","Pas importantes"],a:0},
+{q:"Titre du CV ?",c:["Poste recherché","Nom du lycée","Âge"],a:0}
 ];
-
 let questionDeck=[];
+
+/* ===== INIT ===== */
 function initQuestions(){
   questionDeck=[...QUESTIONS].sort(()=>Math.random()-0.5);
+}
+function resetGame(){
+  score=0;
+  level=1;
+  speed=2;
+  spawnDelay=1400;
+  immunity=120;
+  obstacles=[];
+  player.y=groundY;
+  player.vy=0;
+  lastSpawn=0;
+  initQuestions();
 }
 
 /* ===== START ===== */
 document.getElementById("startBtn").onclick=()=>{
   document.getElementById("start").style.display="none";
   resetGame();
-  state="play";
+  countdown=180;
+  state="countdown";
 };
-
-function resetGame(){
-  score=0; level=1;
-  speed=3.5; spawnDelay=900;
-  immunity=160;
-  obstacles=[];
-  player.y=groundY; player.vy=0;
-  lastSpawn=0;
-  initQuestions();
-}
 
 /* ===== CONTROLS ===== */
 function jump(){
@@ -165,9 +166,11 @@ canvas.addEventListener("touchstart",jump);
 /* ===== ORIENTATION ===== */
 function checkOrientation(){
   if(window.innerWidth<900 && window.innerHeight>window.innerWidth){
-    rotateMsg.style.display="flex"; paused=true;
+    rotateMsg.style.display="flex";
+    paused=true;
   }else{
-    rotateMsg.style.display="none"; paused=false;
+    rotateMsg.style.display="none";
+    paused=false;
   }
 }
 window.addEventListener("resize",checkOrientation);
@@ -175,27 +178,31 @@ checkOrientation();
 
 /* ===== OBSTACLES ===== */
 function spawnObstacle(){
-  const air = level>=2 && Math.random()<0.35;
+  let type="ground";
+  if(level>=3 && Math.random()<0.3) type="air";
+  if(level>=6 && Math.random()<0.2) type="small";
+
+  let h= type==="small"?24:40;
   obstacles.push({
     x:canvas.width+30,
-    y: air ? groundY-80-Math.random()*40 : groundY+player.r-10,
-    w:26,h:40
+    y: type==="air"?groundY-90-Math.random()*40:groundY+player.r-h+10,
+    w:type==="small"?20:28,
+    h:h
   });
 }
 
-/* ===== QUESTION UNIQUE ===== */
+/* ===== QUESTIONS ===== */
 function showQuestion(){
   state="question";
+  const box=document.getElementById("question");
 
   if(questionDeck.length===0){
-    alert("🎉 Bravo ! Tu as réussi toutes les questions !");
-    state="menu";
     document.getElementById("start").style.display="flex";
+    state="menu";
     return;
   }
 
   const q=questionDeck.shift();
-  const box=document.getElementById("question");
   box.innerHTML=`<h3>${q.q}</h3><div class="qcm"></div>`;
   box.style.display="flex";
 
@@ -205,12 +212,12 @@ function showQuestion(){
     b.onclick=()=>{
       box.style.display="none";
       if(i===q.a){
-        immunity=160;
+        immunity=120;
         obstacles=[];
         state="play";
       }else{
-        state="menu";
         document.getElementById("start").style.display="flex";
+        state="menu";
       }
     };
     box.querySelector(".qcm").appendChild(b);
@@ -221,10 +228,19 @@ function showQuestion(){
 function loop(time){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  /* BACKGROUND WORDS */
-  ctx.fillStyle="rgba(13,71,161,0.07)";
-  ctx.font="26px Arial";
-  bgPositions.forEach(w=>ctx.fillText(w.text,w.x,w.y));
+  if(state==="countdown"){
+    ctx.fillStyle="rgba(255,255,255,0.9)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle="#0d47a1";
+    ctx.font="bold 80px Arial";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.fillText(Math.ceil(countdown/60),canvas.width/2,canvas.height/2);
+    countdown--;
+    if(countdown<=0) state="play";
+    requestAnimationFrame(loop);
+    return;
+  }
 
   if(state==="play" && !paused){
     player.vy+=0.6;
@@ -251,31 +267,30 @@ function loop(time){
     obstacles=obstacles.filter(o=>o.x+o.w>0);
 
     score++;
-    if(score%300===0){
+    speed+=0.0008;
+
+    if(score%350===0){
       level++;
-      speed+=0.4;
-      spawnDelay=Math.max(420,spawnDelay-80);
+      spawnDelay=Math.max(380,spawnDelay-120);
     }
-    if(immunity>0)immunity--;
+
+    if(immunity>0) immunity--;
   }
 
   /* PLAYER */
   ctx.beginPath();
   ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-  ctx.fillStyle="#ffb300"; ctx.fill();
-  ctx.strokeStyle="#1565c0"; ctx.lineWidth=4; ctx.stroke();
-  ctx.fillStyle="#0d47a1";
-  ctx.font="12px Arial";
-  ctx.textAlign="center";
-  ctx.textBaseline="middle";
-  ctx.fillText("MLE",player.x,player.y);
+  ctx.fillStyle="#ffb300";
+  ctx.fill();
+  ctx.strokeStyle="#1565c0";
+  ctx.lineWidth=4;
+  ctx.stroke();
 
   /* HUD */
-  ctx.textAlign="left";
+  ctx.fillStyle="#0d47a1";
   ctx.font="14px Arial";
   ctx.fillText("Score : "+score,10,25);
   ctx.fillText("Niveau : "+level,10,45);
-  if(immunity>0)ctx.fillText("Immunité",10,65);
 
   requestAnimationFrame(loop);
 }
