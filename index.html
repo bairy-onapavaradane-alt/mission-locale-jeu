@@ -1,84 +1,334 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Mon Jeu</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLE Runner</title>
 
-  <!-- IMPORTANT pour mobile -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #0d47a1;
+  font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden;
+}
 
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #000;
-      font-family: Arial, sans-serif;
-    }
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
 
-    /* Score toujours visible */
-    #score {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      background: rgba(0, 0, 0, 0.6);
-      color: white;
-      padding: 10px 15px;
-      border-radius: 10px;
-      font-size: 24px;
-      z-index: 1000;
-    }
+#container {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+}
 
-    /* Canvas plein écran */
-    canvas {
-      display: block;
-    }
-  </style>
+canvas {
+  display: block;
+  width: 100%;
+  background: linear-gradient(#ffffff, #e3f2fd);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+/* OVERLAYS */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.96);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #0d47a1;
+  border-radius: 14px;
+  z-index: 5;
+  padding: 20px;
+}
+
+button {
+  margin-top: 14px;
+  padding: 12px 28px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  background: #ffca28;
+  cursor: pointer;
+}
+button:hover { background: #ffc107; }
+.qcm button { width: 100%; margin: 6px 0; }
+
+#footer {
+  margin-top: 10px;
+  color: white;
+  font-weight: bold;
+}
+
+#rotateMsg {
+  position: fixed;
+  inset: 0;
+  background: #0d47a1;
+  color: white;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px;
+  z-index: 20;
+  font-size: 18px;
+}
+</style>
 </head>
 
 <body>
 
-  <div id="score">Score : 0</div>
+<div id="rotateMsg">
+📱🔄<br><br>
+Ce jeu se joue en <b>mode paysage</b><br>
+Tourne ton téléphone 🙂
+</div>
+
+<div id="container">
   <canvas id="game"></canvas>
 
-  <script>
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
-    const scoreDiv = document.getElementById("score");
+  <div id="start" class="overlay">
+    <h2>Runner Mission Locale</h2>
+    <p>
+      🎯 Saute pour éviter les obstacles<br>
+      Clic / toucher / <b>Espace</b><br><br>
+      🧠 En cas de collision, répond à une question
+    </p>
+    <button id="startBtn">Démarrer</button>
+  </div>
 
-    let score = 0;
+  <div id="question" class="overlay" style="display:none"></div>
+</div>
 
-    function resize() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+<div id="footer">La Mission Locale vous souhaite un super jeu !</div>
+
+<script>
+/* ===== CANVAS RESPONSIVE ===== */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas(){
+  const container = document.getElementById("container");
+  const w = container.clientWidth;
+  const h = Math.min(window.innerHeight * 0.9, w * 9 / 16);
+
+  canvas.width = w;
+  canvas.height = h;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+/* ===== GAME STATE ===== */
+let state = "menu";
+let paused = false;
+let score = 0, level = 1;
+let speed = 2;
+let spawnDelay = 1400;
+let immunity = 0;
+let countdown = 0;
+
+const player = { x: 120, y: 0, r: 22, vy: 0 };
+let obstacles = [];
+let lastSpawn = 0;
+
+/* ===== SOL ADAPTATIF ===== */
+function groundY() {
+  return canvas.height - 80;
+}
+
+/* ===== QUESTIONS ===== */
+const QUESTIONS = [
+  {q:"Objectif d’un CV ?",c:["Décrocher un entretien","Raconter sa vie","Se préparer"],a:0},
+  {q:"Photo sur le CV ?",c:["Professionnelle","Obligatoire","En soirée"],a:0},
+  {q:"Ordre des expériences ?",c:["De la plus récente à l’ancienne","Chronologique","Aléatoire"],a:0},
+  {q:"CV lisible ?",c:["Clair et structuré","Beaucoup de couleurs","Texte serré"],a:0},
+  {q:"Fautes d’orthographe ?",c:["À éviter","Acceptables","Pas importantes"],a:0},
+  {q:"Titre du CV ?",c:["Poste recherché","Nom du lycée","Âge"],a:0}
+];
+let questionDeck = [];
+
+function initQuestions(){
+  questionDeck = [...QUESTIONS].sort(() => Math.random() - 0.5);
+}
+
+function resetGame(){
+  score = 0;
+  level = 1;
+  speed = 2;
+  spawnDelay = 1400;
+  immunity = 120;
+  obstacles = [];
+  player.y = groundY();
+  player.vy = 0;
+  lastSpawn = 0;
+  initQuestions();
+}
+
+/* ===== START ===== */
+document.getElementById("startBtn").onclick = () => {
+  document.getElementById("start").style.display = "none";
+  resetGame();
+  countdown = 180;
+  state = "countdown";
+};
+
+/* ===== CONTROLS ===== */
+function jump(){
+  if(state === "play" && !paused && player.y >= groundY()){
+    player.vy = -12;
+  }
+}
+window.addEventListener("keydown", e => { if(e.code === "Space") jump(); });
+canvas.addEventListener("click", jump);
+canvas.addEventListener("touchstart", jump);
+
+/* ===== ORIENTATION ===== */
+const rotateMsg = document.getElementById("rotateMsg");
+function checkOrientation(){
+  if(window.innerWidth < 900 && window.innerHeight > window.innerWidth){
+    rotateMsg.style.display = "flex";
+    paused = true;
+  } else {
+    rotateMsg.style.display = "none";
+    paused = false;
+  }
+}
+window.addEventListener("resize", checkOrientation);
+checkOrientation();
+
+/* ===== OBSTACLES ===== */
+function spawnObstacle(){
+  let type = "ground";
+  if(level >= 3 && Math.random() < 0.3) type = "air";
+  if(level >= 6 && Math.random() < 0.2) type = "small";
+
+  let h = type === "small" ? 24 : 40;
+
+  obstacles.push({
+    x: canvas.width + 30,
+    y: type === "air"
+      ? groundY() - 90 - Math.random() * 40
+      : groundY() - h + 10,
+    w: type === "small" ? 20 : 28,
+    h: h
+  });
+}
+
+/* ===== QUESTIONS ===== */
+function showQuestion(){
+  state = "question";
+  const box = document.getElementById("question");
+
+  if(questionDeck.length === 0){
+    document.getElementById("start").style.display = "flex";
+    state = "menu";
+    return;
+  }
+
+  const q = questionDeck.shift();
+  box.innerHTML = `<h3>${q.q}</h3><div class="qcm"></div>`;
+  box.style.display = "flex";
+
+  q.c.forEach((txt,i)=>{
+    const b = document.createElement("button");
+    b.textContent = txt;
+    b.onclick = ()=>{
+      box.style.display = "none";
+      if(i === q.a){
+        immunity = 120;
+        obstacles = [];
+        state = "play";
+      } else {
+        document.getElementById("start").style.display = "flex";
+        state = "menu";
+      }
+    };
+    box.querySelector(".qcm").appendChild(b);
+  });
+}
+
+/* ===== LOOP ===== */
+function loop(time){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  if(state === "countdown"){
+    ctx.fillStyle = "#0d47a1";
+    ctx.font = "bold 80px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(Math.ceil(countdown/60), canvas.width/2, canvas.height/2);
+    countdown--;
+    if(countdown <= 0) state = "play";
+    requestAnimationFrame(loop);
+    return;
+  }
+
+  if(state === "play" && !paused){
+    player.vy += 0.6;
+    player.y += player.vy;
+    if(player.y > groundY()){ player.y = groundY(); player.vy = 0; }
+
+    if(time - lastSpawn > spawnDelay){
+      spawnObstacle();
+      lastSpawn = time;
     }
 
-    window.addEventListener("resize", resize);
-    resize();
+    obstacles.forEach(o=>{
+      o.x -= speed;
+      ctx.fillStyle = immunity > 0 ? "#81c784" : "#e53935";
+      ctx.fillRect(o.x,o.y,o.w,o.h);
 
-    function gameLoop() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const dx = Math.max(o.x, Math.min(player.x, o.x+o.w));
+      const dy = Math.max(o.y, Math.min(player.y, o.y+o.h));
+      if(immunity <= 0 && (player.x-dx)**2 + (player.y-dy)**2 < player.r**2){
+        showQuestion();
+      }
+    });
 
-      // Exemple : fond
-      ctx.fillStyle = "#222";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    obstacles = obstacles.filter(o => o.x + o.w > 0);
 
-      // Exemple : animation simple
-      ctx.fillStyle = "red";
-      ctx.beginPath();
-      ctx.arc(canvas.width / 2, canvas.height / 2, 40, 0, Math.PI * 2);
-      ctx.fill();
+    score++;
+    speed += 0.0008;
 
-      score++;
-      scoreDiv.textContent = "Score : " + score;
-
-      requestAnimationFrame(gameLoop);
+    if(score % 350 === 0){
+      level++;
+      spawnDelay = Math.max(380, spawnDelay - 120);
     }
 
-    gameLoop();
-  </script>
+    if(immunity > 0) immunity--;
+  }
+
+  /* PLAYER */
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
+  ctx.fillStyle = "#ffb300";
+  ctx.fill();
+  ctx.strokeStyle = "#1565c0";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  /* HUD */
+  ctx.fillStyle = "#0d47a1";
+  ctx.font = "bold 16px Arial";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText("Score : " + score, 12, 12);
+  ctx.fillText("Niveau : " + level, 12, 34);
+
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
 
 </body>
 </html>
