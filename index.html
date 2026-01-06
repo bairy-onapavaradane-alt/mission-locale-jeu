@@ -27,7 +27,7 @@ canvas{
 .overlay{
   position:absolute;
   inset:0;
-  background:rgba(255,255,255,.95);
+  background:rgba(255,255,255,.96);
   display:flex;
   flex-direction:column;
   justify-content:center;
@@ -36,10 +36,11 @@ canvas{
   color:#0d47a1;
   border-radius:14px;
   z-index:5;
+  padding:30px;
 }
 button{
-  margin-top:12px;
-  padding:12px 24px;
+  margin-top:14px;
+  padding:12px 26px;
   font-size:16px;
   border:none;
   border-radius:8px;
@@ -83,9 +84,16 @@ Tourne ton téléphone 🙂
 <div id="container">
   <canvas id="game" width="800" height="450"></canvas>
 
+  <!-- ÉCRAN DE DÉMARRAGE AVEC CONSIGNE -->
   <div id="start" class="overlay">
     <h2>Runner Mission Locale</h2>
-    <p>Sauter pour éviter les obstacles</p>
+    <p>
+      🎯 <b>Objectif</b><br><br>
+      Avance le plus loin possible en évitant les obstacles.<br>
+      Clique ou appuie sur <b>Espace</b> pour sauter.<br><br>
+      🧠 Si tu touches un obstacle, répond correctement à la question
+      liée au monde professionnel pour continuer la partie.
+    </p>
     <button id="startBtn">Démarrer</button>
   </div>
 
@@ -113,7 +121,13 @@ const player={x:120,y:groundY,r:22,vy:0};
 let obstacles=[];
 let lastSpawn=0;
 
-/* ===== QUESTIONS (SOURCE UNIQUE) ===== */
+/* ===== MOTS DE FOND (PROFESSIONNEL NEUTRE) ===== */
+const bgWords=[
+  "CV","EMPLOI","COMPÉTENCES","PROJET","ENTRETIEN",
+  "FORMATION","ORIENTATION","EXPÉRIENCE","AVENIR","TRAVAIL"
+];
+
+/* ===== QUESTIONS ===== */
 const ALL_QUESTIONS=[
  {q:"Que faut-il absolument mettre en haut d’un CV ?",c:["Nom, prénom et coordonnées","Une citation personnelle","Ses loisirs détaillés"],a:0},
  {q:"Quelle est la durée idéale pour un CV ciblé ?",c:["Une page claire et synthétique","Plusieurs pages détaillées","Autant de pages que d’expériences"],a:0},
@@ -127,7 +141,7 @@ const ALL_QUESTIONS=[
 
 let questionDeck=[];
 
-/* ===== SHUFFLE PROPRE ===== */
+/* ===== SHUFFLE ===== */
 function shuffleDeck(){
   questionDeck=[...ALL_QUESTIONS];
   for(let i=questionDeck.length-1;i>0;i--){
@@ -149,7 +163,7 @@ function resetGame(){
   obstacles=[];
   player.y=groundY; player.vy=0;
   lastSpawn=0;
-  shuffleDeck(); // 🔑 IMPORTANT
+  shuffleDeck();
 }
 
 /* ===== CONTROLS ===== */
@@ -172,15 +186,11 @@ function spawnObstacle(){
   });
 }
 
-/* ===== QUESTIONS (ZÉRO RÉPÉTITION) ===== */
+/* ===== QUESTIONS ===== */
 function showQuestion(){
   state="question";
-
-  if(questionDeck.length===0){
-    shuffleDeck(); // 🔁 seulement quand TOUT est passé
-  }
-
-  const q = questionDeck.shift(); // 🔑 UNE SEULE FOIS
+  if(questionDeck.length===0) shuffleDeck();
+  const q=questionDeck.shift();
 
   const answers=q.c.map((t,i)=>({t,ok:i===q.a}))
                    .sort(()=>Math.random()-0.5);
@@ -221,6 +231,13 @@ checkOrientation();
 /* ===== LOOP ===== */
 function loop(time){
   ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  /* MOTS DE FOND */
+  ctx.fillStyle="rgba(13,71,161,0.08)";
+  ctx.font="28px Arial";
+  bgWords.forEach((w,i)=>{
+    ctx.fillText(w, 60+(i*130)%700, 80+Math.floor(i/5)*120);
+  });
 
   if(state==="play" && !paused){
     player.vy+=0.6;
@@ -277,3 +294,4 @@ requestAnimationFrame(loop);
 
 </body>
 </html>
+
