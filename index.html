@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>MLE Runner</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Runner Mission Locale</title>
 
 <style>
 html, body {
@@ -29,13 +29,13 @@ body {
 
 canvas {
   width: 100%;
-  height: auto;
   display: block;
   background: linear-gradient(#ffffff, #e3f2fd);
   border-radius: 14px;
   box-shadow: 0 10px 30px rgba(0,0,0,.35);
 }
 
+/* OVERLAY */
 .overlay {
   position: absolute;
   inset: 0;
@@ -47,11 +47,11 @@ canvas {
   text-align: center;
   color: #0d47a1;
   border-radius: 14px;
-  z-index: 5;
+  z-index: 10;
 }
 
 button {
-  margin-top: 16px;
+  margin-top: 18px;
   padding: 12px 28px;
   font-size: 16px;
   border: none;
@@ -59,6 +59,7 @@ button {
   background: #ffca28;
   cursor: pointer;
 }
+button:hover { background: #ffc107; }
 
 #footer {
   margin: 10px 0;
@@ -75,9 +76,159 @@ button {
   <div style="position:relative">
     <canvas id="game"></canvas>
 
+    <!-- ÉCRAN DÉMARRAGE -->
     <div id="start" class="overlay">
       <h2>Runner Mission Locale</h2>
       <p>
         Saute pour éviter les obstacles<br>
-        Clic / toucher / <b>Espace</b>
-     
+        Clic / toucher / <b>Espace</b><br><br>
+        Gameplay inspiré du Dino Google
+      </p>
+      <button id="startBtn">Démarrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="footer">La Mission Locale vous souhaite un super jeu !</div>
+
+<script>
+/* ===== CANVAS RESPONSIVE ===== */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas(){
+  const width = document.getElementById("container").clientWidth;
+  const height = Math.min(window.innerHeight * 0.65, width * 9 / 16);
+  canvas.width = width;
+  canvas.height = height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+/* ===== GAME STATE ===== */
+let state = "menu";
+let score = 0;
+let speed = 3;
+let spawnDelay = 1800;
+let lastSpawn = 0;
+
+/* ===== PLAYER ===== */
+const player = {
+  x: 120,
+  y: 0,
+  r: 22,
+  vy: 0,
+  onGround: true
+};
+
+function groundY(){
+  return canvas.height - 70;
+}
+
+/* ===== OBSTACLES ===== */
+let obstacles = [];
+
+function spawnObstacle(){
+  const size = Math.random() < 0.5 ? 36 : 44;
+  obstacles.push({
+    x: canvas.width + 20,
+    y: groundY() - size + 8,
+    w: 26 + Math.random() * 10,
+    h: size
+  });
+}
+
+/* ===== RESET ===== */
+function resetGame(){
+  score = 0;
+  speed = 3;
+  spawnDelay = 1800;
+  lastSpawn = 0;
+  obstacles = [];
+  player.y = groundY();
+  player.vy = 0;
+  player.onGround = true;
+}
+
+/* ===== START BUTTON ===== */
+document.getElementById("startBtn").onclick = () => {
+  document.getElementById("start").style.display = "none";
+  resetGame();
+  state = "play";
+};
+
+/* ===== CONTROLS ===== */
+function jump(){
+  if(state === "play" && player.onGround){
+    player.vy = -11.5;
+    player.onGround = false;
+  }
+}
+window.addEventListener("keydown", e => { if(e.code === "Space") jump(); });
+canvas.addEventListener("click", jump);
+canvas.addEventListener("touchstart", jump);
+
+/* ===== LOOP ===== */
+function loop(time){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  if(state === "play"){
+    /* PHYSIQUE DINO */
+    player.vy += 0.65;
+    player.y += player.vy;
+
+    if(player.y >= groundY()){
+      player.y = groundY();
+      player.vy = 0;
+      player.onGround = true;
+    }
+
+    /* SPAWN OBSTACLES */
+    if(time - lastSpawn > spawnDelay){
+      spawnObstacle();
+      lastSpawn = time;
+      spawnDelay = 1400 + Math.random() * 700;
+    }
+
+    /* OBSTACLES */
+    obstacles.forEach(o => {
+      o.x -= speed;
+      ctx.fillStyle = "#e53935";
+      ctx.fillRect(o.x, o.y, o.w, o.h);
+
+      const dx = Math.max(o.x, Math.min(player.x, o.x + o.w));
+      const dy = Math.max(o.y, Math.min(player.y, o.y + o.h));
+      if((player.x - dx)**2 + (player.y - dy)**2 < player.r**2){
+        document.getElementById("start").style.display = "flex";
+        state = "menu";
+      }
+    });
+
+    obstacles = obstacles.filter(o => o.x + o.w > 0);
+
+    score++;
+    speed += 0.0007;
+  }
+
+  /* PLAYER */
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
+  ctx.fillStyle = "#ffb300";
+  ctx.fill();
+  ctx.strokeStyle = "#1565c0";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  /* HUD */
+  ctx.fillStyle = "#0d47a1";
+  ctx.font = "bold 16px Arial";
+  ctx.fillText("Score : " + score, 12, 12);
+
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
+
