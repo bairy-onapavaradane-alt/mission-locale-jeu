@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>MLE Runner</title>
 
 <style>
@@ -11,26 +11,26 @@ html, body {
   padding: 0;
   background: #0d47a1;
   font-family: Arial, Helvetica, sans-serif;
-  overflow: hidden;
 }
 
 body {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: 100vh;
 }
 
 #container {
-  position: relative;
   width: 100%;
   max-width: 900px;
+  padding: 12px;
+  box-sizing: border-box;
 }
 
 canvas {
-  display: block;
   width: 100%;
+  height: auto;
+  display: block;
   background: linear-gradient(#ffffff, #e3f2fd);
   border-radius: 14px;
   box-shadow: 0 10px 30px rgba(0,0,0,.35);
@@ -48,11 +48,10 @@ canvas {
   color: #0d47a1;
   border-radius: 14px;
   z-index: 5;
-  padding: 20px;
 }
 
 button {
-  margin-top: 14px;
+  margin-top: 16px;
   padding: 12px 28px;
   font-size: 16px;
   border: none;
@@ -60,12 +59,12 @@ button {
   background: #ffca28;
   cursor: pointer;
 }
-button:hover { background: #ffc107; }
 
 #footer {
-  margin-top: 10px;
+  margin: 10px 0;
   color: white;
   font-weight: bold;
+  text-align: center;
 }
 </style>
 </head>
@@ -73,161 +72,12 @@ button:hover { background: #ffc107; }
 <body>
 
 <div id="container">
-  <canvas id="game"></canvas>
+  <div style="position:relative">
+    <canvas id="game"></canvas>
 
-  <div id="start" class="overlay">
-    <h2>Runner Mission Locale</h2>
-    <p>
-      Saute pour éviter les obstacles<br>
-      Clic / toucher / <b>Espace</b><br><br>
-      Gameplay inspiré du Dino Google
-    </p>
-    <button id="startBtn">Démarrer</button>
-  </div>
-
-  <div id="question" class="overlay" style="display:none"></div>
-</div>
-
-<div id="footer">La Mission Locale vous souhaite un super jeu !</div>
-
-<script>
-/* ===== CANVAS ===== */
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-function resizeCanvas(){
-  const w = document.getElementById("container").clientWidth;
-  const h = Math.min(window.innerHeight * 0.9, w * 9 / 16);
-  canvas.width = w;
-  canvas.height = h;
-}
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
-
-/* ===== GAME STATE ===== */
-let state = "menu";
-let score = 0;
-let speed = 6;
-let spawnDelay = 1600;
-let lastSpawn = 0;
-
-/* ===== PLAYER (STYLE DINO) ===== */
-const player = {
-  x: 120,
-  y: 0,
-  r: 22,
-  vy: 0,
-  onGround: true
-};
-
-function groundY(){
-  return canvas.height - 80;
-}
-
-/* ===== RESET ===== */
-function resetGame(){
-  score = 0;
-  speed = 6;
-  spawnDelay = 1600;
-  lastSpawn = 0;
-  player.y = groundY();
-  player.vy = 0;
-  player.onGround = true;
-  obstacles = [];
-}
-
-/* ===== START ===== */
-document.getElementById("startBtn").onclick = () => {
-  document.getElementById("start").style.display = "none";
-  resetGame();
-  state = "play";
-};
-
-/* ===== CONTROLS ===== */
-function jump(){
-  if(state === "play" && player.onGround){
-    player.vy = -11.5; // saut Dino
-    player.onGround = false;
-  }
-}
-window.addEventListener("keydown", e => { if(e.code === "Space") jump(); });
-canvas.addEventListener("click", jump);
-canvas.addEventListener("touchstart", jump);
-
-/* ===== OBSTACLES ===== */
-let obstacles = [];
-
-function spawnObstacle(){
-  const h = 40;
-  obstacles.push({
-    x: canvas.width + 20,
-    y: groundY() - h + 10,
-    w: 26,
-    h: h
-  });
-}
-
-/* ===== LOOP ===== */
-function loop(time){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  if(state === "play"){
-
-    /* PHYSIQUE DINO */
-    player.vy += 0.65;
-    player.y += player.vy;
-
-    if(player.y >= groundY()){
-      player.y = groundY();
-      player.vy = 0;
-      player.onGround = true;
-    }
-
-    /* SPAWN OBSTACLES */
-    if(time - lastSpawn > spawnDelay){
-      spawnObstacle();
-      lastSpawn = time;
-      spawnDelay = 1400 + Math.random() * 600;
-    }
-
-    /* OBSTACLES */
-    obstacles.forEach(o => {
-      o.x -= speed;
-      ctx.fillStyle = "#e53935";
-      ctx.fillRect(o.x, o.y, o.w, o.h);
-
-      const dx = Math.max(o.x, Math.min(player.x, o.x + o.w));
-      const dy = Math.max(o.y, Math.min(player.y, o.y + o.h));
-      if((player.x - dx)**2 + (player.y - dy)**2 < player.r**2){
-        document.getElementById("start").style.display = "flex";
-        state = "menu";
-      }
-    });
-
-    obstacles = obstacles.filter(o => o.x + o.w > 0);
-
-    score++;
-    speed += 0.0006; // accélération progressive Dino
-  }
-
-  /* PLAYER */
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
-  ctx.fillStyle = "#ffb300";
-  ctx.fill();
-  ctx.strokeStyle = "#1565c0";
-  ctx.lineWidth = 4;
-  ctx.stroke();
-
-  /* HUD */
-  ctx.fillStyle = "#0d47a1";
-  ctx.font = "bold 16px Arial";
-  ctx.fillText("Score : " + score, 12, 12);
-
-  requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
-</script>
-
-</body>
-</html>
+    <div id="start" class="overlay">
+      <h2>Runner Mission Locale</h2>
+      <p>
+        Saute pour éviter les obstacles<br>
+        Clic / toucher / <b>Espace</b>
+     
