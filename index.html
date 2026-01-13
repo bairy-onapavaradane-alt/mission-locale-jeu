@@ -137,8 +137,7 @@ resizeCanvas();
 let state = "menu";
 let paused = false;
 let score = 0;
-let level = 1;
-let speed = 1.6;
+let speed = 1.5;
 let spawnDelay = 1600;
 let immunity = 0;
 let countdown = 0;
@@ -166,8 +165,7 @@ const QUESTIONS = [
   {q:"Photo sur le CV ?", c:["Professionnelle","Obligatoire","Entre amis"], a:0},
   {q:"Ordre des expériences ?", c:["De la plus récente à l’ancienne","Au hasard","Par durée"], a:0},
   {q:"CV efficace ?", c:["Clair et structuré","Très coloré","Très long"], a:0},
-  {q:"Fautes d’orthographe ?", c:["À éviter","Tolérées","Sans importance"], a:0},
-  {q:"Titre du CV ?", c:["Poste recherché","Nom du collège","Âge"], a:0}
+  {q:"Fautes d’orthographe ?", c:["À éviter","Tolérées","Sans importance"], a:0}
 ];
 let questionDeck = [];
 
@@ -178,8 +176,7 @@ function initQuestions(){
 /* ===== RESET ===== */
 function resetGame(){
   score = 0;
-  level = 1;
-  speed = 1.6;
+  speed = 1.5;
   spawnDelay = 1600;
   immunity = 120;
   obstacles = [];
@@ -201,7 +198,7 @@ document.getElementById("startBtn").onclick = () => {
 /* ===== CONTROLS ===== */
 function jump(){
   if(state === "play" && !paused && player.onGround){
-    player.vy = -11.5;
+    player.vy = -14;   // saut confortable
     player.onGround = false;
   }
 }
@@ -225,11 +222,11 @@ checkOrientation();
 
 /* ===== OBSTACLES ===== */
 function spawnObstacle(){
-  const h = Math.random() < 0.5 ? 36 : 44;
+  const h = Math.random() < 0.5 ? 28 : 34;
   obstacles.push({
     x: canvas.width + 30,
-    y: groundY() - h + 8,
-    w: 26 + Math.random() * 10,
+    y: groundY() - h + 6,
+    w: 24 + Math.random() * 8,
     h: h
   });
 }
@@ -284,7 +281,7 @@ function loop(time){
   }
 
   if(state === "play" && !paused){
-    player.vy += 0.65;
+    player.vy += 0.6;
     player.y += player.vy;
 
     if(player.y >= groundY()){
@@ -296,7 +293,7 @@ function loop(time){
     if(time - lastSpawn > spawnDelay){
       spawnObstacle();
       lastSpawn = time;
-      spawnDelay = 1200 + Math.random() * 700;
+      spawnDelay = 1200 + Math.random() * 800;
     }
 
     obstacles.forEach(o=>{
@@ -306,7 +303,9 @@ function loop(time){
 
       const dx = Math.max(o.x, Math.min(player.x, o.x+o.w));
       const dy = Math.max(o.y, Math.min(player.y, o.y+o.h));
-      if(immunity <= 0 && (player.x-dx)**2 + (player.y-dy)**2 < player.r**2){
+      const hitRadius = player.r - 6;
+
+      if(immunity <= 0 && (player.x-dx)**2 + (player.y-dy)**2 < hitRadius**2){
         showQuestion();
       }
     });
@@ -314,8 +313,7 @@ function loop(time){
     obstacles = obstacles.filter(o => o.x + o.w > 0);
 
     score++;
-    speed += 0.0006;
-    if(score % 350 === 0) level++;
+    speed += 0.0004;
     if(immunity > 0) immunity--;
   }
 
@@ -332,7 +330,6 @@ function loop(time){
   ctx.fillStyle = "#0d47a1";
   ctx.font = "bold 16px Arial";
   ctx.fillText("Score : " + score, 12, 12);
-  ctx.fillText("Niveau : " + level, 12, 34);
 
   requestAnimationFrame(loop);
 }
@@ -341,3 +338,8 @@ requestAnimationFrame(loop);
 
 </body>
 </html>
+
+
+
+
+  
