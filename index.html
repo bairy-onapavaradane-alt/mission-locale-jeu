@@ -36,7 +36,6 @@ canvas {
   box-shadow: 0 10px 30px rgba(0,0,0,.35);
 }
 
-/* OVERLAYS */
 .overlay {
   position: absolute;
   inset: 0;
@@ -102,7 +101,6 @@ Tourne ton téléphone 🙂
 <div id="container">
   <canvas id="game"></canvas>
 
-  <!-- ACCUEIL -->
   <div id="start" class="overlay">
     <h2>Runner Mission Locale</h2>
     <p>
@@ -113,14 +111,13 @@ Tourne ton téléphone 🙂
     <button id="startBtn">Démarrer</button>
   </div>
 
-  <!-- QUESTIONS -->
   <div id="question" class="overlay" style="display:none"></div>
 </div>
 
 <div id="footer">La Mission Locale vous souhaite un super jeu !</div>
 
 <script>
-/* ===== CANVAS RESPONSIVE ===== */
+/* ===== CANVAS ===== */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
@@ -137,8 +134,8 @@ resizeCanvas();
 let state = "menu";
 let paused = false;
 let score = 0;
-let speed = 1.5;
-let spawnDelay = 1600;
+let speed = 1.4;
+let spawnDelay = 1500;
 let immunity = 0;
 let countdown = 0;
 
@@ -150,6 +147,10 @@ const player = {
   vy: 0,
   onGround: true
 };
+
+/* ===== PHYSIQUE DU SAUT (IMPORTANT) ===== */
+const GRAVITY = 0.4;     // ↓ gravité = saut plus long
+const JUMP_FORCE = -11; // ↓ impulsion = saut moins violent
 
 let obstacles = [];
 let lastSpawn = 0;
@@ -167,6 +168,7 @@ const QUESTIONS = [
   {q:"CV efficace ?", c:["Clair et structuré","Très coloré","Très long"], a:0},
   {q:"Fautes d’orthographe ?", c:["À éviter","Tolérées","Sans importance"], a:0}
 ];
+
 let questionDeck = [];
 
 function initQuestions(){
@@ -176,8 +178,8 @@ function initQuestions(){
 /* ===== RESET ===== */
 function resetGame(){
   score = 0;
-  speed = 1.5;
-  spawnDelay = 1600;
+  speed = 1.4;
+  spawnDelay = 1500;
   immunity = 120;
   obstacles = [];
   player.y = groundY();
@@ -195,14 +197,17 @@ document.getElementById("startBtn").onclick = () => {
   state = "countdown";
 };
 
-/* ===== CONTROLS ===== */
+/* ===== CONTROLES ===== */
 function jump(){
   if(state === "play" && !paused && player.onGround){
-    player.vy = -14;   // saut confortable
+    player.vy = JUMP_FORCE;
     player.onGround = false;
   }
 }
-window.addEventListener("keydown", e => { if(e.code === "Space") jump(); });
+
+window.addEventListener("keydown", e => {
+  if(e.code === "Space") jump();
+});
 canvas.addEventListener("click", jump);
 canvas.addEventListener("touchstart", jump);
 
@@ -226,7 +231,7 @@ function spawnObstacle(){
   obstacles.push({
     x: canvas.width + 30,
     y: groundY() - h + 6,
-    w: 24 + Math.random() * 8,
+    w: 26,
     h: h
   });
 }
@@ -281,7 +286,7 @@ function loop(time){
   }
 
   if(state === "play" && !paused){
-    player.vy += 0.6;
+    player.vy += GRAVITY;
     player.y += player.vy;
 
     if(player.y >= groundY()){
@@ -293,7 +298,7 @@ function loop(time){
     if(time - lastSpawn > spawnDelay){
       spawnObstacle();
       lastSpawn = time;
-      spawnDelay = 1200 + Math.random() * 800;
+      spawnDelay = 1200 + Math.random() * 600;
     }
 
     obstacles.forEach(o=>{
@@ -303,9 +308,7 @@ function loop(time){
 
       const dx = Math.max(o.x, Math.min(player.x, o.x+o.w));
       const dy = Math.max(o.y, Math.min(player.y, o.y+o.h));
-      const hitRadius = player.r - 6;
-
-      if(immunity <= 0 && (player.x-dx)**2 + (player.y-dy)**2 < hitRadius**2){
+      if(immunity <= 0 && (player.x-dx)**2 + (player.y-dy)**2 < (player.r-6)**2){
         showQuestion();
       }
     });
@@ -313,11 +316,10 @@ function loop(time){
     obstacles = obstacles.filter(o => o.x + o.w > 0);
 
     score++;
-    speed += 0.0004;
+    speed += 0.00035;
     if(immunity > 0) immunity--;
   }
 
-  /* PLAYER */
   ctx.beginPath();
   ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
   ctx.fillStyle = "#ffb300";
@@ -326,10 +328,9 @@ function loop(time){
   ctx.lineWidth = 4;
   ctx.stroke();
 
-  /* HUD */
   ctx.fillStyle = "#0d47a1";
   ctx.font = "bold 16px Arial";
-  ctx.fillText("Score : " + score, 12, 12);
+  ctx.fillText("Score : " + score, 12, 20);
 
   requestAnimationFrame(loop);
 }
@@ -339,7 +340,3 @@ requestAnimationFrame(loop);
 </body>
 </html>
 
-
-
-
-  
