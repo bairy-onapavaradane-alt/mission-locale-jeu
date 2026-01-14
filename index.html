@@ -21,11 +21,11 @@ body {
 }
 
 #container {
-  position: relative;
   width: 100%;
   max-width: 900px;
   padding: 12px;
   box-sizing: border-box;
+  position: relative;
 }
 
 canvas {
@@ -38,22 +38,22 @@ canvas {
 
 .overlay {
   position: absolute;
-  inset: 0;
+  inset: 12px;
   background: rgba(255,255,255,.96);
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
-  color: #0d47a1;
-  border-radius: 14px;
   z-index: 10;
+  color: #0d47a1;
   padding: 20px;
 }
 
 button {
-  margin-top: 16px;
-  padding: 12px 30px;
+  margin-top: 18px;
+  padding: 12px 32px;
   font-size: 16px;
   border: none;
   border-radius: 8px;
@@ -68,35 +68,15 @@ button:hover { background: #ffc107; }
 }
 
 #footer {
-  margin: 10px 0;
+  margin: 10px;
   color: white;
   font-weight: bold;
   text-align: center;
-}
-
-#rotateMsg {
-  position: fixed;
-  inset: 0;
-  background: #0d47a1;
-  color: white;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 30px;
-  z-index: 20;
-  font-size: 18px;
 }
 </style>
 </head>
 
 <body>
-
-<div id="rotateMsg">
-📱🔄<br><br>
-Ce jeu se joue en <b>mode paysage</b><br>
-Tourne ton téléphone 🙂
-</div>
 
 <div id="container">
   <canvas id="game"></canvas>
@@ -105,7 +85,7 @@ Tourne ton téléphone 🙂
     <h2>Runner Mission Locale</h2>
     <p>
       🎯 Saute pour éviter les obstacles<br>
-      Clic / toucher / <b>Espace</b><br><br>
+      🖱️ Clic / Toucher / <b>Espace</b><br><br>
       🧠 En cas d’erreur, une question t’aide à continuer
     </p>
     <button id="startBtn">Démarrer</button>
@@ -132,12 +112,10 @@ resizeCanvas();
 
 /* ===== GAME STATE ===== */
 let state = "menu";
-let paused = false;
 let score = 0;
 let speed = 1.4;
 let spawnDelay = 1500;
 let immunity = 0;
-let countdown = 0;
 
 /* ===== PLAYER ===== */
 const player = {
@@ -145,198 +123,5 @@ const player = {
   y: 0,
   r: 22,
   vy: 0,
-  onGround: true
-};
-
-/* ===== PHYSIQUE DU SAUT (IMPORTANT) ===== */
-const GRAVITY = 0.4;     // ↓ gravité = saut plus long
-const JUMP_FORCE = -11; // ↓ impulsion = saut moins violent
-
-let obstacles = [];
-let lastSpawn = 0;
-
-/* ===== SOL ===== */
-function groundY(){
-  return canvas.height - 70;
-}
-
-/* ===== QUESTIONS ===== */
-const QUESTIONS = [
-  {q:"Objectif principal d’un CV ?", c:["Décrocher un entretien","Raconter sa vie","Se justifier"], a:0},
-  {q:"Photo sur le CV ?", c:["Professionnelle","Obligatoire","Entre amis"], a:0},
-  {q:"Ordre des expériences ?", c:["De la plus récente à l’ancienne","Au hasard","Par durée"], a:0},
-  {q:"CV efficace ?", c:["Clair et structuré","Très coloré","Très long"], a:0},
-  {q:"Fautes d’orthographe ?", c:["À éviter","Tolérées","Sans importance"], a:0}
-];
-
-let questionDeck = [];
-
-function initQuestions(){
-  questionDeck = [...QUESTIONS].sort(() => Math.random() - 0.5);
-}
-
-/* ===== RESET ===== */
-function resetGame(){
-  score = 0;
-  speed = 1.4;
-  spawnDelay = 1500;
-  immunity = 120;
-  obstacles = [];
-  player.y = groundY();
-  player.vy = 0;
-  player.onGround = true;
-  lastSpawn = 0;
-  initQuestions();
-}
-
-/* ===== START ===== */
-document.getElementById("startBtn").onclick = () => {
-  document.getElementById("start").style.display = "none";
-  resetGame();
-  countdown = 180;
-  state = "countdown";
-};
-
-/* ===== CONTROLES ===== */
-function jump(){
-  if(state === "play" && !paused && player.onGround){
-    player.vy = JUMP_FORCE;
-    player.onGround = false;
-  }
-}
-
-window.addEventListener("keydown", e => {
-  if(e.code === "Space") jump();
-});
-canvas.addEventListener("click", jump);
-canvas.addEventListener("touchstart", jump);
-
-/* ===== ORIENTATION ===== */
-const rotateMsg = document.getElementById("rotateMsg");
-function checkOrientation(){
-  if(window.innerWidth < 900 && window.innerHeight > window.innerWidth){
-    rotateMsg.style.display = "flex";
-    paused = true;
-  } else {
-    rotateMsg.style.display = "none";
-    paused = false;
-  }
-}
-window.addEventListener("resize", checkOrientation);
-checkOrientation();
-
-/* ===== OBSTACLES ===== */
-function spawnObstacle(){
-  const h = Math.random() < 0.5 ? 28 : 34;
-  obstacles.push({
-    x: canvas.width + 30,
-    y: groundY() - h + 6,
-    w: 26,
-    h: h
-  });
-}
-
-/* ===== QUESTIONS ===== */
-function showQuestion(){
-  state = "question";
-  const box = document.getElementById("question");
-
-  if(questionDeck.length === 0){
-    document.getElementById("start").style.display = "flex";
-    state = "menu";
-    return;
-  }
-
-  const q = questionDeck.shift();
-  box.innerHTML = `<h3>${q.q}</h3><div class="qcm"></div>`;
-  box.style.display = "flex";
-
-  q.c.forEach((txt,i)=>{
-    const b = document.createElement("button");
-    b.textContent = txt;
-    b.onclick = ()=>{
-      box.style.display = "none";
-      if(i === q.a){
-        immunity = 120;
-        obstacles = [];
-        state = "play";
-      } else {
-        document.getElementById("start").style.display = "flex";
-        state = "menu";
-      }
-    };
-    box.querySelector(".qcm").appendChild(b);
-  });
-}
-
-/* ===== LOOP ===== */
-function loop(time){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  if(state === "countdown"){
-    ctx.fillStyle = "#0d47a1";
-    ctx.font = "bold 80px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(Math.ceil(countdown/60), canvas.width/2, canvas.height/2);
-    countdown--;
-    if(countdown <= 0) state = "play";
-    requestAnimationFrame(loop);
-    return;
-  }
-
-  if(state === "play" && !paused){
-    player.vy += GRAVITY;
-    player.y += player.vy;
-
-    if(player.y >= groundY()){
-      player.y = groundY();
-      player.vy = 0;
-      player.onGround = true;
-    }
-
-    if(time - lastSpawn > spawnDelay){
-      spawnObstacle();
-      lastSpawn = time;
-      spawnDelay = 1200 + Math.random() * 600;
-    }
-
-    obstacles.forEach(o=>{
-      o.x -= speed;
-      ctx.fillStyle = immunity > 0 ? "#81c784" : "#e53935";
-      ctx.fillRect(o.x,o.y,o.w,o.h);
-
-      const dx = Math.max(o.x, Math.min(player.x, o.x+o.w));
-      const dy = Math.max(o.y, Math.min(player.y, o.y+o.h));
-      if(immunity <= 0 && (player.x-dx)**2 + (player.y-dy)**2 < (player.r-6)**2){
-        showQuestion();
-      }
-    });
-
-    obstacles = obstacles.filter(o => o.x + o.w > 0);
-
-    score++;
-    speed += 0.00035;
-    if(immunity > 0) immunity--;
-  }
-
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
-  ctx.fillStyle = "#ffb300";
-  ctx.fill();
-  ctx.strokeStyle = "#1565c0";
-  ctx.lineWidth = 4;
-  ctx.stroke();
-
-  ctx.fillStyle = "#0d47a1";
-  ctx.font = "bold 16px Arial";
-  ctx.fillText("Score : " + score, 12, 20);
-
-  requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
-</script>
-
-</body>
-</html>
+  onG
 
