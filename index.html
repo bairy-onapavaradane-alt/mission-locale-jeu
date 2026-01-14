@@ -1,95 +1,10 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Runner Mission Locale</title>
-
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  background: #0d47a1;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-#container {
-  width: 100%;
-  max-width: 900px;
-  padding: 12px;
-  box-sizing: border-box;
-  position: relative;
-}
-
-canvas {
-  width: 100%;
-  display: block;
-  background: linear-gradient(#ffffff, #e3f2fd);
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
-}
-
-.overlay {
-  position: absolute;
-  inset: 12px;
-  background: rgba(255,255,255,.95);
-  border-radius: 14px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  z-index: 10;
-  color: #0d47a1;
-}
-
-button {
-  margin-top: 16px;
-  padding: 12px 30px;
-  font-size: 16px;
-  border: none;
-  border-radius: 8px;
-  background: #ffca28;
-  cursor: pointer;
-}
-button:hover { background: #ffc107; }
-
-#footer {
-  margin: 10px;
-  color: white;
-  font-weight: bold;
-}
-</style>
-</head>
-
-<body>
-
-<div id="container">
-  <canvas id="game"></canvas>
-
-  <div id="start" class="overlay">
-    <h2>Runner Mission Locale</h2>
-    <p>
-      🎯 Saute pour éviter les obstacles<br>
-      🖱️ Clic / Toucher / <b>Espace</b>
-    </p>
-    <button id="startBtn">Démarrer</button>
-  </div>
-</div>
-
-<div id="footer">La Mission Locale vous souhaite un super jeu !</div>
-
 <script>
-/* ===== CANVAS ===== */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+const startOverlay = document.getElementById("start");
+const startBtn = document.getElementById("startBtn");
 
+/* ===== RESIZE ===== */
 function resizeCanvas(){
   const w = document.getElementById("container").clientWidth;
   const h = Math.min(window.innerHeight * 0.7, w * 9 / 16);
@@ -99,10 +14,12 @@ function resizeCanvas(){
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-/* ===== GAME STATE ===== */
+/* ===== GAME VARS ===== */
 let playing = false;
 let score = 0;
 let speed = 3;
+let obstacles = [];
+let lastSpawn = 0;
 
 /* ===== PLAYER ===== */
 const player = {
@@ -116,15 +33,42 @@ const player = {
 const GRAVITY = 0.6;
 const JUMP_FORCE = -13;
 
-/* ===== GROUND ===== */
 function groundY(){
   return canvas.height - 60;
 }
 
-/* ===== OBSTACLES ===== */
-let obstacles = [];
-let lastSpawn = 0;
+/* ===== RESET ===== */
+function resetGame(){
+  score = 0;
+  speed = 3;
+  obstacles = [];
+  player.y = groundY();
+  player.vy = 0;
+  player.onGround = true;
+  lastSpawn = 0;
+}
 
+/* ===== START BUTTON ===== */
+startBtn.addEventListener("click", () => {
+  startOverlay.style.display = "none";
+  resetGame();
+  playing = true;
+});
+
+/* ===== CONTROLS ===== */
+function jump(){
+  if(playing && player.onGround){
+    player.vy = JUMP_FORCE;
+    player.onGround = false;
+  }
+}
+window.addEventListener("keydown", e => {
+  if(e.code === "Space") jump();
+});
+canvas.addEventListener("click", jump);
+canvas.addEventListener("touchstart", jump);
+
+/* ===== OBSTACLES ===== */
 function spawnObstacle(){
   const h = 25 + Math.random() * 25;
   obstacles.push({
@@ -135,31 +79,70 @@ function spawnObstacle(){
   });
 }
 
-/* ===== CONTROLS ===== */
-function jump(){
-  if(playing && player.onGround){
-    player.vy = JUMP_FORCE;
-    player.onGround = false;
+/* ===== LOOP ===== */
+function loop(time){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  if(playing){
+    player.vy += GRAVITY;
+    player.y += player.vy;
+
+    if(player.y >= groundY()){
+      player.y = groundY();
+      player.vy = 0;
+      player.onGround = true;
+    }
+
+    if(time - lastSpawn > 1200){
+      spawnObstacle();
+      lastSpawn = time;
+    }
+
+    obstacles.forEach(o => {
+      o.x -= speed;
+      ctx.fillStyle = "#e53935";
+      ctx.fillRect(o.x,o.y,o.w,o.h);
+
+      if(
+        player.x + player.r > o.x &&
+        player.x - player.r < o.x + o.w &&
+        player.y + player.r > o.y
+      ){
+        playing = false;
+        startOverlay.style.display = "flex";
+      }
+    });
+
+    obstacles = obstacles.filter(o => o.x + o.w > 0);
+    score++;
+    speed += 0.001;
   }
+
+  // Player
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
+  ctx.fillStyle = "#ffb300";
+  ctx.fill();
+  ctx.strokeStyle = "#1565c0";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // Texte MLE
+  ctx.fillStyle = "#0d47a1";
+  ctx.font = "bold 14px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("MLE", player.x, player.y);
+
+  // Score
+  ctx.fillStyle = "#0d47a1";
+  ctx.font = "bold 16px Arial";
+  ctx.textAlign = "left";
+  ctx.fillText("Score : " + score, 12, 22);
+
+  requestAnimationFrame(loop);
 }
 
-window.addEventListener("keydown", e => {
-  if(e.code === "Space") jump();
-});
-canvas.addEventListener("click", jump);
-canvas.addEventListener("touchstart", jump);
+requestAnimationFrame(loop);
+</script>
 
-/* ===== START ===== */
-document.getElementById("startBtn").onclick = () => {
-  document.getElementById("start").style.display = "none";
-  resetGame();
-  playing = true;
-};
-
-/* ===== RESET ===== */
-function resetGame(){
-  score = 0;
-  speed = 3;
-  obstacles = [];
-  player.y = groundY();
-  player.vy
