@@ -11,7 +11,6 @@ html, body {
   padding: 0;
   background: #0d47a1;
   font-family: Arial, Helvetica, sans-serif;
-  overflow-x: hidden;
 }
 
 body {
@@ -39,7 +38,7 @@ canvas {
 .overlay {
   position: absolute;
   inset: 12px;
-  background: rgba(255,255,255,.96);
+  background: rgba(255,255,255,.95);
   border-radius: 14px;
   display: flex;
   flex-direction: column;
@@ -48,12 +47,11 @@ canvas {
   text-align: center;
   z-index: 10;
   color: #0d47a1;
-  padding: 20px;
 }
 
 button {
-  margin-top: 18px;
-  padding: 12px 32px;
+  margin-top: 16px;
+  padding: 12px 30px;
   font-size: 16px;
   border: none;
   border-radius: 8px;
@@ -62,16 +60,10 @@ button {
 }
 button:hover { background: #ffc107; }
 
-.qcm button {
-  width: 100%;
-  margin: 6px 0;
-}
-
 #footer {
   margin: 10px;
   color: white;
   font-weight: bold;
-  text-align: center;
 }
 </style>
 </head>
@@ -85,13 +77,10 @@ button:hover { background: #ffc107; }
     <h2>Runner Mission Locale</h2>
     <p>
       🎯 Saute pour éviter les obstacles<br>
-      🖱️ Clic / Toucher / <b>Espace</b><br><br>
-      🧠 En cas d’erreur, une question t’aide à continuer
+      🖱️ Clic / Toucher / <b>Espace</b>
     </p>
     <button id="startBtn">Démarrer</button>
   </div>
-
-  <div id="question" class="overlay" style="display:none"></div>
 </div>
 
 <div id="footer">La Mission Locale vous souhaite un super jeu !</div>
@@ -103,7 +92,7 @@ const ctx = canvas.getContext("2d");
 
 function resizeCanvas(){
   const w = document.getElementById("container").clientWidth;
-  const h = Math.min(window.innerHeight * 0.75, w * 9 / 16);
+  const h = Math.min(window.innerHeight * 0.7, w * 9 / 16);
   canvas.width = w;
   canvas.height = h;
 }
@@ -111,17 +100,66 @@ window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
 /* ===== GAME STATE ===== */
-let state = "menu";
+let playing = false;
 let score = 0;
-let speed = 1.4;
-let spawnDelay = 1500;
-let immunity = 0;
+let speed = 3;
 
 /* ===== PLAYER ===== */
 const player = {
   x: 120,
   y: 0,
-  r: 22,
+  r: 24,
   vy: 0,
-  onG
+  onGround: true
+};
 
+const GRAVITY = 0.6;
+const JUMP_FORCE = -13;
+
+/* ===== GROUND ===== */
+function groundY(){
+  return canvas.height - 60;
+}
+
+/* ===== OBSTACLES ===== */
+let obstacles = [];
+let lastSpawn = 0;
+
+function spawnObstacle(){
+  const h = 25 + Math.random() * 25;
+  obstacles.push({
+    x: canvas.width + 30,
+    y: groundY() - h,
+    w: 20 + Math.random() * 20,
+    h: h
+  });
+}
+
+/* ===== CONTROLS ===== */
+function jump(){
+  if(playing && player.onGround){
+    player.vy = JUMP_FORCE;
+    player.onGround = false;
+  }
+}
+
+window.addEventListener("keydown", e => {
+  if(e.code === "Space") jump();
+});
+canvas.addEventListener("click", jump);
+canvas.addEventListener("touchstart", jump);
+
+/* ===== START ===== */
+document.getElementById("startBtn").onclick = () => {
+  document.getElementById("start").style.display = "none";
+  resetGame();
+  playing = true;
+};
+
+/* ===== RESET ===== */
+function resetGame(){
+  score = 0;
+  speed = 3;
+  obstacles = [];
+  player.y = groundY();
+  player.vy
