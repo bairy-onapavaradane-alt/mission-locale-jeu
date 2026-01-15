@@ -22,7 +22,7 @@ body {
 #container {
   width: 100%;
   max-width: 900px;
-  padding: 12px;
+  padding: 10px;
   box-sizing: border-box;
   position: relative;
 }
@@ -37,21 +37,21 @@ canvas {
 
 .overlay {
   position: absolute;
-  inset: 12px;
-  background: rgba(255,255,255,.96);
-  border-radius: 14px;
+  inset: 0;
+  background: rgba(255,255,255,.97);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
   z-index: 10;
-  color: #0d47a1;
   padding: 20px;
+  border-radius: 14px;
+  color: #0d47a1;
 }
 
 button {
-  margin-top: 18px;
+  margin-top: 16px;
   padding: 12px 32px;
   font-size: 16px;
   border: none;
@@ -60,6 +60,11 @@ button {
   cursor: pointer;
 }
 button:hover { background: #ffc107; }
+
+.qcm button {
+  width: 100%;
+  margin: 6px 0;
+}
 
 #footer {
   margin: 10px;
@@ -75,27 +80,33 @@ button:hover { background: #ffc107; }
 <div id="container">
   <canvas id="game"></canvas>
 
-  <div id="start" class="overlay">
+  <div id="menu" class="overlay">
     <h2>Runner Mission Locale</h2>
     <p>
       🎯 Saute pour éviter les obstacles<br>
-      🖱️ Clic / Toucher / <b>Espace</b>
+      🖱️ Clic / Toucher / <b>Espace</b><br><br>
+      🧠 En cas de collision, réponds à une question professionnelle<br>
+      ✔ Bonne réponse : tu continues<br>
+      ❌ Mauvaise réponse : fin de partie
     </p>
     <button id="startBtn">Démarrer</button>
   </div>
+
+  <div id="question" class="overlay" style="display:none"></div>
 </div>
 
-<div id="footer">La Mission Locale vous souhaite un bon jeu !</div>
+<div id="footer">
+La Mission Locale vous souhaite un bon jeu.
+</div>
 
 <script>
-/* ===== SETUP ===== */
+/* =================== CANVAS =================== */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-const startOverlay = document.getElementById("start");
-const startBtn = document.getElementById("startBtn");
+const container = document.getElementById("container");
 
 function resizeCanvas(){
-  const w = document.getElementById("container").clientWidth;
+  const w = container.clientWidth;
   const h = Math.min(window.innerHeight * 0.7, w * 9 / 16);
   canvas.width = w;
   canvas.height = h;
@@ -103,137 +114,172 @@ function resizeCanvas(){
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-/* ===== GAME STATE ===== */
-let playing = false;
+/* =================== QUESTIONS =================== */
+const QUESTIONS = [
+{q:"Quel est le rôle principal de la Mission Locale ?",c:["Accompagner les jeunes vers l’emploi et l’autonomie","Distribuer des offres d’emploi uniquement","Former directement aux métiers"],a:0},
+{q:"Un CV sert principalement à :",c:["Obtenir un entretien","Raconter sa vie","Justifier son parcours scolaire"],a:0},
+{q:"Une lettre de motivation doit être :",c:["Personnalisée pour chaque candidature","Identique pour tous les employeurs","Très longue"],a:0},
+{q:"Lors d’un entretien, il est important :",c:["D’arriver à l’heure","De tutoyer le recruteur","De parler uniquement de soi"],a:0},
+{q:"Une compétence, c’est :",c:["Un savoir-faire ou un savoir-être","Un diplôme uniquement","Un métier"],a:0},
+{q:"Le savoir-être correspond :",c:["Au comportement professionnel","Aux connaissances théoriques","Au salaire"],a:0},
+{q:"Avant un entretien, il est conseillé :",c:["De se renseigner sur l’entreprise","D’improviser","D’éviter les questions"],a:0},
+{q:"Un stage permet :",c:["De découvrir un métier","D’obtenir un CDI automatiquement","D’éviter la formation"],a:0},
+{q:"Un contrat d’apprentissage combine :",c:["Travail et formation","Deux emplois","Travail bénévole"],a:0},
+{q:"La ponctualité au travail est :",c:["Une qualité professionnelle","Optionnelle","Peu importante"],a:0},
+{q:"Le travail en équipe demande :",c:["Communication et respect","Autorité","Silence"],a:0},
+{q:"Un objectif professionnel doit être :",c:["Réaliste et précis","Flou","Imposé"],a:0},
+{q:"Lors d’un refus, il est conseillé :",c:["D’analyser pour progresser","D’abandonner","D’insister"],a:0},
+{q:"Un recruteur regarde en priorité :",c:["La cohérence du parcours","L’âge","Les loisirs"],a:0},
+{q:"La Mission Locale s’adresse aux jeunes :",c:["De 16 à 25 ans","De tout âge","Uniquement diplômés"],a:0},
+{q:"Un projet professionnel peut évoluer :",c:["Oui","Non","Uniquement après un diplôme"],a:0},
+{q:"Le respect des règles en entreprise est :",c:["Essentiel","Secondaire","Inutile"],a:0},
+{q:"Un entretien sert à :",c:["Évaluer la motivation","Critiquer","Remplacer le CV"],a:0},
+{q:"Un CV doit être :",c:["Lisible et clair","Très coloré","Très long"],a:0},
+{q:"Demander de l’aide est :",c:["Une démarche positive","Un échec","Inutile"],a:0}
+];
+
+/* =================== GAME STATE =================== */
+let state = "menu";
 let score = 0;
+let level = 1;
 let speed = 3;
+let gravity = 0.45;
 let obstacles = [];
 let lastSpawn = 0;
+let jumps = 0;
 
-/* ===== PLAYER ===== */
 const player = {
   x: 120,
   y: 0,
-  r: 24,
-  vy: 0,
-  onGround: true
+  r: 22,
+  vy: 0
 };
 
-const GRAVITY = 0.6;
-const JUMP_FORCE = -13;
+function groundY(){ return canvas.height - 60; }
 
-function groundY(){
-  return canvas.height - 60;
-}
-
-/* ===== RESET ===== */
+/* =================== RESET =================== */
 function resetGame(){
   score = 0;
+  level = 1;
   speed = 3;
   obstacles = [];
   player.y = groundY();
   player.vy = 0;
-  player.onGround = true;
-  lastSpawn = 0;
+  jumps = 0;
+  questionDeck = [...QUESTIONS].sort(()=>Math.random()-0.5);
 }
 
-/* ===== START ===== */
-startBtn.onclick = () => {
-  startOverlay.style.display = "none";
+let questionDeck = [];
+
+/* =================== START =================== */
+document.getElementById("startBtn").onclick = () => {
+  document.getElementById("menu").style.display = "none";
   resetGame();
-  playing = true;
+  state = "play";
 };
 
-/* ===== CONTROLS ===== */
+/* =================== CONTROLS =================== */
 function jump(){
-  if(playing && player.onGround){
-    player.vy = JUMP_FORCE;
-    player.onGround = false;
+  if(state === "play" && jumps < 2){
+    player.vy = -14;
+    jumps++;
   }
 }
-window.addEventListener("keydown", e => {
-  if(e.code === "Space") jump();
-});
-canvas.addEventListener("click", jump);
-canvas.addEventListener("touchstart", jump);
+window.addEventListener("keydown",e=>{if(e.code==="Space")jump();});
+canvas.addEventListener("click",jump);
+canvas.addEventListener("touchstart",jump);
 
-/* ===== OBSTACLES ===== */
+/* =================== OBSTACLES =================== */
 function spawnObstacle(){
-  const h = 30 + Math.random() * 20;
+  const air = Math.random() < 0.3;
+  const h = air ? 22 : 32;
   obstacles.push({
-    x: canvas.width + 30,
-    y: groundY() - h,
-    w: 20 + Math.random() * 20,
+    x: canvas.width + 40,
+    y: air ? groundY()-90 : groundY()-h,
+    w: 24,
     h: h
   });
 }
 
-/* ===== LOOP ===== */
+/* =================== QUESTIONS =================== */
+function showQuestion(){
+  state="question";
+  const box=document.getElementById("question");
+  const q=questionDeck.shift();
+  box.innerHTML=`<h3>${q.q}</h3>`;
+  q.c.forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.textContent=t;
+    b.onclick=()=>{
+      box.style.display="none";
+      if(i===q.a){state="play";}
+      else{
+        document.getElementById("menu").style.display="flex";
+        state="menu";
+      }
+    };
+    box.appendChild(b);
+  });
+  box.style.display="flex";
+}
+
+/* =================== LOOP =================== */
 function loop(time){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  if(playing){
-    player.vy += GRAVITY;
-    player.y += player.vy;
+  if(state==="play"){
+    player.vy+=gravity;
+    player.y+=player.vy;
 
-    if(player.y >= groundY()){
-      player.y = groundY();
-      player.vy = 0;
-      player.onGround = true;
+    if(player.y>=groundY()){
+      player.y=groundY();
+      player.vy=0;
+      jumps=0;
     }
 
-    if(time - lastSpawn > 1200){
+    if(time-lastSpawn>1300){
       spawnObstacle();
-      lastSpawn = time;
+      lastSpawn=time;
     }
 
-    obstacles.forEach(o => {
-      o.x -= speed;
-      ctx.fillStyle = "#e53935";
+    obstacles.forEach(o=>{
+      o.x-=speed;
+      ctx.fillStyle="#e53935";
       ctx.fillRect(o.x,o.y,o.w,o.h);
 
-      if(
-        player.x + player.r > o.x &&
-        player.x - player.r < o.x + o.w &&
-        player.y + player.r > o.y
-      ){
-        playing = false;
-        startOverlay.style.display = "flex";
+      if(player.x+player.r>o.x && player.x-player.r<o.x+o.w && player.y+player.r>o.y){
+        showQuestion();
       }
     });
 
-    obstacles = obstacles.filter(o => o.x + o.w > 0);
+    obstacles=obstacles.filter(o=>o.x+o.w>0);
     score++;
-    speed += 0.001;
+    if(score%500===0){level++;speed+=0.6;}
   }
 
-  /* PLAYER (ROND BLEU/JAUNE + MLE) */
+  /* PLAYER */
   ctx.beginPath();
-  ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
-  ctx.fillStyle = "#ffb300";
+  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
+  ctx.fillStyle="#ffb300";
   ctx.fill();
-  ctx.strokeStyle = "#1565c0";
-  ctx.lineWidth = 4;
+  ctx.strokeStyle="#1565c0";
+  ctx.lineWidth=4;
   ctx.stroke();
+  ctx.fillStyle="#1565c0";
+  ctx.font="bold 12px Arial";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.fillText("MLE",player.x,player.y);
 
-  ctx.fillStyle = "#0d47a1";
-  ctx.font = "bold 14px Arial";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("MLE", player.x, player.y);
-
-  /* SCORE */
-  ctx.fillStyle = "#0d47a1";
-  ctx.font = "bold 16px Arial";
-  ctx.textAlign = "left";
-  ctx.fillText("Score : " + score, 12, 22);
+  ctx.fillStyle="#0d47a1";
+  ctx.font="bold 16px Arial";
+  ctx.fillText("Score : "+score,12,22);
+  ctx.fillText("Niveau : "+level,12,44);
 
   requestAnimationFrame(loop);
 }
-
 requestAnimationFrame(loop);
 </script>
-
 </body>
 </html>
 
