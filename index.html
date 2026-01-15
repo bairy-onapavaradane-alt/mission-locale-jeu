@@ -117,7 +117,6 @@ window.addEventListener("resize",resize);
 resize();
 
 /* ===== QUESTIONS (20 uniques) ===== */
-const QUESTIONS = [/* ===== QUESTIONS ===== */
 const QUESTIONS = [
 {q:"Quel est l’objectif principal de la Mission Locale ?",c:["Accompagner les jeunes vers l’emploi et l’autonomie","Fournir un emploi immédiat","Remplacer l’école"],a:0},
 {q:"Un CV efficace doit être :",c:["Clair et structuré","Très long","Original à tout prix"],a:0},
@@ -140,66 +139,6 @@ const QUESTIONS = [
 {q:"La Mission Locale accompagne :",c:["Les jeunes de 16 à 25 ans","Tous les âges","Uniquement les diplômés"],a:0},
 {q:"Le respect au travail est :",c:["Indispensable","Négociable","Optionnel"],a:0}
 ];
-  q:"Quel est l’objectif principal de la Mission Locale ?",
-    c:[
-      "Accompagner les jeunes vers l’emploi et l’autonomie",
-      "Remplacer l’école",
-      "Fournir un emploi immédiat"
-    ],
-    a:0
-  },
-  {
-    q:"À quoi sert un CV ?",
-    c:[
-      "Présenter son parcours professionnel",
-      "Raconter sa vie personnelle",
-      "Faire une demande d’aide"
-    ],
-    a:0
-  }
-];
-
-/* ===== MÉLANGE DES RÉPONSES ===== */
-function shuffleAnswers(question){
-  const answers = question.c.map((text, index) => ({
-    text,
-    correct: index === question.a
-  }));
-
-  for(let i = answers.length - 1; i > 0; i--){
-    const j = Math.floor(Math.random() * (i + 1));
-    [answers[i], answers[j]] = [answers[j], answers[i]];
-  }
-
-  return answers;
-}
-
-/* ===== AFFICHAGE QUESTION ===== */
-function showQuestion(){
-  state = "question";
-  const box = document.getElementById("question");
-
-  const q = questionDeck.shift();
-  const answers = shuffleAnswers(q);
-
-  box.innerHTML = `<h3>${q.q}</h3>`;
-
-  answers.forEach(ans => {
-    const b = document.createElement("button");
-    b.textContent = ans.text;
-    b.onclick = () => {
-      box.style.display = "none";
-      if(ans.correct){
-        resumeGame();
-      } else {
-        showMenu();
-      }
-    };
-    box.appendChild(b);
-  });
-
-  box.style.display = "flex";
-}
 
 let questionDeck = [];
 
