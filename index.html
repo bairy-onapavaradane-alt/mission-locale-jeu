@@ -1,10 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Runner Mission Locale</title>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #0d47a1;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#container {
+  width: 100%;
+  max-width: 900px;
+  padding: 12px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+canvas {
+  width: 100%;
+  display: block;
+  background: linear-gradient(#ffffff, #e3f2fd);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+.overlay {
+  position: absolute;
+  inset: 12px;
+  background: rgba(255,255,255,.96);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 10;
+  color: #0d47a1;
+  padding: 20px;
+}
+
+button {
+  margin-top: 18px;
+  padding: 12px 32px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  background: #ffca28;
+  cursor: pointer;
+}
+button:hover { background: #ffc107; }
+
+#footer {
+  margin: 10px;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<div id="container">
+  <canvas id="game"></canvas>
+
+  <div id="start" class="overlay">
+    <h2>Runner Mission Locale</h2>
+    <p>
+      🎯 Saute pour éviter les obstacles<br>
+      🖱️ Clic / Toucher / <b>Espace</b>
+    </p>
+    <button id="startBtn">Démarrer</button>
+  </div>
+</div>
+
+<div id="footer">La Mission Locale vous souhaite un bon jeu !</div>
+
 <script>
+/* ===== SETUP ===== */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const startOverlay = document.getElementById("start");
 const startBtn = document.getElementById("startBtn");
 
-/* ===== RESIZE ===== */
 function resizeCanvas(){
   const w = document.getElementById("container").clientWidth;
   const h = Math.min(window.innerHeight * 0.7, w * 9 / 16);
@@ -14,7 +103,7 @@ function resizeCanvas(){
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-/* ===== GAME VARS ===== */
+/* ===== GAME STATE ===== */
 let playing = false;
 let score = 0;
 let speed = 3;
@@ -48,12 +137,12 @@ function resetGame(){
   lastSpawn = 0;
 }
 
-/* ===== START BUTTON ===== */
-startBtn.addEventListener("click", () => {
+/* ===== START ===== */
+startBtn.onclick = () => {
   startOverlay.style.display = "none";
   resetGame();
   playing = true;
-});
+};
 
 /* ===== CONTROLS ===== */
 function jump(){
@@ -70,7 +159,7 @@ canvas.addEventListener("touchstart", jump);
 
 /* ===== OBSTACLES ===== */
 function spawnObstacle(){
-  const h = 25 + Math.random() * 25;
+  const h = 30 + Math.random() * 20;
   obstacles.push({
     x: canvas.width + 30,
     y: groundY() - h,
@@ -118,7 +207,7 @@ function loop(time){
     speed += 0.001;
   }
 
-  // Player
+  /* PLAYER (ROND BLEU/JAUNE + MLE) */
   ctx.beginPath();
   ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
   ctx.fillStyle = "#ffb300";
@@ -127,14 +216,13 @@ function loop(time){
   ctx.lineWidth = 4;
   ctx.stroke();
 
-  // Texte MLE
   ctx.fillStyle = "#0d47a1";
   ctx.font = "bold 14px Arial";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText("MLE", player.x, player.y);
 
-  // Score
+  /* SCORE */
   ctx.fillStyle = "#0d47a1";
   ctx.font = "bold 16px Arial";
   ctx.textAlign = "left";
@@ -145,4 +233,8 @@ function loop(time){
 
 requestAnimationFrame(loop);
 </script>
+
+</body>
+</html>
+
 
