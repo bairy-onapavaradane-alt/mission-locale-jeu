@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Runner Mission Locale</title>
 
 <style>
@@ -25,7 +25,7 @@ canvas{
   width:100%;
   height:auto;
   display:block;
-  background:linear-gradient(#fff,#e3f2fd);
+  background:linear-gradient(#ffffff,#e3f2fd);
   border-radius:14px;
 }
 
@@ -43,11 +43,11 @@ canvas{
 }
 
 button{
-  padding:12px 30px;
-  margin-top:15px;
+  padding:12px 28px;
+  margin-top:14px;
+  font-size:16px;
   border:none;
   border-radius:8px;
-  font-size:16px;
   background:#ffca28;
   cursor:pointer;
 }
@@ -58,9 +58,9 @@ button{
 }
 
 #footer{
-  color:white;
   text-align:center;
-  margin-top:8px;
+  color:white;
+  margin:8px;
   font-weight:bold;
 }
 </style>
@@ -93,11 +93,13 @@ button{
 <div id="footer">La Mission Locale vous souhaite un bon jeu.</div>
 
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
+/* ===== CANVAS ===== */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
+/* ===== ORIENTATION & SIZE ===== */
 function resize(){
-  if(window.innerHeight>window.innerWidth){
+  if(window.innerHeight > window.innerWidth){
     document.getElementById("rotate").style.display="flex";
     canvas.style.display="none";
     return;
@@ -106,81 +108,94 @@ function resize(){
   canvas.style.display="block";
   document.getElementById("menu").style.display="flex";
 
-  const w=document.getElementById("container").clientWidth;
-  const h=Math.min(window.innerHeight*0.7,w*0.5);
-  canvas.width=w;
-  canvas.height=h;
+  const w = document.getElementById("container").clientWidth;
+  const h = Math.min(window.innerHeight*0.7, w*0.5);
+  canvas.width = w;
+  canvas.height = h;
 }
 window.addEventListener("resize",resize);
 resize();
 
-/* QUESTIONS */
-const QUESTIONS=[
-{q:"Quel est le rôle principal de la Mission Locale ?",c:["Accompagner les jeunes vers l’emploi et l’autonomie","Distribuer des emplois","Former directement"],a:0},
-{q:"Un CV doit avant tout :",c:["Être clair et lisible","Être très long","Être décoratif"],a:0},
-{q:"Le savoir-être correspond :",c:["Au comportement professionnel","Aux diplômes","À l’âge"],a:0},
-{q:"Avant un entretien, il est conseillé :",c:["De se préparer","D’improviser","De ne rien dire"],a:0},
-{q:"Arriver à l’heure montre :",c:["Du sérieux","Du stress","De la chance"],a:0},
-{q:"Un refus de candidature permet :",c:["De progresser","D’abandonner","D’arrêter de chercher"],a:0},
-{q:"Le travail en équipe nécessite :",c:["Communication","Silence","Autorité"],a:0},
-{q:"Un projet professionnel peut :",c:["Évoluer","Rester figé","Être imposé"],a:0},
-{q:"Une lettre de motivation doit être :",c:["Personnalisée","Identique","Très courte"],a:0},
-{q:"Un stage sert à :",c:["Découvrir un métier","Éviter le travail","Gagner un salaire"],a:0},
-{q:"Demander de l’aide montre :",c:["Une démarche positive","Une faiblesse","Un échec"],a:0},
+/* ===== QUESTIONS (20 uniques) ===== */
+const QUESTIONS = [
+{q:"Quel est l’objectif principal de la Mission Locale ?",c:["Accompagner les jeunes vers l’emploi et l’autonomie","Fournir un emploi immédiat","Remplacer l’école"],a:0},
+{q:"Un CV efficace doit être :",c:["Clair et structuré","Très long","Original à tout prix"],a:0},
+{q:"Le savoir-être correspond :",c:["Au comportement professionnel","Aux diplômes","À l’expérience"],a:0},
+{q:"Avant un entretien, il est recommandé :",c:["De se préparer","D’improviser","De lire le CV sur place"],a:0},
+{q:"Arriver à l’heure montre :",c:["Du sérieux","De la rigidité","De la chance"],a:0},
+{q:"Un refus peut permettre :",c:["De progresser","D’abandonner","De se décourager"],a:0},
+{q:"Travailler en équipe demande :",c:["Communication","Autorité","Compétition"],a:0},
+{q:"Un projet professionnel peut :",c:["Évoluer avec le temps","Être figé","Être imposé"],a:0},
+{q:"Une lettre de motivation doit être :",c:["Personnalisée","Standardisée","Très courte"],a:0},
+{q:"Un stage sert principalement à :",c:["Découvrir un métier","Remplacer un salarié","Éviter l’école"],a:0},
+{q:"Demander conseil montre :",c:["Une démarche active","Une faiblesse","Un manque"],a:0},
 {q:"La ponctualité est :",c:["Essentielle","Optionnelle","Secondaire"],a:0},
-{q:"Un CV clair permet :",c:["Une meilleure compréhension","De cacher des infos","D’impressionner"],a:0},
-{q:"Une compétence peut être :",c:["Technique ou comportementale","Uniquement scolaire","Naturelle"],a:0},
-{q:"La motivation se montre par :",c:["L’attitude","Les promesses","Le silence"],a:0},
-{q:"Se renseigner sur l’entreprise permet :",c:["De mieux répondre","De perdre du temps","D’éviter l’entretien"],a:0},
-{q:"Un parcours professionnel est :",c:["Progressif","Parfait","Identique"],a:0},
-{q:"L’autonomie signifie :",c:["Savoir s’organiser","Travailler seul","Ne jamais demander"],a:0},
-{q:"La Mission Locale accompagne :",c:["Les jeunes de 16 à 25 ans","Tout le monde","Uniquement les diplômés"],a:0},
-{q:"Le respect au travail est :",c:["Indispensable","Optionnel","Négociable"],a:0}
+{q:"Un CV clair permet :",c:["Une lecture rapide","De cacher des lacunes","D’impressionner visuellement"],a:0},
+{q:"Une compétence peut être :",c:["Technique ou comportementale","Uniquement scolaire","Innée"],a:0},
+{q:"La motivation se remarque par :",c:["L’attitude","Les paroles seules","Le diplôme"],a:0},
+{q:"Se renseigner sur une entreprise permet :",c:["De mieux répondre","De perdre du temps","D’éviter l’entretien"],a:0},
+{q:"Un parcours professionnel est souvent :",c:["Progressif","Linéaire","Parfait"],a:0},
+{q:"Être autonome signifie :",c:["Savoir s’organiser","Travailler seul","Ne jamais demander"],a:0},
+{q:"La Mission Locale accompagne :",c:["Les jeunes de 16 à 25 ans","Tous les âges","Uniquement les diplômés"],a:0},
+{q:"Le respect au travail est :",c:["Indispensable","Négociable","Optionnel"],a:0}
 ];
 
-let questionDeck=[...QUESTIONS].sort(()=>Math.random()-0.5);
+let questionDeck = [];
 
-/* GAME */
-let state="menu",score=0,level=1,speed=3,immunity=0;
+/* ===== GAME STATE ===== */
+let state="menu", score=0, level=1, speed=3, immunity=0;
 const gravity=0.45;
-const player={x:120,y:0,r:22,vy:0,jumps:0};
-let obstacles=[],lastSpawn=0;
+const player={x:140,y:0,r:22,vy:0,jumps:0};
+let obstacles=[], lastSpawn=0;
 
-function ground(){return canvas.height-50;}
+/* ===== UTILS ===== */
+function ground(){ return canvas.height - 50; }
 
-function reset(){
-  score=0;level=1;speed=3;
+/* ===== RESET ===== */
+function resetGame(){
+  score=0; level=1; speed=3;
   obstacles=[];
-  player.y=ground();
-  player.vy=0;player.jumps=0;
+  player.y=ground(); player.vy=0; player.jumps=0;
   immunity=120;
   questionDeck=[...QUESTIONS].sort(()=>Math.random()-0.5);
 }
 
-document.getElementById("startBtn").onclick=()=>{
-  document.getElementById("menu").style.display="none";
-  reset();startCountdown();
-};
-
+/* ===== CONTROLS ===== */
 function jump(){
   if(state==="play" && player.jumps<2){
     player.vy=-14;
     player.jumps++;
   }
 }
-window.addEventListener("keydown",e=>{if(e.code==="Space")jump();});
+window.addEventListener("keydown",e=>{ if(e.code==="Space") jump(); });
 canvas.addEventListener("click",jump);
 canvas.addEventListener("touchstart",jump);
 
-function spawnObstacle(){
-  const air=Math.random()<0.3;
-  obstacles.push({
-    x:canvas.width+30,
-    y:air?ground()-90:ground()-30,
-    w:24,h:air?22:30
-  });
+/* ===== START ===== */
+document.getElementById("startBtn").onclick=()=>{
+  document.getElementById("menu").style.display="none";
+  resetGame();
+  startCountdown();
+};
+
+/* ===== COUNTDOWN ===== */
+function startCountdown(){
+  const cd=document.getElementById("countdown");
+  let t=3;
+  state="countdown";
+  cd.style.display="flex";
+  cd.textContent=t;
+  const i=setInterval(()=>{
+    t--; cd.textContent=t;
+    if(t===0){
+      clearInterval(i);
+      cd.style.display="none";
+      state="play";
+    }
+  },1000);
 }
 
+/* ===== QUESTION ===== */
 function showQuestion(){
   state="question";
   const box=document.getElementById("question");
@@ -191,42 +206,53 @@ function showQuestion(){
     b.textContent=txt;
     b.onclick=()=>{
       box.style.display="none";
-      if(i===q.a){immunity=120;startCountdown();}
-      else{state="menu";document.getElementById("menu").style.display="flex";}
+      if(i===q.a){
+        immunity=120;
+        startCountdown();
+      } else {
+        state="menu";
+        document.getElementById("menu").style.display="flex";
+      }
     };
     box.appendChild(b);
   });
   box.style.display="flex";
 }
 
-function startCountdown(){
-  const cd=document.getElementById("countdown");
-  let t=3;state="countdown";
-  cd.style.display="flex";cd.textContent=t;
-  const i=setInterval(()=>{
-    t--;cd.textContent=t;
-    if(t===0){
-      clearInterval(i);
-      cd.style.display="none";
-      state="play";
-    }
-  },1000);
+/* ===== OBSTACLES ===== */
+function spawnObstacle(){
+  const air=Math.random()<0.3;
+  obstacles.push({
+    x:canvas.width+30,
+    y:air?ground()-90:ground()-30,
+    w:24,
+    h:air?22:30
+  });
 }
 
+/* ===== LOOP ===== */
 function loop(time){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   if(state==="play"){
     player.vy+=gravity;
     player.y+=player.vy;
-    if(player.y>=ground()){player.y=ground();player.vy=0;player.jumps=0;}
+    if(player.y>=ground()){
+      player.y=ground();
+      player.vy=0;
+      player.jumps=0;
+    }
 
-    if(time-lastSpawn>1400){spawnObstacle();lastSpawn=time;}
+    if(time-lastSpawn>1400){
+      spawnObstacle();
+      lastSpawn=time;
+    }
 
     obstacles.forEach(o=>{
       o.x-=speed;
       ctx.fillStyle="#e53935";
       ctx.fillRect(o.x,o.y,o.w,o.h);
+
       if(immunity<=0 &&
          player.x+player.r>o.x &&
          player.x-player.r<o.x+o.w &&
@@ -234,20 +260,31 @@ function loop(time){
         showQuestion();
       }
     });
+
     obstacles=obstacles.filter(o=>o.x+o.w>0);
-    score++;if(score%500===0){level++;speed+=0.5;}
-    if(immunity>0)immunity--;
+    score++;
+    if(score%500===0){ level++; speed+=0.5; }
+    if(immunity>0) immunity--;
   }
 
+  /* PLAYER */
   ctx.beginPath();
   ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
-  ctx.fillStyle="#ffb300";ctx.fill();
-  ctx.strokeStyle="#1565c0";ctx.lineWidth=4;ctx.stroke();
-  ctx.fillStyle="#1565c0";ctx.font="bold 12px Arial";
-  ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillStyle="#ffb300";
+  ctx.fill();
+  ctx.strokeStyle="#1565c0";
+  ctx.lineWidth=4;
+  ctx.stroke();
+  ctx.fillStyle="#1565c0";
+  ctx.font="bold 12px Arial";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
   ctx.fillText("MLE",player.x,player.y);
 
-  ctx.fillStyle="#0d47a1";ctx.font="bold 16px Arial";
+  /* HUD */
+  ctx.fillStyle="#0d47a1";
+  ctx.font="bold 16px Arial";
+  ctx.textAlign="left";
   ctx.fillText("Score : "+score,12,22);
   ctx.fillText("Niveau : "+level,12,42);
 
@@ -257,4 +294,3 @@ requestAnimationFrame(loop);
 </script>
 </body>
 </html>
-
