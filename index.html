@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Runner Mission Locale</title>
 
 <style>
@@ -13,203 +13,235 @@ html,body{
   font-family:Arial,Helvetica,sans-serif;
   overflow:hidden;
 }
-
+body{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
 #container{
   width:100%;
   max-width:900px;
-  margin:auto;
   position:relative;
 }
-
 canvas{
   width:100%;
-  height:auto;
-  display:block;
-  background:linear-gradient(#ffffff,#e3f2fd);
+  background:linear-gradient(#fff,#e3f2fd);
   border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
 }
-
 .overlay{
   position:absolute;
   inset:0;
-  background:rgba(255,255,255,.96);
+  background:rgba(255,255,255,.97);
   display:flex;
   flex-direction:column;
   justify-content:center;
   align-items:center;
   text-align:center;
-  padding:20px;
   z-index:10;
+  padding:20px;
+  color:#0d47a1;
 }
-
 button{
+  margin-top:12px;
   padding:12px 28px;
-  margin-top:14px;
   font-size:16px;
   border:none;
   border-radius:8px;
   background:#ffca28;
   cursor:pointer;
 }
-
-.qcm button{
-  width:100%;
-  margin:6px 0;
-}
-
+button:hover{background:#ffc107;}
+.qcm button{width:100%;}
 #footer{
-  text-align:center;
-  color:white;
   margin:8px;
+  color:white;
   font-weight:bold;
+}
+#rotate{
+  position:fixed;
+  inset:0;
+  background:#0d47a1;
+  color:white;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  z-index:20;
+  font-size:18px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="container">
-  <canvas id="game"></canvas>
-
-  <div id="rotate" class="overlay">
-    <h2>Veuillez retourner votre téléphone</h2>
-    <p>Le jeu fonctionne uniquement en mode paysage.</p>
-  </div>
-
-  <div id="menu" class="overlay" style="display:none">
-    <h2>Runner Mission Locale</h2>
-    <p>
-      🎮 Saute pour éviter les obstacles<br>
-      🖱️ Clic / Toucher / Espace<br><br>
-      ❓ En cas de collision, réponds à une question professionnelle pour continuer
-    </p>
-    <button id="startBtn">Démarrer</button>
-  </div>
-
-  <div id="question" class="overlay qcm" style="display:none"></div>
-  <div id="countdown" class="overlay" style="font-size:72px;display:none"></div>
+<div id="rotate">
+📱🔄<br><br>
+Merci de tourner votre téléphone<br>
+pour jouer en mode paysage
 </div>
 
-<div id="footer">La Mission Locale vous souhaite un bon jeu.</div>
+<div id="container">
+<canvas id="game"></canvas>
+
+<div id="menu" class="overlay">
+<h2>Runner Mission Locale</h2>
+<p>
+Saute pour éviter les obstacles.<br>
+Clic / Toucher / Espace<br><br>
+En cas de collision, réponds à une question<br>
+pour continuer.
+</p>
+<button id="startBtn">Démarrer</button>
+</div>
+
+<div id="question" class="overlay" style="display:none"></div>
+</div>
+
+<div id="footer">La Mission Locale vous souhaite un bon jeu !</div>
 
 <script>
 /* ===== CANVAS ===== */
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-/* ===== ORIENTATION & SIZE ===== */
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
 function resize(){
-  if(window.innerHeight > window.innerWidth){
-    document.getElementById("rotate").style.display="flex";
-    canvas.style.display="none";
-    return;
-  }
-  document.getElementById("rotate").style.display="none";
-  canvas.style.display="block";
-  document.getElementById("menu").style.display="flex";
-
-  const w = document.getElementById("container").clientWidth;
-  const h = Math.min(window.innerHeight*0.7, w*0.5);
-  canvas.width = w;
-  canvas.height = h;
+  const w=document.getElementById("container").clientWidth;
+  const h=Math.min(window.innerHeight*0.7,w*9/16);
+  canvas.width=w;
+  canvas.height=h;
 }
 window.addEventListener("resize",resize);
 resize();
 
-/* ===== QUESTIONS (20 uniques) ===== */
-const QUESTIONS = [
-{q:"Quel est l’objectif principal de la Mission Locale ?",c:["Accompagner les jeunes vers l’emploi et l’autonomie","Fournir un emploi immédiat","Remplacer l’école"],a:0},
-{q:"Un CV efficace doit être :",c:["Clair et structuré","Très long","Original à tout prix"],a:0},
-{q:"Le savoir-être correspond :",c:["Au comportement professionnel","Aux diplômes","À l’expérience"],a:0},
-{q:"Avant un entretien, il est recommandé :",c:["De se préparer","D’improviser","De lire le CV sur place"],a:0},
-{q:"Arriver à l’heure montre :",c:["Du sérieux","De la rigidité","De la chance"],a:0},
-{q:"Un refus peut permettre :",c:["De progresser","D’abandonner","De se décourager"],a:0},
-{q:"Travailler en équipe demande :",c:["Communication","Autorité","Compétition"],a:0},
-{q:"Un projet professionnel peut :",c:["Évoluer avec le temps","Être figé","Être imposé"],a:0},
-{q:"Une lettre de motivation doit être :",c:["Personnalisée","Standardisée","Très courte"],a:0},
-{q:"Un stage sert principalement à :",c:["Découvrir un métier","Remplacer un salarié","Éviter l’école"],a:0},
-{q:"Demander conseil montre :",c:["Une démarche active","Une faiblesse","Un manque"],a:0},
-{q:"La ponctualité est :",c:["Essentielle","Optionnelle","Secondaire"],a:0},
-{q:"Un CV clair permet :",c:["Une lecture rapide","De cacher des lacunes","D’impressionner visuellement"],a:0},
-{q:"Une compétence peut être :",c:["Technique ou comportementale","Uniquement scolaire","Innée"],a:0},
-{q:"La motivation se remarque par :",c:["L’attitude","Les paroles seules","Le diplôme"],a:0},
-{q:"Se renseigner sur une entreprise permet :",c:["De mieux répondre","De perdre du temps","D’éviter l’entretien"],a:0},
-{q:"Un parcours professionnel est souvent :",c:["Progressif","Linéaire","Parfait"],a:0},
-{q:"Être autonome signifie :",c:["Savoir s’organiser","Travailler seul","Ne jamais demander"],a:0},
-{q:"La Mission Locale accompagne :",c:["Les jeunes de 16 à 25 ans","Tous les âges","Uniquement les diplômés"],a:0},
-{q:"Le respect au travail est :",c:["Indispensable","Négociable","Optionnel"],a:0}
-];
-
-let questionDeck = [];
-
-/* ===== GAME STATE ===== */
-let state="menu", score=0, level=1, speed=3, immunity=0;
-const gravity=0.45;
-const player={x:140,y:0,r:22,vy:0,jumps:0};
-let obstacles=[], lastSpawn=0;
-
-/* ===== UTILS ===== */
-function ground(){ return canvas.height - 50; }
-
-/* ===== RESET ===== */
-function resetGame(){
-  score=0; level=1; speed=3;
-  obstacles=[];
-  player.y=ground(); player.vy=0; player.jumps=0;
-  immunity=120;
-  questionDeck=[...QUESTIONS].sort(()=>Math.random()-0.5);
-}
-
-/* ===== CONTROLS ===== */
-function jump(){
-  if(state==="play" && player.jumps<2){
-    player.vy=-14;
-    player.jumps++;
+/* ===== ORIENTATION ===== */
+const rotate=document.getElementById("rotate");
+function checkOrientation(){
+  if(window.innerWidth<window.innerHeight){
+    rotate.style.display="flex";
+    paused=true;
+  }else{
+    rotate.style.display="none";
+    paused=false;
   }
 }
-window.addEventListener("keydown",e=>{ if(e.code==="Space") jump(); });
-canvas.addEventListener("click",jump);
-canvas.addEventListener("touchstart",jump);
+window.addEventListener("resize",checkOrientation);
+checkOrientation();
 
-/* ===== START ===== */
+/* ===== QUESTIONS ===== */
+const QUESTIONS=[
+{q:"À quoi sert principalement un CV ?",c:["Présenter son parcours professionnel","Raconter sa vie personnelle","Remplacer une lettre de motivation"],a:0},
+{q:"Pourquoi préparer un entretien ?",c:["Pour structurer ses réponses","Pour apprendre par cœur","Pour impressionner uniquement"],a:0},
+{q:"Que valoriser en priorité sur un CV ?",c:["Compétences et expériences","Opinions personnelles","Loisirs sans lien"],a:0},
+{q:"À quoi sert la Mission Locale ?",c:["Accompagner les jeunes vers l’emploi et l’autonomie","Trouver un logement immédiatement","Remplacer Pôle emploi"],a:0},
+{q:"Une ponctualité montre :",c:["Du sérieux et du respect","De la chance","Une obligation inutile"],a:0},
+{q:"Lors d’un entretien, il faut :",c:["Écouter et répondre clairement","Parler sans laisser l’autre","Regarder son téléphone"],a:0},
+{q:"Un mail professionnel doit être :",c:["Clair et poli","Familier","Très long"],a:0},
+{q:"Un CV efficace est :",c:["Lisible et structuré","Très chargé","Écrit en langage SMS"],a:0},
+{q:"Pourquoi relire un CV ?",c:["Éviter les fautes","Gagner du temps","Changer le contenu"],a:0},
+{q:"Une tenue adaptée permet :",c:["De faire bonne impression","De garantir l’embauche","De remplacer l’expérience"],a:0},
+{q:"Un projet professionnel sert à :",c:["Donner une direction","Trouver un emploi direct","Éviter les démarches"],a:0},
+{q:"En entretien, parler de ses qualités :",c:["Montre sa motivation","Est inutile","Est mal vu"],a:0},
+{q:"Un retard non justifié donne :",c:["Une mauvaise image","Aucune conséquence","Plus de temps"],a:0},
+{q:"La lettre de motivation sert à :",c:["Expliquer sa candidature","Répéter le CV","Remplir une page"],a:0},
+{q:"Un comportement professionnel est :",c:["Respectueux et engagé","Détendu excessif","Autoritaire"],a:0},
+{q:"Pourquoi se renseigner sur l’entreprise ?",c:["Montrer son intérêt","Gagner du temps","Éviter les questions"],a:0},
+{q:"Un stage permet :",c:["Découvrir un métier","Éviter l’école","Gagner un salaire fixe"],a:0},
+{q:"Un CV doit être mis à jour :",c:["Régulièrement","Une seule fois","Uniquement sur demande"],a:0},
+{q:"En entretien, le regard montre :",c:["L’attention","La gêne","L’ennui"],a:0},
+{q:"Une attitude positive aide à :",c:["Créer un échange","Raccourcir l’entretien","Éviter les questions"],a:0}
+];
+
+/* ===== UTIL ===== */
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+/* ===== GAME ===== */
+let state="menu";
+let paused=false;
+let score=0;
+let level=1;
+let speed=3;
+let obstacles=[];
+let lastSpawn=0;
+let immunity=0;
+let jumps=0;
+let questionDeck=[];
+
+const player={
+  x:120,
+  y:0,
+  r:24,
+  vy:0
+};
+
+const GRAVITY=0.45;
+const JUMP=-15;
+
+function groundY(){return canvas.height-60;}
+
+function resetGame(){
+  score=0;
+  level=1;
+  speed=3;
+  obstacles=[];
+  immunity=120;
+  player.y=groundY();
+  player.vy=0;
+  jumps=0;
+  questionDeck=shuffle([...QUESTIONS]);
+}
+
 document.getElementById("startBtn").onclick=()=>{
   document.getElementById("menu").style.display="none";
   resetGame();
-  startCountdown();
+  state="countdown";
+  countdown=180;
 };
 
-/* ===== COUNTDOWN ===== */
-function startCountdown(){
-  const cd=document.getElementById("countdown");
-  let t=3;
-  state="countdown";
-  cd.style.display="flex";
-  cd.textContent=t;
-  const i=setInterval(()=>{
-    t--; cd.textContent=t;
-    if(t===0){
-      clearInterval(i);
-      cd.style.display="none";
-      state="play";
-    }
-  },1000);
+let countdown=0;
+
+function jump(){
+  if(state==="play" && jumps<2){
+    player.vy=JUMP;
+    jumps++;
+  }
+}
+window.addEventListener("keydown",e=>{if(e.code==="Space")jump();});
+canvas.addEventListener("click",jump);
+canvas.addEventListener("touchstart",jump);
+
+function spawnObstacle(){
+  const air=Math.random()<0.3;
+  const h=air?30:40;
+  obstacles.push({
+    x:canvas.width+40,
+    y:air?groundY()-90:groundY()-h,
+    w:26,
+    h:h
+  });
 }
 
-/* ===== QUESTION ===== */
 function showQuestion(){
   state="question";
   const box=document.getElementById("question");
   const q=questionDeck.shift();
-  box.innerHTML="<h3>"+q.q+"</h3>";
-  q.c.forEach((txt,i)=>{
+  const answers=shuffle(q.c.map((t,i)=>({t,ok:i===q.a})));
+  box.innerHTML=`<h3>${q.q}</h3>`;
+  answers.forEach(a=>{
     const b=document.createElement("button");
-    b.textContent=txt;
+    b.textContent=a.t;
     b.onclick=()=>{
       box.style.display="none";
-      if(i===q.a){
+      if(a.ok){
         immunity=120;
-        startCountdown();
-      } else {
+        state="countdown";
+        countdown=120;
+      }else{
         state="menu";
         document.getElementById("menu").style.display="flex";
       }
@@ -219,52 +251,51 @@ function showQuestion(){
   box.style.display="flex";
 }
 
-/* ===== OBSTACLES ===== */
-function spawnObstacle(){
-  const air=Math.random()<0.3;
-  obstacles.push({
-    x:canvas.width+30,
-    y:air?ground()-90:ground()-30,
-    w:24,
-    h:air?22:30
-  });
-}
-
 /* ===== LOOP ===== */
-function loop(time){
+function loop(t){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  if(state==="play"){
-    player.vy+=gravity;
+  if(state==="countdown"){
+    ctx.fillStyle="#0d47a1";
+    ctx.font="bold 64px Arial";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.fillText(Math.ceil(countdown/60),canvas.width/2,canvas.height/2);
+    countdown--;
+    if(countdown<=0)state="play";
+  }
+
+  if(state==="play"&&!paused){
+    player.vy+=GRAVITY;
     player.y+=player.vy;
-    if(player.y>=ground()){
-      player.y=ground();
+    if(player.y>=groundY()){
+      player.y=groundY();
       player.vy=0;
-      player.jumps=0;
+      jumps=0;
     }
 
-    if(time-lastSpawn>1400){
+    if(t-lastSpawn>1500){
       spawnObstacle();
-      lastSpawn=time;
+      lastSpawn=t;
     }
 
     obstacles.forEach(o=>{
       o.x-=speed;
-      ctx.fillStyle="#e53935";
+      ctx.fillStyle=immunity>0?"#81c784":"#e53935";
       ctx.fillRect(o.x,o.y,o.w,o.h);
 
       if(immunity<=0 &&
-         player.x+player.r>o.x &&
-         player.x-player.r<o.x+o.w &&
-         player.y+player.r>o.y){
+        player.x+player.r>o.x &&
+        player.x-player.r<o.x+o.w &&
+        player.y+player.r>o.y){
         showQuestion();
       }
     });
 
     obstacles=obstacles.filter(o=>o.x+o.w>0);
     score++;
-    if(score%500===0){ level++; speed+=0.5; }
-    if(immunity>0) immunity--;
+    if(score%600===0){level++;speed+=0.6;}
+    if(immunity>0)immunity--;
   }
 
   /* PLAYER */
@@ -276,7 +307,7 @@ function loop(time){
   ctx.lineWidth=4;
   ctx.stroke();
   ctx.fillStyle="#1565c0";
-  ctx.font="bold 12px Arial";
+  ctx.font="bold 14px Arial";
   ctx.textAlign="center";
   ctx.textBaseline="middle";
   ctx.fillText("MLE",player.x,player.y);
@@ -286,11 +317,12 @@ function loop(time){
   ctx.font="bold 16px Arial";
   ctx.textAlign="left";
   ctx.fillText("Score : "+score,12,22);
-  ctx.fillText("Niveau : "+level,12,42);
+  ctx.fillText("Niveau : "+level,12,44);
 
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 </script>
+
 </body>
 </html>
