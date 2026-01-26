@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Mission Locale Runner - Final</title>
+    <title>Mission Locale Runner - Ultra Fix</title>
     <style>
         :root {
             --primary: #0d47a1;
@@ -12,81 +12,72 @@
         }
 
         html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: fixed;
-            font-family: sans-serif;
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden; background: #1a1a1a;
+            display: flex; justify-content: center; align-items: center;
+            position: fixed; font-family: 'Segoe UI', sans-serif;
         }
 
         #game-wrapper {
             position: relative;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
         }
 
         canvas {
-            /* Magie du centrage : conserve le ratio sans jamais dépasser */
-            max-width: 100%;
-            max-height: 100%;
+            max-width: 98%; max-height: 98%;
             object-fit: contain;
             background: var(--sky);
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            border-radius: 8px;
+            border: 4px solid #fff;
+            border-radius: 15px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.6);
+            touch-action: none;
         }
 
         .overlay {
             position: absolute;
-            background: rgba(255, 255, 255, 0.98);
+            background: rgba(255, 255, 255, 0.95);
             inset: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 200; /* Toujours au-dessus */
             text-align: center;
-            z-index: 100;
             padding: 20px;
         }
 
-        .btn {
+        /* BOUTON REFAIT À NEUF */
+        .btn-play {
             background: var(--accent);
             color: var(--primary);
             border: none;
-            padding: 15px 40px;
-            font-size: 22px;
+            padding: 20px 60px;
+            font-size: 28px;
             font-weight: 900;
             border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 4px 0 #c79100;
+            box-shadow: 0 6px 0 #c79100;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: transform 0.1s;
+            pointer-events: auto !important; /* Force l'interaction */
         }
 
-        .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #c79100; }
+        .btn-play:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #c79100;
+        }
 
         .qcm-btn {
-            width: 85%;
-            max-width: 400px;
-            padding: 12px;
-            margin: 6px;
-            border: 2px solid var(--primary);
-            background: white;
-            font-weight: bold;
-            border-radius: 10px;
+            width: 85%; max-width: 400px;
+            padding: 15px; margin: 8px;
+            border: 3px solid var(--primary);
+            background: white; font-weight: bold;
+            border-radius: 15px; font-size: 18px;
         }
 
         #rotate-notice {
-            display: none;
-            background: var(--primary);
-            color: white;
-            z-index: 999;
+            display: none; background: var(--primary); color: white; z-index: 999;
         }
 
         @media (orientation: portrait) {
@@ -100,20 +91,20 @@
     <canvas id="gameCanvas"></canvas>
 
     <div id="menu" class="overlay">
-        <h1 style="color:var(--primary); margin:0 0 10px 0;">Mission Locale Runner</h1>
-        <p style="margin-bottom: 20px;">Saute pour éviter les obstacles !</p>
-        <button id="startBtn" class="btn">JOUER</button>
-        <p id="bestScore" style="margin-top: 15px; font-size: 14px; color: #666;"></p>
+        <h1 style="color:var(--primary); font-size: 40px; margin: 0 0 10px;">MLE RUNNER</h1>
+        <p style="color:#555; margin-bottom: 30px; font-weight: bold;">Évitez les obstacles et répondez aux questions !</p>
+        <button id="startBtn" class="btn-play">JOUER</button>
+        <p id="bestScore" style="margin-top: 20px; font-weight: bold; color: var(--primary); opacity: 0.7;"></p>
     </div>
 
     <div id="questionScreen" class="overlay" style="display:none">
-        <h2 id="qText" style="color:var(--primary); font-size: 1.2rem;">Question</h2>
+        <h2 id="qText" style="color:var(--primary); margin-bottom: 20px;">Question Professionnelle</h2>
         <div id="qOptions" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
     </div>
 
     <div id="rotate-notice" class="overlay">
-        <h2>📱 Tournez votre téléphone</h2>
-        <p>Le jeu nécessite le mode paysage.</p>
+        <h2>📱 MODE PAYSAGE REQUIS</h2>
+        <p>Tournez votre téléphone pour jouer.</p>
     </div>
 </div>
 
@@ -121,7 +112,6 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     
-    // --- Config Canvas Stable ---
     const GAME_WIDTH = 800;
     const GAME_HEIGHT = 400;
     canvas.width = GAME_WIDTH;
@@ -129,31 +119,33 @@
 
     let state = 'MENU';
     let score = 0;
-    let highscore = localStorage.getItem('ml_highscore_v3') || 0;
+    let highscore = localStorage.getItem('ml_highscore_v4') || 0;
     let speed = 6;
     let gameFrame = 0;
 
     const player = {
-        x: 100,
-        y: GAME_HEIGHT - 80,
-        r: 25,
-        vy: 0,
-        gravity: 0.8,
-        jumpForce: -15,
-        jumps: 0,
-        groundY: GAME_HEIGHT - 80
+        x: 100, y: GAME_HEIGHT - 80, r: 25,
+        vy: 0, gravity: 0.8, jumpForce: -15,
+        jumps: 0, groundY: GAME_HEIGHT - 80
     };
 
     let obstacles = [];
+    let clouds = Array.from({length: 5}, () => ({
+        x: Math.random() * GAME_WIDTH,
+        y: Math.random() * 150,
+        s: Math.random() * 0.5 + 0.2
+    }));
 
     const QUESTIONS = [
-        {q:"Quel âge faut-il avoir pour la Mission Locale ?", c:["10-15 ans","16-25 ans","30-50 ans"], a:1},
-        {q:"Le CV doit-il être obligatoirement en couleur ?", c:["Oui","Non, mais il doit être clair","Seulement pour les artistes"], a:1},
-        {q:"Que signifie l'autonomie ?", c:["Travailler seul sans aide","Savoir s'organiser et demander si besoin","Ne jamais parler"], a:1},
-        {q:"La ponctualité c'est...", c:["Arriver 5 min après l'heure","Arriver à l'heure ou un peu avant","Arriver quand on peut"], a:1}
+        {q:"Un CV doit être...", c:["Très long","Clair et aéré","Secret"], a:1},
+        {q:"La Mission Locale s'adresse aux...", c:["16-25 ans","Retraités","Enfants"], a:0},
+        {q:"Le savoir-être c'est...", c:["Ne rien faire","L'attitude pro","La force physique"], a:1},
+        {q:"Être ponctuel c'est arriver...", c:["En retard","À l'heure exacte","Quand on veut"], a:1}
     ];
 
+    // FONCTION DE DÉMARRAGE BLINDÉE
     function startGame() {
+        console.log("Game Starting...");
         state = 'PLAY';
         document.getElementById('menu').style.display = 'none';
         score = 0;
@@ -165,7 +157,17 @@
         gameFrame = 0;
     }
 
-    function handleInput(e) {
+    // ÉCOUTEURS DE CLIC AMÉLIORÉS
+    const startBtn = document.getElementById('startBtn');
+    
+    // On utilise pointerdown pour une réaction immédiate sur mobile et PC
+    startBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        startGame();
+    });
+
+    function handleJump(e) {
         if(e) e.preventDefault();
         if (state === 'PLAY' && player.jumps < 2) {
             player.vy = player.jumpForce;
@@ -173,9 +175,8 @@
         }
     }
 
-    document.getElementById('startBtn').onclick = (e) => { e.stopPropagation(); startGame(); };
-    canvas.addEventListener('touchstart', handleInput, {passive: false});
-    window.addEventListener('keydown', (e) => { if(e.code === 'Space') handleInput(); });
+    canvas.addEventListener('pointerdown', handleJump);
+    window.addEventListener('keydown', (e) => { if(e.code === 'Space') handleJump(); });
 
     function triggerGameOver() {
         state = 'QUESTION';
@@ -191,14 +192,15 @@
             const btn = document.createElement('button');
             btn.className = 'qcm-btn';
             btn.textContent = choice;
-            btn.onclick = () => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
                 if (i === q.a) {
                     screen.style.display = 'none';
                     state = 'PLAY';
                     obstacles = [];
                     player.vy = 0;
                 } else {
-                    if(score > highscore) localStorage.setItem('ml_highscore_v3', score);
+                    if(score > highscore) localStorage.setItem('ml_highscore_v4', score);
                     location.reload();
                 }
             };
@@ -209,20 +211,14 @@
     function drawPlayer() {
         ctx.save();
         ctx.translate(player.x, player.y);
-        
-        // Cercle extérieur Bleu
         ctx.beginPath();
         ctx.arc(0, 0, player.r, 0, Math.PI * 2);
         ctx.fillStyle = "#0d47a1";
         ctx.fill();
-        
-        // Cercle intérieur Jaune
         ctx.beginPath();
         ctx.arc(0, 0, player.r - 5, 0, Math.PI * 2);
         ctx.fillStyle = "#ffca28";
         ctx.fill();
-
-        // Texte MLE
         ctx.fillStyle = "#0d47a1";
         ctx.font = "bold 15px Arial";
         ctx.textAlign = "center";
@@ -234,14 +230,24 @@
     function update() {
         ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-        // Dessin du Sol
+        // Dessin Nuages
+        ctx.fillStyle = "white";
+        clouds.forEach(c => {
+            if(state === 'PLAY') c.x -= c.s;
+            if(c.x < -50) c.x = GAME_WIDTH + 50;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, 15, 0, Math.PI*2);
+            ctx.fill();
+        });
+
+        // Dessin Sol
         ctx.fillStyle = "#2e7d32";
         ctx.fillRect(0, GAME_HEIGHT - 40, GAME_WIDTH, 40);
 
         if (state === 'PLAY') {
             gameFrame++;
             score++;
-            if (score % 700 === 0) speed += 0.7;
+            if (score % 600 === 0) speed += 0.5;
 
             player.vy += player.gravity;
             player.y += player.vy;
@@ -252,19 +258,16 @@
                 player.jumps = 0;
             }
 
-            // Spawn Obstacles (plus espacés pour éviter les bugs)
-            if (gameFrame % 120 === 0) {
-                obstacles.push({ x: GAME_WIDTH + 50, y: GAME_HEIGHT - 75, w: 30, h: 35 });
+            if (gameFrame % 100 === 0) {
+                obstacles.push({ x: GAME_WIDTH + 50, y: GAME_HEIGHT - 70, w: 30, h: 30 });
             }
 
-            obstacles.forEach((o, index) => {
+            obstacles.forEach(o => {
                 o.x -= speed;
-                
-                // Dessin Obstacle
                 ctx.fillStyle = "#d32f2f";
                 ctx.fillRect(o.x, o.y, o.w, o.h);
 
-                // Collision
+                // Collision précise
                 if (player.x + 18 > o.x && player.x - 18 < o.x + o.w && player.y + 18 > o.y) {
                     triggerGameOver();
                 }
@@ -274,23 +277,17 @@
 
         drawPlayer();
 
-        // HUD Score (Dessiné dans le canvas pour être toujours centré)
+        // HUD Score
         if (state === 'PLAY') {
-            ctx.fillStyle = "rgba(13, 71, 161, 0.8)";
-            ctx.beginPath();
-            ctx.roundRect(GAME_WIDTH/2 - 70, 10, 140, 40, 20);
-            ctx.fill();
-            
-            ctx.fillStyle = "#ffca28";
-            ctx.font = "bold 20px Arial";
+            ctx.fillStyle = "rgba(13, 71, 161, 0.9)";
+            ctx.font = "bold 24px Arial";
             ctx.textAlign = "center";
-            ctx.fillText(score, GAME_WIDTH/2, 37);
+            ctx.fillText("SCORE: " + score, GAME_WIDTH / 2, 40);
         }
 
         requestAnimationFrame(update);
     }
 
-    // Initialisation
     document.getElementById('bestScore').textContent = `Record : ${highscore}`;
     update();
 </script>
