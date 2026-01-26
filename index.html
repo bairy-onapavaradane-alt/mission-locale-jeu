@@ -8,33 +8,37 @@
         :root {
             --primary: #0d47a1;
             --accent: #ffca28;
-            --sky: #87CEEB;
+            --sky: #e3f2fd;
+            --ground: #2e7d32;
         }
 
-        /* RESET TOTAL POUR BLOQUER LE SCROLL */
+        /* Centrage absolu sur tous les appareils */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden; /* Empêche de monter/descendre */
-            background: #000;
+            overflow: hidden;
+            background: #1a1a1a; /* Fond sombre pour faire ressortir le jeu */
             display: flex;
             justify-content: center;
             align-items: center;
-            position: fixed; /* Bloque la page sur iOS */
+            position: fixed;
         }
 
         #game-container {
             position: relative;
-            width: 100vw;
-            height: 56.25vw; /* Ratio 16/9 automatique */
-            max-height: 100vh;
-            max-width: 177.78vh; /* Garde le ratio même sur grand écran */
+            /* Gestion adaptative de la taille */
+            width: 95vw; 
+            height: 53.43vw; /* Ratio 16/9 */
+            max-width: 1000px;
+            max-height: 562px;
             background: var(--sky);
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            border: 4px solid #fff;
+            border-radius: 12px;
             overflow: hidden;
-            touch-action: none; /* Empêche le scroll tactile */
+            touch-action: none;
         }
 
         canvas {
@@ -43,10 +47,28 @@
             display: block;
         }
 
+        /* Score Ultra-Visible */
+        #hud-score {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(13, 71, 161, 0.9);
+            color: var(--accent);
+            padding: 10px 30px;
+            border-radius: 50px;
+            font-family: 'Arial Black', sans-serif;
+            font-size: 24px;
+            border: 3px solid white;
+            z-index: 50;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+
         .overlay {
             position: absolute;
             inset: 0;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.96);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -56,27 +78,32 @@
             text-align: center;
         }
 
-        /* Style des boutons */
         .btn {
             background: var(--accent);
+            color: var(--primary);
             border: none;
-            padding: 15px 40px;
-            font-size: clamp(16px, 4vw, 24px);
-            font-weight: bold;
+            padding: 18px 50px;
+            font-size: 22px;
+            font-weight: 900;
             border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 4px 0 #c79100;
+            box-shadow: 0 6px 0 #c79100;
+            transition: 0.1s;
         }
+
+        .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #c79100; }
 
         .qcm-btn {
             width: 90%;
-            max-width: 500px;
-            padding: 10px;
-            margin: 5px;
-            border-radius: 10px;
-            border: 1px solid #ccc;
-            background: #fff;
-            font-size: clamp(14px, 3vw, 18px);
+            max-width: 450px;
+            padding: 15px;
+            margin: 8px;
+            border-radius: 12px;
+            border: 2px solid var(--primary);
+            background: white;
+            font-weight: bold;
+            font-size: 16px;
+            color: var(--primary);
         }
 
         #rotate-notice {
@@ -94,91 +121,94 @@
 <body>
 
 <div id="game-container">
+    <div id="hud-score" style="display:none">SCORE : 0</div>
     <canvas id="gameCanvas"></canvas>
 
     <div id="menu" class="overlay">
-        <h1 style="color:var(--primary); margin:0; font-size: clamp(20px, 5vw, 32px);">Mission Locale Runner</h1>
-        <p>Évite les obstacles !</p>
-        <button id="startBtn" class="btn">JOUER</button>
-        <p id="bestScore" style="font-weight:bold; margin-top:10px;"></p>
+        <h1 style="color:var(--primary); font-size: 32px; margin-bottom: 10px;">Mission Locale Runner</h1>
+        <p style="font-weight: bold; color: #555;">Sautez pour réussir votre mission !</p>
+        <button id="startBtn" class="btn">DÉMARRER</button>
+        <p id="bestScore" style="margin-top:20px; color: var(--primary);"></p>
     </div>
 
     <div id="questionScreen" class="overlay" style="display:none">
-        <h2 id="qText" style="font-size: 1.2rem;">Question</h2>
+        <h2 id="qText" style="color:var(--primary)">Question</h2>
         <div id="qOptions" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
     </div>
 
-    <div id="countdown" class="overlay" style="display:none; font-size:80px; font-weight:bold; background:transparent;">3</div>
-
     <div id="rotate-notice" class="overlay">
-        <h2>📱 Tournez l'écran</h2>
-        <p>Le jeu se joue en paysage.</p>
+        <h2>📱 MODE PAYSAGE REQUIS</h2>
+        <p>Merci de tourner votre appareil.</p>
     </div>
 </div>
 
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const menu = document.getElementById('menu');
-    const startBtn = document.getElementById('startBtn');
+    const hud = document.getElementById('hud-score');
     
     let state = 'MENU';
     let score = 0;
-    let highscore = localStorage.getItem('ml_highscore') || 0;
-    let player = { x: 80, y: 0, r: 20, vy: 0, jumps: 0 };
+    let highscore = localStorage.getItem('ml_highscore_new') || 0;
+    let speed = 6;
+    let gameFrame = 0;
+
+    const player = {
+        x: 120, y: 0, r: 28, 
+        vy: 0, gravity: 0.7, 
+        jumpForce: -14, jumps: 0,
+        groundY: 0
+    };
+
     let obstacles = [];
-    let speed = 5;
 
     const QUESTIONS = [
-        {q:"Un CV doit être...", c:["Long","Clair et structuré","Secret"], a:1},
-        {q:"La Mission Locale aide les...", c:["16-25 ans","Séniors","Enfants"], a:0},
-        {q:"Arriver à l'heure est...", c:["Inutile","Essentiel","Optionnel"], a:1}
+        {q:"Quelle est la mission principale de la Mission Locale ?", c:["Vendre des voitures","Accompagner les jeunes 16-25 ans","Organiser des concerts"], a:1},
+        {q:"Pour un entretien, il est important d'être :", c:["En retard","Ponctuel","En pyjama"], a:1},
+        {q:"Le CV sert à présenter :", c:["Ses dernières vacances","Son parcours et ses compétences","Ses films préférés"], a:1},
+        {q:"Le savoir-être en entreprise, c'est :", c:["Crier fort","Le comportement et l'attitude","Savoir coder en C++"], a:1}
     ];
 
     function init() {
         canvas.width = 800;
         canvas.height = 450;
-        player.y = canvas.height - 60;
-        document.getElementById('bestScore').textContent = `Record : ${highscore}`;
+        player.groundY = canvas.height - 80;
+        player.y = player.groundY;
+        document.getElementById('bestScore').textContent = `Record personnel : ${highscore}`;
     }
 
-    // GESTION DU CLIC/TOUCHER
+    function startGame() {
+        state = 'PLAY';
+        document.getElementById('menu').style.display = 'none';
+        hud.style.display = 'block';
+        score = 0;
+        speed = 6;
+        obstacles = [];
+        player.y = player.groundY;
+        player.vy = 0;
+    }
+
     function handleJump(e) {
         if(e) e.preventDefault();
         if (state === 'PLAY' && player.jumps < 2) {
-            player.vy = -14;
+            player.vy = player.jumpForce;
             player.jumps++;
         }
     }
 
-    startBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        startGame();
-    });
-
+    document.getElementById('startBtn').onclick = (e) => { e.stopPropagation(); startGame(); };
     canvas.addEventListener('touchstart', handleJump, {passive: false});
     window.addEventListener('keydown', (e) => { if(e.code === 'Space') handleJump(); });
 
-    function startGame() {
-        state = 'PLAY';
-        menu.style.display = 'none';
-        score = 0;
-        speed = 5;
-        obstacles = [];
-        player.y = canvas.height - 60;
-        player.vy = 0;
-        player.jumps = 0;
-    }
-
     function triggerGameOver() {
         state = 'QUESTION';
-        const questionScreen = document.getElementById('questionScreen');
-        questionScreen.style.display = 'flex';
+        const screen = document.getElementById('questionScreen');
+        screen.style.display = 'flex';
         const q = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)];
         
         document.getElementById('qText').textContent = q.q;
-        const optionsDiv = document.getElementById('qOptions');
-        optionsDiv.innerHTML = '';
+        const opts = document.getElementById('qOptions');
+        opts.innerHTML = '';
 
         q.c.forEach((choice, i) => {
             const btn = document.createElement('button');
@@ -186,56 +216,85 @@
             btn.textContent = choice;
             btn.onclick = () => {
                 if (i === q.a) {
-                    questionScreen.style.display = 'none';
+                    screen.style.display = 'none';
                     state = 'PLAY';
                     obstacles = [];
                     player.vy = 0;
                 } else {
-                    location.reload(); // Recommence tout
+                    if(score > highscore) localStorage.setItem('ml_highscore_new', score);
+                    location.reload();
                 }
             };
-            optionsDiv.appendChild(btn);
+            opts.appendChild(btn);
         });
     }
 
     function update() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Sol
-        ctx.fillStyle = "#4CAF50";
-        ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+
+        // Sol stylisé
+        ctx.fillStyle = "#2e7d32";
+        ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+        ctx.fillStyle = "#388e3c";
+        ctx.fillRect(0, canvas.height - 55, canvas.width, 5);
 
         if (state === 'PLAY') {
+            gameFrame++;
             score++;
-            player.vy += 0.8;
+            hud.textContent = `SCORE : ${score}`;
+            if (score % 800 === 0) speed += 0.8;
+
+            player.vy += player.gravity;
             player.y += player.vy;
 
-            if (player.y > canvas.height - 60) {
-                player.y = canvas.height - 60;
+            if (player.y > player.groundY) {
+                player.y = player.groundY;
+                player.vy = 0;
                 player.jumps = 0;
             }
 
-            if (score % 120 === 0) {
-                obstacles.push({ x: canvas.width, y: canvas.height - 70, w: 30, h: 30 });
+            if (gameFrame % 110 === 0) {
+                obstacles.push({ x: canvas.width, y: player.groundY + 5, w: 35, h: 45 });
             }
 
-            obstacles.forEach((o, i) => {
+            obstacles.forEach(o => {
                 o.x -= speed;
-                ctx.fillStyle = "#FF5722";
-                ctx.fillRect(o.x, o.y, o.w, o.h);
+                ctx.fillStyle = "#d32f2f";
+                ctx.beginPath();
+                ctx.roundRect(o.x, o.y, o.w, o.h, 5);
+                ctx.fill();
 
-                if (player.x + 15 > o.x && player.x - 15 < o.x + o.w && player.y + 15 > o.y) {
+                if (player.x + 20 > o.x && player.x - 20 < o.x + o.w && player.y + 20 > o.y) {
                     triggerGameOver();
                 }
             });
             obstacles = obstacles.filter(o => o.x > -50);
         }
 
-        // Joueur
-        ctx.fillStyle = "#ffca28";
+        // --- DESSIN JOUEUR (Le Rond MLE) ---
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        
+        // Bord extérieur bleu
         ctx.beginPath();
-        ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
+        ctx.arc(0, 0, player.r, 0, Math.PI*2);
+        ctx.fillStyle = "#0d47a1";
         ctx.fill();
+        
+        // Intérieur jaune
+        ctx.beginPath();
+        ctx.arc(0, 0, player.r - 5, 0, Math.PI*2);
+        ctx.fillStyle = "#ffca28";
+        ctx.fill();
+
+        // Texte MLE au centre
+        ctx.fillStyle = "#0d47a1";
+        ctx.font = "bold 16px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("MLE", 0, 1);
+        
+        ctx.restore();
 
         requestAnimationFrame(update);
     }
