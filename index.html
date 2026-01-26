@@ -234,4 +234,65 @@
     function update() {
         ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-        // Dessin
+        // Dessin du Sol
+        ctx.fillStyle = "#2e7d32";
+        ctx.fillRect(0, GAME_HEIGHT - 40, GAME_WIDTH, 40);
+
+        if (state === 'PLAY') {
+            gameFrame++;
+            score++;
+            if (score % 700 === 0) speed += 0.7;
+
+            player.vy += player.gravity;
+            player.y += player.vy;
+
+            if (player.y > player.groundY) {
+                player.y = player.groundY;
+                player.vy = 0;
+                player.jumps = 0;
+            }
+
+            // Spawn Obstacles (plus espacés pour éviter les bugs)
+            if (gameFrame % 120 === 0) {
+                obstacles.push({ x: GAME_WIDTH + 50, y: GAME_HEIGHT - 75, w: 30, h: 35 });
+            }
+
+            obstacles.forEach((o, index) => {
+                o.x -= speed;
+                
+                // Dessin Obstacle
+                ctx.fillStyle = "#d32f2f";
+                ctx.fillRect(o.x, o.y, o.w, o.h);
+
+                // Collision
+                if (player.x + 18 > o.x && player.x - 18 < o.x + o.w && player.y + 18 > o.y) {
+                    triggerGameOver();
+                }
+            });
+            obstacles = obstacles.filter(o => o.x > -100);
+        }
+
+        drawPlayer();
+
+        // HUD Score (Dessiné dans le canvas pour être toujours centré)
+        if (state === 'PLAY') {
+            ctx.fillStyle = "rgba(13, 71, 161, 0.8)";
+            ctx.beginPath();
+            ctx.roundRect(GAME_WIDTH/2 - 70, 10, 140, 40, 20);
+            ctx.fill();
+            
+            ctx.fillStyle = "#ffca28";
+            ctx.font = "bold 20px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(score, GAME_WIDTH/2, 37);
+        }
+
+        requestAnimationFrame(update);
+    }
+
+    // Initialisation
+    document.getElementById('bestScore').textContent = `Record : ${highscore}`;
+    update();
+</script>
+</body>
+</html>
