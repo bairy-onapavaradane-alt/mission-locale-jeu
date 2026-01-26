@@ -3,38 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MLE Runner - Total Adapt</title>
+    <title>MLE Runner - Perfection Responsive</title>
     <style>
         :root {
             --primary: #0d47a1;
             --accent: #ffca28;
             --sky: #e3f2fd;
+            --app-height: 100%; /* Sera mis à jour par JS */
         }
 
         html, body {
             margin: 0; padding: 0;
-            width: 100%; height: 100%;
+            width: 100vw;
+            height: var(--app-height); /* Hauteur dynamique réelle */
             overflow: hidden; background: #000;
             display: flex; justify-content: center; align-items: center;
             position: fixed; font-family: 'Segoe UI', sans-serif;
         }
 
-        /* Le conteneur magique qui s'adapte à tout */
         #game-wrapper {
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100vw;
-            height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            width: 100%; height: 100%;
         }
 
         canvas {
             background: var(--sky);
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border: 2px solid #fff;
             border-radius: 8px;
             touch-action: none;
-            /* La taille sera gérée par le script pour être parfaite */
+            display: block;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
         }
 
         .overlay {
@@ -47,111 +46,115 @@
             padding: 20px;
         }
 
-        h1 { font-size: clamp(1.5rem, 6vw, 2.5rem); color: var(--primary); margin: 10px; }
-        
+        /* ALERTE ROTATION - Bloque tout en Portrait */
+        #rotate-notice {
+            display: none;
+            background: var(--primary);
+            color: white;
+            z-index: 9999;
+            position: fixed; inset: 0;
+            flex-direction: column;
+        }
+
+        @media screen and (orientation: portrait) {
+            #rotate-notice { display: flex; }
+            #game-wrapper { display: none; }
+        }
+
+        h1 { font-size: clamp(1.4rem, 6vw, 2.2rem); color: var(--primary); margin: 10px; }
+        #rotate-notice h1 { color: white; }
+
         .btn-play {
             background: var(--accent); color: var(--primary); border: none;
-            padding: 15px 45px; font-size: clamp(18px, 4vw, 26px);
+            padding: 14px 40px; font-size: clamp(16px, 4vw, 22px);
             font-weight: 900; border-radius: 50px; cursor: pointer;
             box-shadow: 0 5px 0 #c79100;
         }
 
         .qcm-btn {
-            width: 85%; max-width: 400px; padding: 12px; margin: 6px;
+            width: 80%; max-width: 400px; padding: 10px; margin: 4px;
             border: 2px solid var(--primary); background: white;
-            font-weight: bold; border-radius: 12px; font-size: 16px;
+            font-weight: bold; border-radius: 10px; font-size: 14px;
         }
-
-        #rotate-notice { display: none; background: var(--primary); color: white; z-index: 999; }
-        @media (orientation: portrait) { #rotate-notice { display: flex; } }
     </style>
 </head>
 <body>
+
+<div id="rotate-notice">
+    <h1>📱 TOURNEZ VOTRE TÉLÉPHONE</h1>
+    <p>Le jeu nécessite le mode paysage pour s'ajuster parfaitement.</p>
+</div>
 
 <div id="game-wrapper">
     <canvas id="gameCanvas"></canvas>
 
     <div id="menu" class="overlay">
         <h1>MLE RUNNER</h1>
-        <button id="startBtn" class="btn-play">JOUER</button>
-        <p id="bestScore" style="margin-top:15px; font-weight:bold; color:var(--primary)"></p>
+        <button id="startBtn" class="btn-play">DÉMARRER</button>
+        <p id="bestScore" style="margin-top:10px; font-weight:bold; color:var(--primary)"></p>
     </div>
 
     <div id="questionScreen" class="overlay" style="display:none">
-        <h2 id="qText" style="color:var(--primary);">Question</h2>
+        <h2 id="qText" style="color:var(--primary); font-size: 1.1rem;">Question</h2>
         <div id="qOptions" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
-    </div>
-
-    <div id="rotate-notice" class="overlay">
-        <h1>📱 MODE PAYSAGE</h1>
-        <p>Tourne ton téléphone pour voir le jeu en entier !</p>
     </div>
 </div>
 
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    
-    // Résolution interne (toujours la même pour le calcul)
     const GAME_WIDTH = 800;
     const GAME_HEIGHT = 400;
 
-    // FONCTION DE REDIMENSIONNEMENT INTELLIGENTE
-    function fitScreen() {
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
-        const windowRatio = windowWidth / windowHeight;
+    // --- FIX ADAPTATION MOBILE ---
+    function updateAppHeight() {
+        const doc = document.documentElement;
+        doc.style.setProperty('--app-height', `${window.innerHeight}px`);
+        
+        // Ajustement du Canvas
+        const windowRatio = window.innerWidth / window.innerHeight;
         const gameRatio = GAME_WIDTH / GAME_HEIGHT;
 
         if (windowRatio > gameRatio) {
-            // Écran trop large (PC ou tablette large)
-            canvas.style.height = '90vh';
+            canvas.style.height = '90%';
             canvas.style.width = 'auto';
         } else {
-            // Écran trop haut (Téléphone en paysage)
-            canvas.style.width = '95vw';
+            canvas.style.width = '95%';
             canvas.style.height = 'auto';
         }
     }
-    
-    window.addEventListener('resize', fitScreen);
-    fitScreen();
 
-    // Configuration du jeu
+    window.addEventListener('resize', updateAppHeight);
+    window.addEventListener('orientationchange', updateAppHeight);
+    updateAppHeight();
+
     canvas.width = GAME_WIDTH;
     canvas.height = GAME_HEIGHT;
 
+    // --- VARIABLES JEU ---
     let state = 'MENU';
     let score = 0;
-    let highscore = localStorage.getItem('ml_highscore_v5') || 0;
+    let highscore = localStorage.getItem('ml_highscore_v7') || 0;
     let speed = 6;
     let gameFrame = 0;
     let obstacles = [];
+    let currentQuestions = [];
 
-    const player = {
-        x: 100, y: 320, r: 25,
-        vy: 0, gravity: 0.8, jumpForce: -15,
-        jumps: 0, groundY: 320
-    };
+    const player = { x: 100, y: 320, r: 25, vy: 0, gravity: 0.8, jumpForce: -14, jumps: 0, groundY: 320 };
 
     const QUESTIONS_BASE = [
-        {q:"À part l'emploi, la Mission Locale t'aide pour...", c:["Le logement et la santé","Gagner au loto","Réparer ta console"], a:0},
-        {q:"Le CEJ (Contrat d'Engagement Jeune), c'est...", c:["Un abonnement","Un accompagnement avec allocation","Un diplôme"], a:1},
+        {q:"À part l'emploi, la Mission Locale t'aide pour...", c:["Le logement et la santé","Gagner au loto","Voyager sur Mars"], a:0},
+        {q:"Le CEJ (Contrat d'Engagement Jeune) c'est...", c:["Un abonnement sport","Accompagnement + allocation","Un CDD"], a:1},
         {q:"Sur un CV, les expériences sont classées...", c:["De la plus ancienne à la récente","De la plus récente à l'ancienne","Au hasard"], a:1},
-        {q:"Une lettre de motivation doit être...", c:["Identique pour tous","Personnalisée pour chaque poste","Facultative"], a:1},
-        {q:"Quelle tenue choisir pour un entretien ?", c:["Un jogging","Une tenue propre et adaptée","Un déguisement"], a:1},
-        {q:"En cas de retard au travail, je dois...", c:["Prévenir le lendemain","Prévenir immédiatement mon chef","Ne rien dire"], a:1},
-        {q:"Le savoir-être en entreprise, c'est...", c:["Ne rien faire","L'attitude pro","La force physique"], a:1}
+        {q:"Quelle tenue choisir pour un entretien ?", c:["Jogging confortable","Tenue propre et adaptée","Pyjama"], a:1},
+        {q:"Le savoir-être en entreprise, c'est...", c:["Se taire","L'attitude pro et le respect","Savoir coder"], a:1}
     ];
-
-    let currentQuestions = [...QUESTIONS_BASE];
 
     function startGame() {
         state = 'PLAY';
         document.getElementById('menu').style.display = 'none';
         score = 0; speed = 6; obstacles = [];
-        player.y = player.groundY; player.vy = 0;
-        gameFrame = 0;
+        player.y = player.groundY; player.vy = 0; gameFrame = 0;
     }
 
     document.getElementById('startBtn').addEventListener('pointerdown', (e) => {
@@ -194,7 +197,7 @@
                     obstacles = [];
                     player.vy = 0;
                 } else {
-                    if(score > highscore) localStorage.setItem('ml_highscore_v5', score);
+                    if(score > highscore) localStorage.setItem('ml_highscore_v7', score);
                     location.reload();
                 }
             };
@@ -204,22 +207,19 @@
 
     function update() {
         ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-
-        // Sol
         ctx.fillStyle = "#2e7d32";
         ctx.fillRect(0, GAME_HEIGHT - 40, GAME_WIDTH, 40);
 
         if (state === 'PLAY') {
             gameFrame++;
             score++;
-
             if (score % 500 === 0) speed += 0.8;
 
             player.vy += player.gravity;
             player.y += player.vy;
             if (player.y > player.groundY) { player.y = player.groundY; player.vy = 0; player.jumps = 0; }
 
-            let spawnRate = Math.max(40, 100 - Math.floor(speed * 2));
+            let spawnRate = Math.max(45, 110 - Math.floor(speed * 2));
             if (gameFrame % spawnRate === 0) {
                 obstacles.push({ x: GAME_WIDTH + 50, y: GAME_HEIGHT - 75, w: 30, h: 35 });
             }
