@@ -2,90 +2,81 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Locale Runner - Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Mission Locale Runner</title>
     <style>
         :root {
             --primary: #0d47a1;
             --accent: #ffca28;
             --sky: #87CEEB;
-            --ground: #4CAF50;
         }
 
-        * { box-sizing: border-box; touch-action: manipulation; }
-
-        body {
-            margin: 0; padding: 0;
+        /* RESET TOTAL POUR BLOQUER LE SCROLL */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Empêche de monter/descendre */
             background: #000;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: fixed; /* Bloque la page sur iOS */
         }
 
         #game-container {
             position: relative;
-            width: 100%;
-            max-width: 800px;
-            aspect-ratio: 16/9;
+            width: 100vw;
+            height: 56.25vw; /* Ratio 16/9 automatique */
+            max-height: 100vh;
+            max-width: 177.78vh; /* Garde le ratio même sur grand écran */
             background: var(--sky);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
             overflow: hidden;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            touch-action: none; /* Empêche le scroll tactile */
         }
 
-        canvas { width: 100%; height: 100%; display: block; }
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
 
         .overlay {
             position: absolute;
             inset: 0;
             background: rgba(255, 255, 255, 0.95);
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            text-align: center; padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
             z-index: 100;
+            text-align: center;
         }
 
-        h1 { color: var(--primary); margin: 0 0 15px; font-size: 28px; }
-        p { color: #444; margin-bottom: 20px; line-height: 1.4; }
-
+        /* Style des boutons */
         .btn {
             background: var(--accent);
-            color: #333;
             border: none;
             padding: 15px 40px;
-            font-size: 20px;
+            font-size: clamp(16px, 4vw, 24px);
             font-weight: bold;
             border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 5px 0 #c79100;
-            transition: all 0.1s;
-        }
-
-        .btn:active {
-            transform: translateY(3px);
-            box-shadow: 0 2px 0 #c79100;
+            box-shadow: 0 4px 0 #c79100;
         }
 
         .qcm-btn {
-            width: 100%;
-            max-width: 450px;
-            padding: 12px 20px;
-            margin: 8px 0;
-            font-size: 16px;
-            text-align: left;
-            background: #f0f0f0;
-            border: 2px solid #ddd;
+            width: 90%;
+            max-width: 500px;
+            padding: 10px;
+            margin: 5px;
             border-radius: 10px;
-            cursor: pointer;
-        }
-
-        .qcm-btn:hover { background: #e0e0e0; }
-
-        #countdown {
-            font-size: 120px;
-            font-weight: 900;
-            color: var(--primary);
-            pointer-events: none;
-            background: transparent;
+            border: 1px solid #ccc;
+            background: #fff;
+            font-size: clamp(14px, 3vw, 18px);
         }
 
         #rotate-notice {
@@ -106,23 +97,22 @@
     <canvas id="gameCanvas"></canvas>
 
     <div id="menu" class="overlay">
-        <h1>Mission Locale Runner</h1>
-        <p>Évitez les obstacles pour aller le plus loin possible.<br>
-           En cas de choc, répondez bien pour continuer !</p>
+        <h1 style="color:var(--primary); margin:0; font-size: clamp(20px, 5vw, 32px);">Mission Locale Runner</h1>
+        <p>Évite les obstacles !</p>
         <button id="startBtn" class="btn">JOUER</button>
-        <p id="bestScore" style="margin-top:20px; font-weight:bold;"></p>
+        <p id="bestScore" style="font-weight:bold; margin-top:10px;"></p>
     </div>
 
     <div id="questionScreen" class="overlay" style="display:none">
-        <h2 id="qText">Question ?</h2>
+        <h2 id="qText" style="font-size: 1.2rem;">Question</h2>
         <div id="qOptions" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
     </div>
 
-    <div id="countdown" class="overlay" style="display:none">3</div>
+    <div id="countdown" class="overlay" style="display:none; font-size:80px; font-weight:bold; background:transparent;">3</div>
 
     <div id="rotate-notice" class="overlay">
-        <h1>📱 Tournez l'écran</h1>
-        <p>Le jeu nécessite le mode paysage.</p>
+        <h2>📱 Tournez l'écran</h2>
+        <p>Le jeu se joue en paysage.</p>
     </div>
 </div>
 
@@ -131,58 +121,43 @@
     const ctx = canvas.getContext('2d');
     const menu = document.getElementById('menu');
     const startBtn = document.getElementById('startBtn');
-    const questionScreen = document.getElementById('questionScreen');
-    const countdownScreen = document.getElementById('countdown');
-
-    // --- Configuration du Jeu ---
+    
     let state = 'MENU';
     let score = 0;
     let highscore = localStorage.getItem('ml_highscore') || 0;
-    let speed = 5;
-    let gameFrame = 0;
-
-    const player = {
-        x: 80, y: 0, r: 25, 
-        vy: 0, gravity: 0.8, 
-        jumpForce: -15, jumps: 0,
-        groundY: 0
-    };
-
+    let player = { x: 80, y: 0, r: 20, vy: 0, jumps: 0 };
     let obstacles = [];
-    let clouds = [];
+    let speed = 5;
 
     const QUESTIONS = [
-        {q:"Le CV doit être de préférence...", c:["Sur 10 pages","Clair et sur 1 page","Écrit à la main"], a:1},
-        {q:"La ponctualité en entreprise est...", c:["Facultative","Essentielle","Pour les chefs"], a:1},
-        {q:"Un soft-skill, c'est quoi ?", c:["Une compétence technique","Une qualité humaine","Un logiciel"], a:1},
-        {q:"La Mission Locale aide les jeunes de...", c:["16 à 25 ans","40 à 50 ans","5 à 10 ans"], a:0},
-        {q:"Que faire avant un entretien ?", c:["Dormir sur place","Se renseigner sur l'entreprise","Rien"], a:1}
+        {q:"Un CV doit être...", c:["Long","Clair et structuré","Secret"], a:1},
+        {q:"La Mission Locale aide les...", c:["16-25 ans","Séniors","Enfants"], a:0},
+        {q:"Arriver à l'heure est...", c:["Inutile","Essentiel","Optionnel"], a:1}
     ];
 
     function init() {
         canvas.width = 800;
         canvas.height = 450;
-        player.groundY = canvas.height - 60;
-        player.y = player.groundY;
+        player.y = canvas.height - 60;
         document.getElementById('bestScore').textContent = `Record : ${highscore}`;
     }
 
-    // --- Gestion des entrées ---
-    function handleJump() {
+    // GESTION DU CLIC/TOUCHER
+    function handleJump(e) {
+        if(e) e.preventDefault();
         if (state === 'PLAY' && player.jumps < 2) {
-            player.vy = player.jumpForce;
+            player.vy = -14;
             player.jumps++;
         }
     }
 
-    // Fix pour le bouton qui ne marche pas : on sépare les clics
-    startBtn.onclick = (e) => {
+    startBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         startGame();
-    };
+    });
 
+    canvas.addEventListener('touchstart', handleJump, {passive: false});
     window.addEventListener('keydown', (e) => { if(e.code === 'Space') handleJump(); });
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleJump(); }, {passive: false});
 
     function startGame() {
         state = 'PLAY';
@@ -190,20 +165,14 @@
         score = 0;
         speed = 5;
         obstacles = [];
-        player.jumps = 0;
+        player.y = canvas.height - 60;
         player.vy = 0;
-        player.y = player.groundY;
-        
-        // Init nuages
-        clouds = Array.from({length: 5}, () => ({
-            x: Math.random() * canvas.width,
-            y: Math.random() * 100 + 50,
-            s: Math.random() * 1 + 0.5
-        }));
+        player.jumps = 0;
     }
 
     function triggerGameOver() {
         state = 'QUESTION';
+        const questionScreen = document.getElementById('questionScreen');
         questionScreen.style.display = 'flex';
         const q = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)];
         
@@ -217,126 +186,62 @@
             btn.textContent = choice;
             btn.onclick = () => {
                 if (i === q.a) {
-                    resumeGame();
+                    questionScreen.style.display = 'none';
+                    state = 'PLAY';
+                    obstacles = [];
+                    player.vy = 0;
                 } else {
-                    endGame();
+                    location.reload(); // Recommence tout
                 }
             };
             optionsDiv.appendChild(btn);
         });
     }
 
-    function resumeGame() {
-        questionScreen.style.display = 'none';
-        countdownScreen.style.display = 'flex';
-        let count = 3;
-        countdownScreen.textContent = count;
-        
-        const timer = setInterval(() => {
-            count--;
-            if (count <= 0) {
-                clearInterval(timer);
-                countdownScreen.style.display = 'none';
-                state = 'PLAY';
-                obstacles = []; // Nettoie le passage
-            } else {
-                countdownScreen.textContent = count;
-            }
-        }, 800);
-    }
-
-    function endGame() {
-        if (score > highscore) {
-            highscore = score;
-            localStorage.setItem('ml_highscore', highscore);
-        }
-        state = 'MENU';
-        questionScreen.style.display = 'none';
-        menu.style.display = 'flex';
-        init();
-    }
-
-    // --- Boucle de rendu ---
     function update() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Dessin Nuages
-        ctx.fillStyle = "white";
-        clouds.forEach(c => {
-            if (state === 'PLAY') c.x -= c.s;
-            if (c.x < -100) c.x = canvas.width + 50;
-            ctx.beginPath();
-            ctx.arc(c.x, c.y, 20, 0, Math.PI*2);
-            ctx.fill();
-        });
-
-        // Dessin Sol
-        ctx.fillStyle = varColor('--ground');
-        ctx.fillRect(0, player.groundY + player.r, canvas.width, 100);
+        
+        // Sol
+        ctx.fillStyle = "#4CAF50";
+        ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
 
         if (state === 'PLAY') {
-            gameFrame++;
             score++;
-            if (score % 500 === 0) speed += 0.5;
-
-            // Physique Joueur
-            player.vy += player.gravity;
+            player.vy += 0.8;
             player.y += player.vy;
-            if (player.y > player.groundY) {
-                player.y = player.groundY;
-                player.vy = 0;
+
+            if (player.y > canvas.height - 60) {
+                player.y = canvas.height - 60;
                 player.jumps = 0;
             }
 
-            // Gestion Obstacles
-            if (gameFrame % 100 === 0) {
-                obstacles.push({
-                    x: canvas.width + 50,
-                    y: player.groundY + 5,
-                    w: 30, h: 40
-                });
+            if (score % 120 === 0) {
+                obstacles.push({ x: canvas.width, y: canvas.height - 70, w: 30, h: 30 });
             }
 
             obstacles.forEach((o, i) => {
                 o.x -= speed;
-                ctx.fillStyle = "#d32f2f";
+                ctx.fillStyle = "#FF5722";
                 ctx.fillRect(o.x, o.y, o.w, o.h);
 
-                // Collision simple
-                if (player.x + 15 > o.x && player.x - 15 < o.x + o.w &&
-                    player.y + 15 > o.y) {
+                if (player.x + 15 > o.x && player.x - 15 < o.x + o.w && player.y + 15 > o.y) {
                     triggerGameOver();
                 }
             });
-            obstacles = obstacles.filter(o => o.x > -100);
+            obstacles = obstacles.filter(o => o.x > -50);
         }
 
-        // Dessin Joueur
-        ctx.fillStyle = varColor('--accent');
+        // Joueur
+        ctx.fillStyle = "#ffca28";
         ctx.beginPath();
         ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
         ctx.fill();
-        ctx.strokeStyle = varColor('--primary');
-        ctx.lineWidth = 4;
-        ctx.stroke();
-        
-        // HUD
-        if (state === 'PLAY') {
-            ctx.fillStyle = varColor('--primary');
-            ctx.font = "bold 20px sans-serif";
-            ctx.fillText(`SCORE: ${score}`, 20, 40);
-        }
 
         requestAnimationFrame(update);
-    }
-
-    function varColor(name) {
-        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     }
 
     init();
     update();
 </script>
-
 </body>
 </html>
