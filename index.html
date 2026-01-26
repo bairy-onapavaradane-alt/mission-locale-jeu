@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Mission Locale Runner - Ultra Fix</title>
+    <title>MLE Runner - Version Finale</title>
     <style>
         :root {
             --primary: #0d47a1;
@@ -11,69 +11,70 @@
             --sky: #e3f2fd;
         }
 
+        /* Bloque tout mouvement de page et centre le jeu */
         html, body {
             margin: 0; padding: 0;
             width: 100%; height: 100%;
-            overflow: hidden; background: #1a1a1a;
+            overflow: hidden; background: #000;
             display: flex; justify-content: center; align-items: center;
-            position: fixed; font-family: 'Segoe UI', sans-serif;
+            position: fixed; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         #game-wrapper {
             position: relative;
-            width: 100vw; height: 100vh;
+            width: 100%; height: 100%;
             display: flex; justify-content: center; align-items: center;
         }
 
         canvas {
-            max-width: 98%; max-height: 98%;
-            object-fit: contain;
+            /* Ratio 2:1 préservé, s'adapte sans jamais déborder */
+            max-width: 100vw;
+            max-height: 50vw; 
             background: var(--sky);
-            border: 4px solid #fff;
-            border-radius: 15px;
-            box-shadow: 0 0 40px rgba(0,0,0,0.6);
+            box-shadow: 0 0 30px rgba(0,0,0,0.7);
+            border: 2px solid #fff;
+            border-radius: 10px;
             touch-action: none;
         }
 
         .overlay {
             position: absolute;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
             inset: 0;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
-            z-index: 200; /* Toujours au-dessus */
-            text-align: center;
-            padding: 20px;
+            text-align: center; z-index: 200;
+            padding: 15px;
         }
 
-        /* BOUTON REFAIT À NEUF */
+        h1 { font-size: clamp(1.2rem, 5vw, 2.5rem); color: var(--primary); margin: 5px; text-transform: uppercase; }
+        p { font-size: clamp(0.8rem, 3vw, 1.1rem); margin: 5px; color: #444; }
+
         .btn-play {
             background: var(--accent);
             color: var(--primary);
             border: none;
-            padding: 20px 60px;
-            font-size: 28px;
+            padding: 15px 50px;
+            font-size: clamp(18px, 4vw, 26px);
             font-weight: 900;
             border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 6px 0 #c79100;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: transform 0.1s;
-            pointer-events: auto !important; /* Force l'interaction */
+            box-shadow: 0 5px 0 #c79100;
+            margin-top: 15px;
         }
 
-        .btn-play:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #c79100;
-        }
+        .btn-play:active { transform: translateY(4px); box-shadow: 0 1px 0 #c79100; }
 
         .qcm-btn {
-            width: 85%; max-width: 400px;
-            padding: 15px; margin: 8px;
-            border: 3px solid var(--primary);
-            background: white; font-weight: bold;
-            border-radius: 15px; font-size: 18px;
+            width: 90%; max-width: 450px;
+            padding: clamp(10px, 2.5vw, 18px);
+            margin: 5px;
+            border: 2px solid var(--primary);
+            background: white;
+            font-weight: bold;
+            border-radius: 12px;
+            font-size: clamp(13px, 2.5vw, 17px);
+            cursor: pointer;
         }
 
         #rotate-notice {
@@ -91,20 +92,20 @@
     <canvas id="gameCanvas"></canvas>
 
     <div id="menu" class="overlay">
-        <h1 style="color:var(--primary); font-size: 40px; margin: 0 0 10px;">MLE RUNNER</h1>
-        <p style="color:#555; margin-bottom: 30px; font-weight: bold;">Évitez les obstacles et répondez aux questions !</p>
-        <button id="startBtn" class="btn-play">JOUER</button>
-        <p id="bestScore" style="margin-top: 20px; font-weight: bold; color: var(--primary); opacity: 0.7;"></p>
+        <h1>MLE RUNNER</h1>
+        <p>Évite les obstacles et réponds aux questions pro !</p>
+        <button id="startBtn" class="btn-play">C'EST PARTI !</button>
+        <p id="bestScore" style="font-size: 0.9rem; margin-top: 15px; font-weight: bold;"></p>
     </div>
 
     <div id="questionScreen" class="overlay" style="display:none">
-        <h2 id="qText" style="color:var(--primary); margin-bottom: 20px;">Question Professionnelle</h2>
+        <h2 id="qText" style="font-size: 1.2rem; color: var(--primary);">Question Professionnelle</h2>
         <div id="qOptions" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
     </div>
 
     <div id="rotate-notice" class="overlay">
-        <h2>📱 MODE PAYSAGE REQUIS</h2>
-        <p>Tournez votre téléphone pour jouer.</p>
+        <h1>📱 TOURNEZ L'ÉCRAN</h1>
+        <p>Le jeu nécessite le mode paysage pour fonctionner.</p>
     </div>
 </div>
 
@@ -119,53 +120,43 @@
 
     let state = 'MENU';
     let score = 0;
-    let highscore = localStorage.getItem('ml_highscore_v4') || 0;
+    let highscore = localStorage.getItem('ml_highscore_vfinal') || 0;
     let speed = 6;
     let gameFrame = 0;
 
     const player = {
-        x: 100, y: GAME_HEIGHT - 80, r: 25,
+        x: 100, y: 320, r: 25,
         vy: 0, gravity: 0.8, jumpForce: -15,
-        jumps: 0, groundY: GAME_HEIGHT - 80
+        jumps: 0, groundY: 320
     };
 
     let obstacles = [];
     let clouds = Array.from({length: 5}, () => ({
-        x: Math.random() * GAME_WIDTH,
-        y: Math.random() * 150,
-        s: Math.random() * 0.5 + 0.2
+        x: Math.random() * GAME_WIDTH, y: Math.random() * 120, s: Math.random() * 0.5 + 0.2
     }));
 
+    // --- NOUVELLES QUESTIONS ---
     const QUESTIONS = [
-        {q:"Un CV doit être...", c:["Très long","Clair et aéré","Secret"], a:1},
-        {q:"La Mission Locale s'adresse aux...", c:["16-25 ans","Retraités","Enfants"], a:0},
-        {q:"Le savoir-être c'est...", c:["Ne rien faire","L'attitude pro","La force physique"], a:1},
-        {q:"Être ponctuel c'est arriver...", c:["En retard","À l'heure exacte","Quand on veut"], a:1}
+        {q:"À part l'emploi, la Mission Locale t'aide pour...", c:["Le logement et la santé","Gagner au loto","Réparer ta console"], a:0},
+        {q:"Le CEJ (Contrat d'Engagement Jeune), c'est...", c:["Un abonnement","Un accompagnement avec allocation","Un diplôme de cuisine"], a:1},
+        {q:"Sur un CV, les expériences sont classées...", c:["De la plus ancienne à la récente","De la plus récente à la plus ancienne","Au hasard"], a:1},
+        {q:"Une lettre de motivation doit être...", c:["Identique pour tous","Personnalisée pour chaque poste","Facultative"], a:1},
+        {q:"Quelle tenue choisir pour un entretien ?", c:["Un jogging","Une tenue propre et adaptée","Un déguisement"], a:1},
+        {q:"En cas de retard au travail, je dois...", c:["Prévenir le lendemain","Prévenir immédiatement mon chef","Ne rien dire"], a:1},
+        {q:"Le savoir-être en entreprise, c'est...", c:["Ne rien faire","L'attitude et le comportement pro","La force physique"], a:1},
+        {q:"L'inscription à la Mission Locale est...", c:["Payante","Gratuite","Seulement pour les diplômés"], a:1}
     ];
 
-    // FONCTION DE DÉMARRAGE BLINDÉE
     function startGame() {
-        console.log("Game Starting...");
         state = 'PLAY';
         document.getElementById('menu').style.display = 'none';
-        score = 0;
-        speed = 6;
-        obstacles = [];
-        player.y = player.groundY;
-        player.vy = 0;
-        player.jumps = 0;
+        score = 0; speed = 6; obstacles = [];
+        player.y = player.groundY; player.vy = 0; player.jumps = 0;
         gameFrame = 0;
     }
 
-    // ÉCOUTEURS DE CLIC AMÉLIORÉS
     const startBtn = document.getElementById('startBtn');
-    
-    // On utilise pointerdown pour une réaction immédiate sur mobile et PC
-    startBtn.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        startGame();
-    });
+    startBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); startGame(); });
 
     function handleJump(e) {
         if(e) e.preventDefault();
@@ -183,7 +174,6 @@
         const screen = document.getElementById('questionScreen');
         screen.style.display = 'flex';
         const q = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)];
-        
         document.getElementById('qText').textContent = q.q;
         const opts = document.getElementById('qOptions');
         opts.innerHTML = '';
@@ -192,15 +182,14 @@
             const btn = document.createElement('button');
             btn.className = 'qcm-btn';
             btn.textContent = choice;
-            btn.onclick = (e) => {
-                e.stopPropagation();
+            btn.onclick = () => {
                 if (i === q.a) {
                     screen.style.display = 'none';
                     state = 'PLAY';
                     obstacles = [];
                     player.vy = 0;
                 } else {
-                    if(score > highscore) localStorage.setItem('ml_highscore_v4', score);
+                    if(score > highscore) localStorage.setItem('ml_highscore_vfinal', score);
                     location.reload();
                 }
             };
@@ -208,87 +197,60 @@
         });
     }
 
-    function drawPlayer() {
-        ctx.save();
-        ctx.translate(player.x, player.y);
-        ctx.beginPath();
-        ctx.arc(0, 0, player.r, 0, Math.PI * 2);
-        ctx.fillStyle = "#0d47a1";
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(0, 0, player.r - 5, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffca28";
-        ctx.fill();
-        ctx.fillStyle = "#0d47a1";
-        ctx.font = "bold 15px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("MLE", 0, 1);
-        ctx.restore();
-    }
-
     function update() {
         ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-        // Dessin Nuages
+        // Nuages
         ctx.fillStyle = "white";
         clouds.forEach(c => {
             if(state === 'PLAY') c.x -= c.s;
             if(c.x < -50) c.x = GAME_WIDTH + 50;
-            ctx.beginPath();
-            ctx.arc(c.x, c.y, 15, 0, Math.PI*2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(c.x, c.y, 15, 0, Math.PI*2); ctx.fill();
         });
 
-        // Dessin Sol
+        // Sol
         ctx.fillStyle = "#2e7d32";
         ctx.fillRect(0, GAME_HEIGHT - 40, GAME_WIDTH, 40);
 
         if (state === 'PLAY') {
-            gameFrame++;
-            score++;
+            gameFrame++; score++;
             if (score % 600 === 0) speed += 0.5;
-
             player.vy += player.gravity;
             player.y += player.vy;
-
-            if (player.y > player.groundY) {
-                player.y = player.groundY;
-                player.vy = 0;
-                player.jumps = 0;
-            }
-
-            if (gameFrame % 100 === 0) {
-                obstacles.push({ x: GAME_WIDTH + 50, y: GAME_HEIGHT - 70, w: 30, h: 30 });
-            }
-
+            if (player.y > player.groundY) { player.y = player.groundY; player.vy = 0; player.jumps = 0; }
+            if (gameFrame % 100 === 0) obstacles.push({ x: GAME_WIDTH + 50, y: GAME_HEIGHT - 75, w: 30, h: 35 });
+            
             obstacles.forEach(o => {
                 o.x -= speed;
                 ctx.fillStyle = "#d32f2f";
                 ctx.fillRect(o.x, o.y, o.w, o.h);
-
-                // Collision précise
-                if (player.x + 18 > o.x && player.x - 18 < o.x + o.w && player.y + 18 > o.y) {
-                    triggerGameOver();
-                }
+                if (player.x + 18 > o.x && player.x - 18 < o.x + o.w && player.y + 18 > o.y) triggerGameOver();
             });
             obstacles = obstacles.filter(o => o.x > -100);
         }
 
-        drawPlayer();
+        // --- JOUEUR MLE ---
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        // Cercle bleu extérieur
+        ctx.beginPath(); ctx.arc(0, 0, player.r, 0, Math.PI*2); ctx.fillStyle = "#0d47a1"; ctx.fill();
+        // Cercle jaune intérieur
+        ctx.beginPath(); ctx.arc(0, 0, player.r-5, 0, Math.PI*2); ctx.fillStyle = "#ffca28"; ctx.fill();
+        // Texte MLE
+        ctx.fillStyle = "#0d47a1"; ctx.font = "bold 15px Arial"; ctx.textAlign = "center";
+        ctx.textBaseline = "middle"; ctx.fillText("MLE", 0, 1);
+        ctx.restore();
 
-        // HUD Score
+        // --- HUD SCORE ---
         if (state === 'PLAY') {
             ctx.fillStyle = "rgba(13, 71, 161, 0.9)";
-            ctx.font = "bold 24px Arial";
-            ctx.textAlign = "center";
+            ctx.font = "bold 24px Arial"; ctx.textAlign = "center";
             ctx.fillText("SCORE: " + score, GAME_WIDTH / 2, 40);
         }
-
         requestAnimationFrame(update);
     }
 
-    document.getElementById('bestScore').textContent = `Record : ${highscore}`;
+    document.getElementById('bestScore').textContent = `Record actuel : ${highscore}`;
     update();
 </script>
 </body>
