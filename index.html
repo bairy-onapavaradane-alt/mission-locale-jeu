@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MLE Runner - Perfection Responsive</title>
+    <title>MLE Runner - Final</title>
     <style>
         :root {
             --primary: #0d47a1;
             --accent: #ffca28;
             --sky: #e3f2fd;
-            --app-height: 100%; /* Sera mis à jour par JS */
+            --app-height: 100%;
         }
 
         html, body {
             margin: 0; padding: 0;
             width: 100vw;
-            height: var(--app-height); /* Hauteur dynamique réelle */
+            height: var(--app-height);
             overflow: hidden; background: #000;
             display: flex; justify-content: center; align-items: center;
             position: fixed; font-family: 'Segoe UI', sans-serif;
@@ -46,7 +46,6 @@
             padding: 20px;
         }
 
-        /* ALERTE ROTATION - Bloque tout en Portrait */
         #rotate-notice {
             display: none;
             background: var(--primary);
@@ -62,13 +61,21 @@
         }
 
         h1 { font-size: clamp(1.4rem, 6vw, 2.2rem); color: var(--primary); margin: 10px; }
-        #rotate-notice h1 { color: white; }
-
+        
         .btn-play {
             background: var(--accent); color: var(--primary); border: none;
             padding: 14px 40px; font-size: clamp(16px, 4vw, 22px);
             font-weight: 900; border-radius: 50px; cursor: pointer;
             box-shadow: 0 5px 0 #c79100;
+        }
+
+        /* Style de la consigne */
+        .consigne {
+            margin-top: 20px;
+            font-size: clamp(14px, 3vw, 18px);
+            color: #555;
+            max-width: 80%;
+            line-height: 1.4;
         }
 
         .qcm-btn {
@@ -91,6 +98,9 @@
     <div id="menu" class="overlay">
         <h1>MLE RUNNER</h1>
         <button id="startBtn" class="btn-play">DÉMARRER</button>
+        <p class="consigne">
+            <b>Consigne :</b> Saute par-dessus les obstacles rouges. Si tu touches un obstacle, réponds correctement à la question pour continuer ta course !
+        </p>
         <p id="bestScore" style="margin-top:10px; font-weight:bold; color:var(--primary)"></p>
     </div>
 
@@ -106,15 +116,11 @@
     const GAME_WIDTH = 800;
     const GAME_HEIGHT = 400;
 
-    // --- FIX ADAPTATION MOBILE ---
     function updateAppHeight() {
         const doc = document.documentElement;
         doc.style.setProperty('--app-height', `${window.innerHeight}px`);
-        
-        // Ajustement du Canvas
         const windowRatio = window.innerWidth / window.innerHeight;
         const gameRatio = GAME_WIDTH / GAME_HEIGHT;
-
         if (windowRatio > gameRatio) {
             canvas.style.height = '90%';
             canvas.style.width = 'auto';
@@ -131,7 +137,6 @@
     canvas.width = GAME_WIDTH;
     canvas.height = GAME_HEIGHT;
 
-    // --- VARIABLES JEU ---
     let state = 'MENU';
     let score = 0;
     let highscore = localStorage.getItem('ml_highscore_v7') || 0;
@@ -177,15 +182,12 @@
         state = 'QUESTION';
         const screen = document.getElementById('questionScreen');
         screen.style.display = 'flex';
-
         if (currentQuestions.length === 0) currentQuestions = [...QUESTIONS_BASE];
         const qIndex = Math.floor(Math.random() * currentQuestions.length);
         const q = currentQuestions.splice(qIndex, 1)[0];
-
         document.getElementById('qText').textContent = q.q;
         const opts = document.getElementById('qOptions');
         opts.innerHTML = '';
-
         q.c.forEach((choice, i) => {
             const btn = document.createElement('button');
             btn.className = 'qcm-btn';
@@ -209,21 +211,17 @@
         ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
         ctx.fillStyle = "#2e7d32";
         ctx.fillRect(0, GAME_HEIGHT - 40, GAME_WIDTH, 40);
-
         if (state === 'PLAY') {
             gameFrame++;
             score++;
             if (score % 500 === 0) speed += 0.8;
-
             player.vy += player.gravity;
             player.y += player.vy;
             if (player.y > player.groundY) { player.y = player.groundY; player.vy = 0; player.jumps = 0; }
-
             let spawnRate = Math.max(45, 110 - Math.floor(speed * 2));
             if (gameFrame % spawnRate === 0) {
                 obstacles.push({ x: GAME_WIDTH + 50, y: GAME_HEIGHT - 75, w: 30, h: 35 });
             }
-
             obstacles.forEach(o => {
                 o.x -= speed;
                 ctx.fillStyle = "#d32f2f";
@@ -232,8 +230,6 @@
             });
             obstacles = obstacles.filter(o => o.x > -100);
         }
-
-        // Joueur MLE
         ctx.save();
         ctx.translate(player.x, player.y);
         ctx.beginPath(); ctx.arc(0, 0, player.r, 0, Math.PI*2); ctx.fillStyle = "#0d47a1"; ctx.fill();
@@ -241,7 +237,6 @@
         ctx.fillStyle = "#0d47a1"; ctx.font = "bold 15px Arial"; ctx.textAlign = "center";
         ctx.textBaseline = "middle"; ctx.fillText("MLE", 0, 1);
         ctx.restore();
-
         if (state === 'PLAY') {
             ctx.fillStyle = "rgba(13, 71, 161, 0.9)";
             ctx.font = "bold 24px Arial"; ctx.textAlign = "center";
