@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MLE Runner - Final</title>
+    <title>MLE Runner - Pro Edition</title>
     <style>
         :root {
             --primary: #0d47a1;
             --accent: #ffca28;
             --sky: #e3f2fd;
+            --success: #2e7d32;
+            --error: #d32f2f;
             --app-height: 100%;
         }
 
@@ -69,7 +71,6 @@
             box-shadow: 0 5px 0 #c79100;
         }
 
-        /* Style de la consigne */
         .consigne {
             margin-top: 20px;
             font-size: clamp(14px, 3vw, 18px);
@@ -79,10 +80,15 @@
         }
 
         .qcm-btn {
-            width: 80%; max-width: 400px; padding: 10px; margin: 4px;
+            width: 80%; max-width: 400px; padding: 12px; margin: 4px;
             border: 2px solid var(--primary); background: white;
             font-weight: bold; border-radius: 10px; font-size: 14px;
+            transition: all 0.2s;
+            cursor: pointer;
         }
+
+        .qcm-btn.correct { background-color: var(--success) !important; color: white !important; border-color: white !important; }
+        .qcm-btn.wrong { background-color: var(--error) !important; color: white !important; border-color: white !important; }
     </style>
 </head>
 <body>
@@ -99,7 +105,7 @@
         <h1>MLE RUNNER</h1>
         <button id="startBtn" class="btn-play">DÉMARRER</button>
         <p class="consigne">
-            <b>Consigne :</b> Saute par-dessus les obstacles rouges. Si tu touches un obstacle, réponds correctement à la question pour continuer ta course !
+            <b>Consigne :</b> Saute par-dessus les obstacles rouges. Si tu touches un obstacle, réponds correctement pour continuer !
         </p>
         <p id="bestScore" style="margin-top:10px; font-weight:bold; color:var(--primary)"></p>
     </div>
@@ -139,28 +145,56 @@
 
     let state = 'MENU';
     let score = 0;
-    let highscore = localStorage.getItem('ml_highscore_v7') || 0;
+    let highscore = localStorage.getItem('ml_highscore_v8') || 0;
     let speed = 6;
     let gameFrame = 0;
     let obstacles = [];
-    let currentQuestions = [];
-
-    const player = { x: 100, y: 320, r: 25, vy: 0, gravity: 0.8, jumpForce: -14, jumps: 0, groundY: 320 };
 
     const QUESTIONS_BASE = [
-        {q:"À part l'emploi, la Mission Locale t'aide pour...", c:["Le logement et la santé","Gagner au loto","Voyager sur Mars"], a:0},
-        {q:"Le CEJ (Contrat d'Engagement Jeune) c'est...", c:["Un abonnement sport","Accompagnement + allocation","Un CDD"], a:1},
-        {q:"Sur un CV, les expériences sont classées...", c:["De la plus ancienne à la récente","De la plus récente à l'ancienne","Au hasard"], a:1},
-        {q:"Quelle tenue choisir pour un entretien ?", c:["Jogging confortable","Tenue propre et adaptée","Pyjama"], a:1},
-        {q:"Le savoir-être en entreprise, c'est...", c:["Se taire","L'attitude pro et le respect","Savoir coder"], a:1}
+        {q:"Que signifie l'acronyme CV ?", c:["Curriculum Vitae","Course Vivante","Compte Visuel"], a:0},
+        {q:"Le Contrat d'Engagement Jeune (CEJ) s'adresse aux :", c:["16-25 ans","Tous les âges","Uniquement aux diplômés"], a:0},
+        {q:"Quelle est la durée légale du travail par semaine en France ?", c:["35 heures","39 heures","40 heures"], a:0},
+        {q:"Un 'Soft Skill', c'est quoi ?", c:["Une compétence technique","Une qualité humaine","Un logiciel"], a:1},
+        {q:"Comment doit-on classer ses expériences sur un CV ?", c:["De la plus ancienne à la récente","De la plus récente à la plus ancienne","Par ordre alphabétique"], a:1},
+        {q:"Le savoir-être en entreprise, c'est :", c:["Le comportement et l'attitude","La maîtrise d'Excel","Avoir un gros diplôme"], a:0},
+        {q:"Que faire avant un entretien d'embauche ?", c:["Rien du tout","Se renseigner sur l'entreprise","Préparer ses vacances"], a:1},
+        {q:"La Mission Locale peut t'aider pour :", c:["L'emploi uniquement","Emploi, formation, santé, logement","Remplacer l'école"], a:1},
+        {q:"Une lettre de motivation doit être :", c:["La même pour tous","Personnalisée selon le poste","Écrite en SMS"], a:1},
+        {q:"Arriver en avance de 5 à 10 minutes à un entretien est :", c:["Inutile","Une marque de ponctualité","Une impolitesse"], a:1},
+        {q:"Quelle est la fonction principale d'un stage ?", c:["Remplacer un employé","Découvrir un métier","Gagner beaucoup d'argent"], a:1},
+        {q:"Le SMIC correspond au :", c:["Salaire Maximum","Salaire Minimum de Croissance","Système de Management"], a:1},
+        {q:"Quelle est la mission d'un conseiller Mission Locale ?", c:["Te donner des ordres","T'accompagner dans ton projet","Te trouver un job en 1h"], a:1},
+        {q:"Peut-on utiliser une adresse e-mail fantaisiste pour postuler ?", c:["Oui, c'est original","Non, il faut une adresse pro (nom.prenom)","Seulement le week-end"], a:1},
+        {q:"Qu'est-ce qu'une période d'essai ?", c:["Un test avant l'embauche définitive","Un examen médical","Le premier jour de retraite"], a:0},
+        // 15 NOUVELLES QUESTIONS
+        {q:"Que signifie l'acronyme CDD ?", c:["Contrat à Durée Déterminée","Contrat de Début Durable","Contrat Direct Définitif"], a:0},
+        {q:"En entreprise, le tutoiement est :", c:["Toujours obligatoire","Dépendant de la culture de l'entreprise","Interdit par la loi"], a:1},
+        {q:"Un réseau professionnel (ex: LinkedIn) sert à :", c:["Partager ses photos de vacances","Développer ses opportunités pro","Regarder des vidéos de chats"], a:1},
+        {q:"Le droit à la déconnexion, c'est :", c:["Éteindre son PC pendant le travail","Ne pas être sollicité par mail/tel hors travail","Avoir une mauvaise connexion internet"], a:1},
+        {q:"Qu'est-ce qu'un alternant ?", c:["Un élève qui change de classe","Un jeune qui travaille et étudie en même temps","Un salarié qui travaille de nuit"], a:1},
+        {q:"Que signifie l'acronyme intérim ?", c:["Travail temporaire","Travail à vie","Travail à distance"], a:0},
+        {q:"La politesse envers ses collègues est :", c:["Optionnelle","Essentielle pour le climat de travail","Réservée aux stagiaires"], a:1},
+        {q:"En entretien, si on ne connaît pas une réponse, il vaut mieux :", c:["Inventer n'importe quoi","Être honnête et montrer son envie d'apprendre","Garder le silence total"], a:1},
+        {q:"Une 'compétence transférable', c'est :", c:["Un virement bancaire","Un savoir utilisable dans différents métiers","Une compétence inutile"], a:1},
+        {q:"Qu'est-ce que le RGPD ?", c:["Un règlement sur la protection des données","Une marque de vêtements","Une nouvelle loi sur le sport"], a:0},
+        {q:"L'habit fait-il le moine en entreprise ?", c:["Non, jamais","L'image renvoyée est importante professionnellement","Seul le diplôme compte"], a:1},
+        {q:"Que signifie 'être polyvalent' ?", c:["Savoir faire plusieurs choses différentes","Parler beaucoup de langues","Être toujours fatigué"], a:0},
+        {q:"Le CSE en entreprise sert à :", c:["Nettoyer les bureaux","Représenter les salariés","Cuisiner pour le patron"], a:1},
+        {q:"Qu'est-ce qu'un bilan de compétences ?", c:["Un examen médical pro","Une analyse de ses capacités et projets","Un calcul de salaire"], a:1},
+        {q:"Peut-on être viré pour une simple erreur sans gravité ?", c:["Oui, tout de suite","Non, il faut une cause réelle et sérieuse","Seulement le lundi"], a:1}
     ];
+
+    let questionPool = [];
 
     function startGame() {
         state = 'PLAY';
         document.getElementById('menu').style.display = 'none';
         score = 0; speed = 6; obstacles = [];
         player.y = player.groundY; player.vy = 0; gameFrame = 0;
+        questionPool = [...QUESTIONS_BASE];
     }
+
+    const player = { x: 100, y: 320, r: 25, vy: 0, gravity: 0.8, jumpForce: -14, jumps: 0, groundY: 320 };
 
     document.getElementById('startBtn').addEventListener('pointerdown', (e) => {
         e.preventDefault();
@@ -182,25 +216,40 @@
         state = 'QUESTION';
         const screen = document.getElementById('questionScreen');
         screen.style.display = 'flex';
-        if (currentQuestions.length === 0) currentQuestions = [...QUESTIONS_BASE];
-        const qIndex = Math.floor(Math.random() * currentQuestions.length);
-        const q = currentQuestions.splice(qIndex, 1)[0];
+        
+        if (questionPool.length === 0) questionPool = [...QUESTIONS_BASE];
+
+        const qIndex = Math.floor(Math.random() * questionPool.length);
+        const q = questionPool.splice(qIndex, 1)[0];
+
         document.getElementById('qText').textContent = q.q;
         const opts = document.getElementById('qOptions');
         opts.innerHTML = '';
+
+        let answered = false;
+
         q.c.forEach((choice, i) => {
             const btn = document.createElement('button');
             btn.className = 'qcm-btn';
             btn.textContent = choice;
             btn.onclick = () => {
+                if (answered) return;
+                answered = true;
+
                 if (i === q.a) {
-                    screen.style.display = 'none';
-                    state = 'PLAY';
-                    obstacles = [];
-                    player.vy = 0;
+                    btn.classList.add('correct');
+                    setTimeout(() => {
+                        screen.style.display = 'none';
+                        state = 'PLAY';
+                        obstacles = [];
+                        player.vy = 0;
+                    }, 600);
                 } else {
-                    if(score > highscore) localStorage.setItem('ml_highscore_v7', score);
-                    location.reload();
+                    btn.classList.add('wrong');
+                    setTimeout(() => {
+                        if(score > highscore) localStorage.setItem('ml_highscore_v8', score);
+                        location.reload();
+                    }, 600);
                 }
             };
             opts.appendChild(btn);
@@ -240,7 +289,7 @@
         if (state === 'PLAY') {
             ctx.fillStyle = "rgba(13, 71, 161, 0.9)";
             ctx.font = "bold 24px Arial"; ctx.textAlign = "center";
-            ctx.fillText("SCORE: " + score, GAME_WIDTH / 2, 40);
+            ctx.fillText(`SCORE: ${score}`, GAME_WIDTH / 2, 40);
         }
         requestAnimationFrame(update);
     }
