@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MLE Runner - Pro Edition</title>
+    <title>MLE Runner - Expert Edition</title>
     <style>
         :root {
             --primary: #0d47a1;
@@ -16,8 +16,7 @@
 
         html, body {
             margin: 0; padding: 0;
-            width: 100vw;
-            height: var(--app-height);
+            width: 100vw; height: var(--app-height);
             overflow: hidden; background: #000;
             display: flex; justify-content: center; align-items: center;
             position: fixed; font-family: 'Segoe UI', sans-serif;
@@ -49,12 +48,8 @@
         }
 
         #rotate-notice {
-            display: none;
-            background: var(--primary);
-            color: white;
-            z-index: 9999;
-            position: fixed; inset: 0;
-            flex-direction: column;
+            display: none; background: var(--primary); color: white;
+            z-index: 9999; position: fixed; inset: 0; flex-direction: column;
         }
 
         @media screen and (orientation: portrait) {
@@ -72,19 +67,15 @@
         }
 
         .consigne {
-            margin-top: 20px;
-            font-size: clamp(14px, 3vw, 18px);
-            color: #555;
-            max-width: 80%;
-            line-height: 1.4;
+            margin-top: 15px; font-size: clamp(12px, 2.5vw, 16px);
+            color: #555; max-width: 85%; line-height: 1.4;
         }
 
         .qcm-btn {
-            width: 80%; max-width: 400px; padding: 12px; margin: 4px;
+            width: 85%; max-width: 500px; padding: 12px; margin: 5px;
             border: 2px solid var(--primary); background: white;
             font-weight: bold; border-radius: 10px; font-size: 14px;
-            transition: all 0.2s;
-            cursor: pointer;
+            transition: all 0.2s; cursor: pointer;
         }
 
         .qcm-btn.correct { background-color: var(--success) !important; color: white !important; border-color: white !important; }
@@ -102,16 +93,16 @@
     <canvas id="gameCanvas"></canvas>
 
     <div id="menu" class="overlay">
-        <h1>MLE RUNNER</h1>
+        <h1>MLE RUNNER : EXPERT</h1>
         <button id="startBtn" class="btn-play">DÉMARRER</button>
         <p class="consigne">
-            <b>Consigne :</b> Saute par-dessus les obstacles rouges. Si tu touches un obstacle, réponds correctement pour continuer !
+            <b>Défi :</b> Les obstacles sont plus rapides et les questions exigent une réelle connaissance du monde pro. Bonne chance !
         </p>
         <p id="bestScore" style="margin-top:10px; font-weight:bold; color:var(--primary)"></p>
     </div>
 
     <div id="questionScreen" class="overlay" style="display:none">
-        <h2 id="qText" style="color:var(--primary); font-size: 1.1rem;">Question</h2>
+        <h2 id="qText" style="color:var(--primary); font-size: 1.1rem; margin-bottom: 15px;">Question</h2>
         <div id="qOptions" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
     </div>
 </div>
@@ -123,16 +114,13 @@
     const GAME_HEIGHT = 400;
 
     function updateAppHeight() {
-        const doc = document.documentElement;
-        doc.style.setProperty('--app-height', `${window.innerHeight}px`);
+        document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
         const windowRatio = window.innerWidth / window.innerHeight;
         const gameRatio = GAME_WIDTH / GAME_HEIGHT;
         if (windowRatio > gameRatio) {
-            canvas.style.height = '90%';
-            canvas.style.width = 'auto';
+            canvas.style.height = '90%'; canvas.style.width = 'auto';
         } else {
-            canvas.style.width = '95%';
-            canvas.style.height = 'auto';
+            canvas.style.width = '95%'; canvas.style.height = 'auto';
         }
     }
 
@@ -145,43 +133,28 @@
 
     let state = 'MENU';
     let score = 0;
-    let highscore = localStorage.getItem('ml_highscore_v8') || 0;
-    let speed = 6;
+    let highscore = localStorage.getItem('ml_highscore_expert') || 0;
+    let speed = 6.5; // Vitesse de base légèrement augmentée
     let gameFrame = 0;
     let obstacles = [];
-
+    
+    // BASE DE QUESTIONS "DIFFICILE"
     const QUESTIONS_BASE = [
-        {q:"Que signifie l'acronyme CV ?", c:["Curriculum Vitae","Course Vivante","Compte Visuel"], a:0},
-        {q:"Le Contrat d'Engagement Jeune (CEJ) s'adresse aux :", c:["16-25 ans","Tous les âges","Uniquement aux diplômés"], a:0},
-        {q:"Quelle est la durée légale du travail par semaine en France ?", c:["35 heures","39 heures","40 heures"], a:0},
-        {q:"Un 'Soft Skill', c'est quoi ?", c:["Une compétence technique","Une qualité humaine","Un logiciel"], a:1},
-        {q:"Comment doit-on classer ses expériences sur un CV ?", c:["De la plus ancienne à la récente","De la plus récente à la plus ancienne","Par ordre alphabétique"], a:1},
-        {q:"Le savoir-être en entreprise, c'est :", c:["Le comportement et l'attitude","La maîtrise d'Excel","Avoir un gros diplôme"], a:0},
-        {q:"Que faire avant un entretien d'embauche ?", c:["Rien du tout","Se renseigner sur l'entreprise","Préparer ses vacances"], a:1},
-        {q:"La Mission Locale peut t'aider pour :", c:["L'emploi uniquement","Emploi, formation, santé, logement","Remplacer l'école"], a:1},
-        {q:"Une lettre de motivation doit être :", c:["La même pour tous","Personnalisée selon le poste","Écrite en SMS"], a:1},
-        {q:"Arriver en avance de 5 à 10 minutes à un entretien est :", c:["Inutile","Une marque de ponctualité","Une impolitesse"], a:1},
-        {q:"Quelle est la fonction principale d'un stage ?", c:["Remplacer un employé","Découvrir un métier","Gagner beaucoup d'argent"], a:1},
-        {q:"Le SMIC correspond au :", c:["Salaire Maximum","Salaire Minimum de Croissance","Système de Management"], a:1},
-        {q:"Quelle est la mission d'un conseiller Mission Locale ?", c:["Te donner des ordres","T'accompagner dans ton projet","Te trouver un job en 1h"], a:1},
-        {q:"Peut-on utiliser une adresse e-mail fantaisiste pour postuler ?", c:["Oui, c'est original","Non, il faut une adresse pro (nom.prenom)","Seulement le week-end"], a:1},
-        {q:"Qu'est-ce qu'une période d'essai ?", c:["Un test avant l'embauche définitive","Un examen médical","Le premier jour de retraite"], a:0},
-        // 15 NOUVELLES QUESTIONS
-        {q:"Que signifie l'acronyme CDD ?", c:["Contrat à Durée Déterminée","Contrat de Début Durable","Contrat Direct Définitif"], a:0},
-        {q:"En entreprise, le tutoiement est :", c:["Toujours obligatoire","Dépendant de la culture de l'entreprise","Interdit par la loi"], a:1},
-        {q:"Un réseau professionnel (ex: LinkedIn) sert à :", c:["Partager ses photos de vacances","Développer ses opportunités pro","Regarder des vidéos de chats"], a:1},
-        {q:"Le droit à la déconnexion, c'est :", c:["Éteindre son PC pendant le travail","Ne pas être sollicité par mail/tel hors travail","Avoir une mauvaise connexion internet"], a:1},
-        {q:"Qu'est-ce qu'un alternant ?", c:["Un élève qui change de classe","Un jeune qui travaille et étudie en même temps","Un salarié qui travaille de nuit"], a:1},
-        {q:"Que signifie l'acronyme intérim ?", c:["Travail temporaire","Travail à vie","Travail à distance"], a:0},
-        {q:"La politesse envers ses collègues est :", c:["Optionnelle","Essentielle pour le climat de travail","Réservée aux stagiaires"], a:1},
-        {q:"En entretien, si on ne connaît pas une réponse, il vaut mieux :", c:["Inventer n'importe quoi","Être honnête et montrer son envie d'apprendre","Garder le silence total"], a:1},
-        {q:"Une 'compétence transférable', c'est :", c:["Un virement bancaire","Un savoir utilisable dans différents métiers","Une compétence inutile"], a:1},
-        {q:"Qu'est-ce que le RGPD ?", c:["Un règlement sur la protection des données","Une marque de vêtements","Une nouvelle loi sur le sport"], a:0},
-        {q:"L'habit fait-il le moine en entreprise ?", c:["Non, jamais","L'image renvoyée est importante professionnellement","Seul le diplôme compte"], a:1},
-        {q:"Que signifie 'être polyvalent' ?", c:["Savoir faire plusieurs choses différentes","Parler beaucoup de langues","Être toujours fatigué"], a:0},
-        {q:"Le CSE en entreprise sert à :", c:["Nettoyer les bureaux","Représenter les salariés","Cuisiner pour le patron"], a:1},
-        {q:"Qu'est-ce qu'un bilan de compétences ?", c:["Un examen médical pro","Une analyse de ses capacités et projets","Un calcul de salaire"], a:1},
-        {q:"Peut-on être viré pour une simple erreur sans gravité ?", c:["Oui, tout de suite","Non, il faut une cause réelle et sérieuse","Seulement le lundi"], a:1}
+        {q:"Quelle est la durée maximale légale d'une période d'essai pour un cadre en CDI ?", c:["2 mois","3 mois","4 mois"], a:2},
+        {q:"Lors d'une rupture conventionnelle, quelle est la condition indispensable ?", c:["L'accord mutuel signé","Une faute grave","La décision de l'employeur seul"], a:0},
+        {q:"Dans le cadre du CEJ, quel est le volume d'activité hebdomadaire requis ?", c:["5 à 10 heures","15 à 20 heures","35 heures"], a:1},
+        {q:"Que signifie concrètement 'être force de proposition' ?", c:["Attendre les ordres","Identifier un problème et proposer une solution","Crier plus fort en réunion"], a:1},
+        {q:"Qu'est-ce qu'une 'clause de non-concurrence' ?", c:["Interdiction de parler aux collègues","Limitation de travailler pour un concurrent après le départ","Obligation de rester à vie"], a:1},
+        {q:"En intérim, qui est l'employeur juridique du salarié ?", c:["L'entreprise où il travaille","L'agence d'intérim (ETT)","L'État"], a:1},
+        {q:"Que vérifie prioritairement un recruteur lors du contrôle des références ?", c:["Vos loisirs","La véracité de vos dates et missions","Votre adresse"], a:1},
+        {q:"Le Conseil de Prud'hommes est une juridiction dite :", c:["Unilatérale","Paritaire (Employeurs/Salariés)","Administrative"], a:1},
+        {q:"Quelle est la différence entre un abandon de poste et une démission ?", c:["Aucune","L'abandon ne garantit pas de toucher le chômage","La démission est plus rapide"], a:1},
+        {q:"Qu'est-ce que l'alternance sous contrat d'apprentissage ?", c:["Un stage long","Une formation théorique et une mise en pratique pro","Un job d'été"], a:1},
+        {q:"Que signifie 'Soft Skills' ?", c:["Compétences informatiques","Compétences comportementales et humaines","Compétences linguistiques"], a:1},
+        {q:"Un CDD peut-il être rompu avant son terme par le salarié ?", c:["Oui, n'importe quand","Seulement en cas d'embauche en CDI ailleurs","Jamais"], a:1},
+        {q:"La visite d'information et de prévention (ex-visite médicale) est :", c:["Optionnelle","Obligatoire pour tout salarié","Réservée aux métiers dangereux"], a:1},
+        {q:"Sur un bulletin de paie, que représente le 'Salaire Brut' ?", c:["Ce que vous recevez en banque","Le salaire avant déduction des cotisations sociales","Le salaire avec les impôts"], a:1},
+        {q:"Le CPF (Compte Personnel de Formation) est alimenté en :", c:["Points","Heures","Euros"], a:2}
     ];
 
     let questionPool = [];
@@ -189,7 +162,7 @@
     function startGame() {
         state = 'PLAY';
         document.getElementById('menu').style.display = 'none';
-        score = 0; speed = 6; obstacles = [];
+        score = 0; speed = 6.5; obstacles = [];
         player.y = player.groundY; player.vy = 0; gameFrame = 0;
         questionPool = [...QUESTIONS_BASE];
     }
@@ -197,8 +170,7 @@
     const player = { x: 100, y: 320, r: 25, vy: 0, gravity: 0.8, jumpForce: -14, jumps: 0, groundY: 320 };
 
     document.getElementById('startBtn').addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        startGame();
+        e.preventDefault(); startGame();
     });
 
     function handleJump(e) {
@@ -218,14 +190,12 @@
         screen.style.display = 'flex';
         
         if (questionPool.length === 0) questionPool = [...QUESTIONS_BASE];
-
         const qIndex = Math.floor(Math.random() * questionPool.length);
         const q = questionPool.splice(qIndex, 1)[0];
 
         document.getElementById('qText').textContent = q.q;
         const opts = document.getElementById('qOptions');
         opts.innerHTML = '';
-
         let answered = false;
 
         q.c.forEach((choice, i) => {
@@ -235,21 +205,18 @@
             btn.onclick = () => {
                 if (answered) return;
                 answered = true;
-
                 if (i === q.a) {
                     btn.classList.add('correct');
                     setTimeout(() => {
-                        screen.style.display = 'none';
-                        state = 'PLAY';
-                        obstacles = [];
-                        player.vy = 0;
-                    }, 600);
+                        screen.style.display = 'none'; state = 'PLAY';
+                        obstacles = []; player.vy = 0;
+                    }, 700);
                 } else {
                     btn.classList.add('wrong');
                     setTimeout(() => {
-                        if(score > highscore) localStorage.setItem('ml_highscore_v8', score);
+                        if(score > highscore) localStorage.setItem('ml_highscore_expert', score);
                         location.reload();
-                    }, 600);
+                    }, 700);
                 }
             };
             opts.appendChild(btn);
@@ -260,17 +227,21 @@
         ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
         ctx.fillStyle = "#2e7d32";
         ctx.fillRect(0, GAME_HEIGHT - 40, GAME_WIDTH, 40);
+        
         if (state === 'PLAY') {
             gameFrame++;
             score++;
-            if (score % 500 === 0) speed += 0.8;
+            if (score % 400 === 0) speed += 0.9; // Difficulté grimpe plus vite
+            
             player.vy += player.gravity;
             player.y += player.vy;
             if (player.y > player.groundY) { player.y = player.groundY; player.vy = 0; player.jumps = 0; }
-            let spawnRate = Math.max(45, 110 - Math.floor(speed * 2));
+            
+            let spawnRate = Math.max(40, 100 - Math.floor(speed * 2.5));
             if (gameFrame % spawnRate === 0) {
                 obstacles.push({ x: GAME_WIDTH + 50, y: GAME_HEIGHT - 75, w: 30, h: 35 });
             }
+            
             obstacles.forEach(o => {
                 o.x -= speed;
                 ctx.fillStyle = "#d32f2f";
@@ -279,6 +250,7 @@
             });
             obstacles = obstacles.filter(o => o.x > -100);
         }
+        
         ctx.save();
         ctx.translate(player.x, player.y);
         ctx.beginPath(); ctx.arc(0, 0, player.r, 0, Math.PI*2); ctx.fillStyle = "#0d47a1"; ctx.fill();
@@ -286,6 +258,7 @@
         ctx.fillStyle = "#0d47a1"; ctx.font = "bold 15px Arial"; ctx.textAlign = "center";
         ctx.textBaseline = "middle"; ctx.fillText("MLE", 0, 1);
         ctx.restore();
+
         if (state === 'PLAY') {
             ctx.fillStyle = "rgba(13, 71, 161, 0.9)";
             ctx.font = "bold 24px Arial"; ctx.textAlign = "center";
